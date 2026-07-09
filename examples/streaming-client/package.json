@@ -1,0 +1,13 @@
+{
+  "name": "ai-gateway-example-streaming-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A minimal external Node.js client for AI Gateway's /v1/execute/stream (SSE) endpoint — no workspace dependencies.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

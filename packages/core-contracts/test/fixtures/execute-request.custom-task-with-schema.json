@@ -1,0 +1,30 @@
+{
+  "task": "invoice_line_item_extraction",
+  "input": {
+    "text": "Invoice #4471: 3x Widget A @ $12.00, 1x Widget B @ $45.00"
+  },
+  "constraints": {
+    "requiredSchema": {
+      "type": "object",
+      "properties": {
+        "lineItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sku": { "type": "string" },
+              "quantity": { "type": "number" },
+              "unitPriceUsd": { "type": "number" }
+            },
+            "required": ["sku", "quantity", "unitPriceUsd"]
+          }
+        }
+      },
+      "required": ["lineItems"],
+      "additionalProperties": false
+    }
+  },
+  "tenant": {
+    "organizationId": "org_acme"
+  }
+}
