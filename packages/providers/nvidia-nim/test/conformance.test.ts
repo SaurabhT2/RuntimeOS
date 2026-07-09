@@ -1,4 +1,4 @@
-import { runConformanceSuite } from "@ai-gateway/provider-sdk";
+import { runConformanceSuite } from "@ai-gateway/provider-sdk/conformance";
 import { NimAdapter } from "../src/nim-adapter.js";
 
 /**

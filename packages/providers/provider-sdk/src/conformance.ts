@@ -47,8 +47,12 @@ export interface ConformanceOptions {
  * file, e.g.:
  *
  * ```ts
- * import { runConformanceSuite } from "@ai-gateway/provider-sdk";
+ * import { runConformanceSuite } from "@ai-gateway/provider-sdk/conformance";
  * import { MockAdapter } from "@ai-gateway/provider-sdk";
+ *
+ * // Imported from the dedicated "/conformance" subpath (not the package's
+ * // main entry point) because this module pulls in vitest, which must
+ * // never load as part of production runtime execution.
  *
  * runConformanceSuite({
  *   createAdapter: () => new MockAdapter(),

@@ -1,4 +1,4 @@
-import { runConformanceSuite } from "@ai-gateway/provider-sdk";
+import { runConformanceSuite } from "@ai-gateway/provider-sdk/conformance";
 import { GroqAdapter } from "../src/groq-adapter.js";
 import { TokenBucketRateLimiter } from "../src/rate-limiter.js";
 
