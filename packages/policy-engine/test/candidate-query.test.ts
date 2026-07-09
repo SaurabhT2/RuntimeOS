@@ -25,8 +25,8 @@ describe("queryCandidates", () => {
     const registry = new DefaultModelRegistry({ seed: SEED_MODELS });
     const candidates = await queryCandidates(registry, requirement({ requiresJsonMode: true }));
     expect(candidates.every((m) => m.capabilities.structuredOutput)).toBe(true);
-    // groq-creative-v1 declares structuredOutput: false in the seed data.
-    expect(candidates.some((m) => m.modelId === "groq-creative-v1")).toBe(false);
+    // The creative-class Groq model declares structuredOutput: false in the seed data.
+    expect(candidates.some((m) => m.modelId === "openai/gpt-oss-20b")).toBe(false);
   });
 
   it("filters out models lacking tool calling when tool calling is required", async () => {

@@ -20,7 +20,8 @@
 - `TtlCache` — the generic TTL-cache-plus-invalidation-event primitive
   `DefaultModelRegistry` is built on (architecture §14.2).
 - `SEED_MODELS` — architecture §14.3's illustrative seed table as full
-  `ModelDescriptor` records (placeholder model IDs — see file docs).
+  `ModelDescriptor` records (real Groq production model IDs; nvidia-nim
+  entries remain placeholders — see file docs).
 
 ## Design notes
 
@@ -51,7 +52,7 @@ const candidates = await registry.queryModels({
   requiresStructuredOutput: true,
 });
 
-const model = await registry.getModel("groq", "groq-fast-extraction-v1");
+const model = await registry.getModel("groq", "llama-3.1-8b-instant");
 
 await registry.upsertModel({ ...model!, availability: { ...model!.availability, enabled: false } });
 ```
