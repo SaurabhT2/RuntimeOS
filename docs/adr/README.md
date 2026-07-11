@@ -1,7 +1,7 @@
 # Architecture Decision Records — Index
 
-Ten ADRs are on record, spanning EM-0 through EM-5. `0000-template.md` is
-the template used to write all of them, not a decision itself.
+Twelve ADRs are on record, spanning EM-0 through EM-5.5. `0000-template.md`
+is the template used to write all of them, not a decision itself.
 
 Status legend: **Accepted** decisions are settled and reflected in the
 codebase as implemented. **Proposed / draft** ADRs document a real,
@@ -21,6 +21,13 @@ open items has been decided by the Architecture Review Board yet.
 | [0002](0002-json-schema-and-tool-call-shapes.md) | Concrete shapes for `JSONSchema` and `ToolCall` | Defines concrete shapes for two types the architecture spec references but never fully specifies. |
 | [0003](0003-boundary-enforcement-layers.md) | Boundary enforcement has three layers, not one | Documents that pnpm, dependency-cruiser, and ESLint each catch different kinds of package-boundary violation, confirmed by deliberately introducing and reverting a forbidden import. |
 | [0008](0008-orchestrator-adapter-resolution.md) | `orchestrator`'s provider-adapter resolution | Resolves ADR-0007's open question: how `orchestrator` turns an `ExecutionPlan` into a concrete `(adapter, invocation)` pair. Implemented as of EM-4. |
+| [0012](0012-shared-gateway-runtime-package.md) | Extract `bootstrap()` and the HTTP composition layer into `@ai-gateway/gateway-runtime`, a shared package | Corrects ADR-0011: the app-isolation boundary that forbade `apps/vercel-adapter` from importing `apps/gateway-server` directly never forbade either from depending on a shared `packages/*` module. Moves `bootstrap()`, the router, request handlers, parsing, validation, and response-shaping into `@ai-gateway/gateway-runtime`, eliminating the duplication ADR-0011 had accepted. |
+
+## Superseded
+
+| ADR | Title | Description |
+|---|---|---|
+| [0011](0011-vercel-adapter-app-boundary-duplication.md) | `apps/vercel-adapter` duplicates a small amount of app-layer HTTP glue instead of importing it from `apps/gateway-server` | Superseded by [0012](0012-shared-gateway-runtime-package.md). Retained for the historical record of the (mistaken) reasoning that led to accepting the duplication in the first place — not an accurate description of the current codebase. |
 
 ## Proposed / Draft — open for decision
 

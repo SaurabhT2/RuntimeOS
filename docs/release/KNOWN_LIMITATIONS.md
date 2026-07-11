@@ -194,14 +194,15 @@ settled design decisions.
 `@ai-gateway/telemetry` deliberately never registers an OTel
 `TracerProvider`/`MeterProvider` or exporter — every span and metric it
 produces is a correct, inert no-op until a real SDK provider is
-registered, and `apps/gateway-server/src/bootstrap.ts` does not register
+registered, and `@ai-gateway/gateway-runtime`'s `bootstrap()` (the
+composition root every deployment target calls) does not register
 one. Traces and metrics are produced but go nowhere unless an operator
 adds OTel SDK exporter registration in their own deployment. Structured
 logs, by contrast, are written to stdout by default and require no
 additional wiring.
 
 *Source: `telemetry/README.md` (Design notes); confirmed by inspection of
-`apps/gateway-server/src/bootstrap.ts`, which calls `createTelemetry()`
+`packages/gateway-runtime/src/bootstrap.ts`, which calls `createTelemetry()`
 with no exporter configuration. See
 [`docs/release/DEPLOYMENT.md`](DEPLOYMENT.md) for how to wire one.*
 

@@ -1,0 +1,51 @@
+{
+  "name": "@ai-gateway/gateway-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared RuntimeOS composition layer: bootstrap(), GatewayApp, the router, request handlers, request parsing, validation, and response helpers. Hosting-lifecycle-agnostic — consumed by every composition root (apps/gateway-server, apps/vercel-adapter) as a plain package dependency; owns no createServer()/.listen()/Vercel-specific code itself.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist coverage *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ai-gateway/core-contracts": "workspace:*",
+    "@ai-gateway/config": "workspace:*",
+    "@ai-gateway/telemetry": "workspace:*",
+    "@ai-gateway/model-registry": "workspace:*",
+    "@ai-gateway/credential-resolver": "workspace:*",
+    "@ai-gateway/reliability": "workspace:*",
+    "@ai-gateway/policy-engine": "workspace:*",
+    "@ai-gateway/streaming": "workspace:*",
+    "@ai-gateway/orchestrator": "workspace:*",
+    "@ai-gateway/middleware": "workspace:*",
+    "@ai-gateway/groq": "workspace:*",
+    "@ai-gateway/nvidia-nim": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

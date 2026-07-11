@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { bootstrap } from "./bootstrap.js";
+import { bootstrap } from "@ai-gateway/gateway-runtime";
 import { createHttpServer } from "./http/server.js";
 import { registerGracefulShutdown } from "./lifecycle.js";
 import { GatewayServerConfigError, loadServerConfigFromEnv } from "./server-config.js";

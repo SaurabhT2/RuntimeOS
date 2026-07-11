@@ -43,7 +43,36 @@ const DEPENDENCY_TABLE = {
   // Added now per this file's own comment above ("later-wave packages are
   // added here as their waves begin") — every EM-0–EM-4 entry above is
   // byte-for-byte unchanged.
-  "apps/gateway-server": ["orchestrator", "middleware", "providers/groq", "providers/nvidia-nim"],
+  //
+  // EM-5.5 (revised): `apps/gateway-server` no longer depends on
+  // `orchestrator`/`middleware`/the provider packages *directly* — that
+  // composition now lives in `gateway-runtime` below, and both apps
+  // depend on it instead. `apps/gateway-server` keeps a direct dependency
+  // on `config` and `middleware` only for its own `server-config.ts` env
+  // loader (which needs `CredentialScope`/`ROLES`/`ApiKeyRecord` for its
+  // own zod validation, independent of `bootstrap()`).
+  "gateway-runtime": [
+    "core-contracts",
+    "config",
+    "telemetry",
+    "model-registry",
+    "credential-resolver",
+    "reliability",
+    "policy-engine",
+    "streaming",
+    "orchestrator",
+    "middleware",
+    "providers/groq",
+    "providers/nvidia-nim",
+  ],
+  "apps/gateway-server": ["gateway-runtime", "config", "middleware", "telemetry"],
+  // EM-5.5: additive second composition root (Vercel target), approved
+  // architecture at docs/Hosting-architecture/
+  // EM-5.5-vercel-deployment-architecture-review.md (revised). Same
+  // allowed-deps list as `apps/gateway-server` — both depend on the
+  // shared `gateway-runtime` package, not on each other — see
+  // docs/adr/0011-shared-gateway-runtime-package.md.
+  "apps/vercel-adapter": ["gateway-runtime", "config", "middleware"],
 };
 
 function pkgPathPattern(pkgKey) {

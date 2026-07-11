@@ -145,7 +145,8 @@ in-process log-shipping configuration in v1.0.
 ## Telemetry (traces and metrics)
 
 **Important:** `@ai-gateway/telemetry` wraps the OpenTelemetry API, but
-`apps/gateway-server`'s `bootstrap.ts` only calls `createTelemetry()` —
+`@ai-gateway/gateway-runtime`'s `bootstrap()` (the composition root
+`apps/gateway-server` calls) only calls `createTelemetry()` —
 it does **not** register an OTel `TracerProvider`, `MeterProvider`, or
 exporter. Every span and metric the gateway produces (`startSpan`,
 `recordMetric`) is real and correctly formed, but is an inert no-op

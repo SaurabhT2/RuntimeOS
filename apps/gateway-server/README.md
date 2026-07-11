@@ -51,8 +51,9 @@ substitute.
 
 Body: an `ExecuteRequest` (`@ai-gateway/core-contracts`). Header:
 `Authorization: Bearer <gateway-api-key>` (or `x-api-key: <key>` as a
-fallback — see `src/http/auth-header.ts`). Returns a `200` with an
-`ExecuteResponse` body, or a non-2xx with `{ error: GatewayError }`.
+fallback — see `@ai-gateway/gateway-runtime`'s `extractApiKey`). Returns a
+`200` with an `ExecuteResponse` body, or a non-2xx with
+`{ error: GatewayError }`.
 
 ### `POST /v1/execute/stream`
 
@@ -75,99 +76,70 @@ healthy).
 
 ## Runtime composition
 
-`src/bootstrap.ts` is the single composition root (architecture §6.4):
-one function, `bootstrap(serverConfig, overrides?)`, constructing exactly
-one instance of every package's concrete implementation and returning a
-plain `GatewayApp` bundle — deliberately not a class, matching
-`orchestrator`'s own "sequencing function, not a class hierarchy"
-precedent at this layer. `src/index.ts` is the only file with process-level
-side effects (loads env config, calls `bootstrap`, starts the HTTP
+The composition root itself — `bootstrap()`, `GatewayApp`, the router, the
+route handlers, request parsing, validation, and response-shaping — lives
+in `@ai-gateway/gateway-runtime` (a shared `packages/*` dependency, not
+something this app defines), per
+[ADR-0012](../../docs/adr/0012-shared-gateway-runtime-package.md). See
+that package's README for the wiring order and every design decision
+made when writing it (it originated here, in EM-5, before the EM-5.5
+extraction — the decisions carry over unchanged).
+
+What remains in this app is exactly its own hosting lifecycle: `src/index.ts`
+is the only file with process-level side effects (loads env config via
+`server-config.ts`, calls the shared `bootstrap()`, starts the HTTP
 server, registers signal handlers) and is guarded so importing it (e.g.
 from a future tool) never has those side effects — only running it
-directly does.
-
-Wiring order mirrors the dependency table exactly: Telemetry ->
-GatewayConfig -> Model Registry -> Credential Resolver -> Reliability ->
-Policy Engine -> Provider Adapters -> Streaming -> Orchestrator ->
-Middleware -> `GatewayApp`.
+directly does. `src/http/server.ts` builds the shared route table once
+(`buildGatewayRouter`) and wraps the shared `dispatchGatewayRequest` in a
+real `node:http` `createServer()` call — this file owns the listen socket;
+the shared package never does.
 
 ## Engineering decisions
 
-1. **No HTTP framework.** `src/http/router.ts` is a hand-rolled,
-   ~30-line method+exact-path router. Neither the architecture spec nor
-   the Engineering Blueprint names a framework for this package, and this
-   milestone's three fixed routes (no path parameters) don't need one. A
-   framework dependency was a deliberate non-choice, not an oversight —
-   see the router's own doc comment for when this should be revisited
-   (many more routes, path parameters).
-
-2. **`SEED_MODELS` is used as-is; a real deployment must supply real
-   model IDs.** `model-registry`'s seed data is placeholder (its own
-   README says so); `GroqAdapter`/`NimAdapter` pass `modelId` straight
-   through as the literal provider-side string (EM-3 Engineering
-   Decision 3). This composition root does not invent real model IDs on
-   an operator's behalf — `bootstrap()`'s `overrides.modelRegistrySeed`
-   is the seam a real deployment (or a test) uses to supply its own.
-
-3. **`GatewayConfig.reliability` is not wired to `CircuitBreaker`/
-   `RetryEngine`.** Discovered while writing `bootstrap()` — see
-   `docs/adr/0010-gatewayconfig-reliability-section-unconsumed.md` (ADR
-   candidate). Both are constructed with their own shipped defaults
-   instead of a guessed mapping.
-
-4. **HTTP-boundary request-shape validation, before middleware.**
-   `MiddlewarePipeline`'s stages (`CacheMiddleware` in particular) assume
-   they're handed an already-well-shaped `ExecuteRequest` — reasonably,
-   since that's how every existing EM-4 test exercises them. A malformed
-   body (e.g. a missing `tenant`) would otherwise throw a raw, non-
-   `GatewayError` exception inside `CacheMiddleware` before
-   `orchestrator`'s own schema validation ever runs. `src/http/validate-request.ts`
-   validates against the same `executeRequestSchema` orchestrator itself
-   uses (not a second, divergent schema) immediately after body-parsing,
-   closing that gap without changing `middleware`'s frozen contract.
-
-5. **`CREDENTIAL_INVALID` -> 401, `CREDENTIAL_NOT_FOUND` -> 424.**
-   Architecture §19.1 groups both under one "401/424" cell without
-   specifying which gets which. See `src/http/respond.ts`'s doc comment
-   for the full reasoning (`AuthMiddleware`'s own gateway-auth failures
-   are the only `CREDENTIAL_INVALID` source that's unambiguously a
-   caller-identity problem).
-
-6. **Streaming auth/rate-limit run outside `MiddlewarePipeline.run`.**
-   `pipeline.run`'s `downstream` returns a single `ExecuteResponse`, never
-   a stream, and its cache-check step never applies to streaming anyway.
-   `execute-stream.ts` calls `AuthMiddleware.authenticate`/
-   `RateLimitMiddleware.checkOrThrow` directly instead — the same two
-   stages, wired a second way for the one lifecycle shape
-   `MiddlewarePipeline` doesn't cover end-to-end, not new business logic.
-
-7. **Fail-fast environment-driven configuration.** `src/server-config.ts`
+1. **Fail-fast environment-driven configuration.** `src/server-config.ts`
    loads and Zod-validates every process-level setting (listen
    address, which env var holds each provider's platform key, gateway API
    keys, rate-limit/cache tuning) and throws before any network listener
    opens if anything required is missing or malformed — this milestone's
-   own "no silent configuration failures" requirement.
+   own "no silent configuration failures" requirement. `GatewayServerConfig`
+   extends the shared package's `GatewayRuntimeConfig` with exactly one
+   local addition, `http: { host, port }` — `bootstrap()` never reads it
+   (see `gateway-runtime`'s README).
+
+2. **`http/server.ts` is a thin wrapper, not a second implementation of
+   routing.** It builds the shared router once at server-construction
+   time (not per-request) and delegates every request to
+   `dispatchGatewayRequest` — the exact same function
+   `apps/vercel-adapter` awaits per-invocation. This file's only job is
+   "own the `createServer`/`.listen()` call"; see
+   [ADR-0012](../../docs/adr/0012-shared-gateway-runtime-package.md) for
+   why the routing/dispatch logic itself isn't duplicated here.
+
+Every other design decision this app's HTTP layer embodies (no framework,
+model-registry seed handling, the `GatewayConfig.reliability` gap, HTTP-
+boundary validation ordering, the `CREDENTIAL_INVALID`/`CREDENTIAL_NOT_FOUND`
+status mapping, streaming auth sequencing) now lives in
+`@ai-gateway/gateway-runtime`'s README, since that's where the code those
+decisions describe now lives.
 
 ## Testing strategy
 
-- **Unit:** `server-config.ts` (env parsing/validation), `bootstrap.ts`
-  (wiring, config-loading, override seams), every `http/*` module
-  (router, respond, auth-header, read-body, validate-request) in
-  isolation, and `lifecycle.ts` (graceful shutdown, signal handling, a
-  simulated hung-close force-exit).
-- **Route-level:** each of the three routes exercised over a _real_
-  `node:http` server (`test/test-server.ts` starts the actual
-  `createHttpServer(app)` this process itself runs) with fake, in-memory
-  `ProviderAdapter`s — never a live network call in CI, matching this
-  codebase's established `fetchImpl`-as-test-seam convention.
+- **Unit:** `server-config.ts` (env parsing/validation, including the one
+  field genuinely local to this app, `http`) and `lifecycle.ts` (graceful
+  shutdown, signal handling, a simulated hung-close force-exit).
 - **Integration:** `test/integration/end-to-end.test.ts` drives this
-  milestone's own named Runtime Integration flow (Client -> Gateway API
-  -> Middleware -> Orchestrator -> ... -> Client Response) as real HTTP
-  round trips, including a failover scenario where the client only ever
-  sees a normal `200`.
-- **Coverage:** 95.5/90.1/93.9/95.5 (statements/branches/functions/lines),
-  above the shared 90/90/90/85 threshold every package in this monorepo
-  enforces.
+  app's _real_ `createHttpServer(app)` + `.listen()` assembly over real
+  HTTP — proving this app's own hosting-layer wiring is correct, not
+  re-deriving the underlying request-handling behavior from scratch
+  (that's `@ai-gateway/gateway-runtime`'s own integration suite's job;
+  see that package's README, Testing strategy). Fake, in-memory
+  `ProviderAdapter`s throughout — never a live network call in CI.
+- **Coverage:** 91.3/88.3/100/91.3 (statements/branches/functions/lines).
+  The route/handler/router/bootstrap unit tests that used to be counted
+  here moved to `@ai-gateway/gateway-runtime`'s own suite along with the
+  code they test — see that package's README for its own (higher)
+  coverage numbers.
 
 ## Deferred work
 

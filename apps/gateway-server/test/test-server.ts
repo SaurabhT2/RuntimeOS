@@ -1,5 +1,5 @@
 import type { AddressInfo } from "node:net";
-import { bootstrap, type BootstrapOverrides, type GatewayApp } from "../src/bootstrap.js";
+import { bootstrap, type BootstrapOverrides, type GatewayApp } from "@ai-gateway/gateway-runtime";
 import { createHttpServer } from "../src/http/server.js";
 import { fakeAdapter, TEST_MODEL_SEED, testServerConfig } from "./fixtures.js";
 import type { GatewayServerConfig } from "../src/server-config.js";

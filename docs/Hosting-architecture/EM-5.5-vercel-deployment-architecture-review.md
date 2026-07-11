@@ -1,0 +1,228 @@
+# RuntimeOS — EM-5.5 Deployment Architecture Review: Vercel Compatibility
+
+**Document type:** Architecture Review (no implementation, no patches, no migration plan)
+**Status:** Approved, Revision 2 (see Revision History)
+**Subject release:** RuntimeOS v1.0.2 (tagged, stable, EM-0–EM-5 complete)
+**Target location:** `docs/Hosting-architecture/`
+**Reviewed by:** Architecture Review Board (independent review, EM-5.5)
+**Target endpoint:** `runtime.saurabhtiwariai.com`
+
+## Revision History
+
+| Revision | Change |
+|---|---|
+| 1 (original) | Approved. §7 recommended an additive Vercel composition root that would either import `apps/gateway-server`'s `bootstrap()`/route handlers directly, or duplicate them, leaving the choice to the implementation milestone. |
+| **2 (this revision)** | Implemented per Revision 1; during architecture review of that implementation, the Board found the resulting ~450-line HTTP-layer duplication between `apps/gateway-server` and `apps/vercel-adapter` unnecessary — it existed only because of an incorrect assumption that this codebase's app-isolation boundary prevented sharing that code at all, when in fact it only ever prevented one **app** importing another **app**; sharing it via a normal **package** dependency was available the whole time and violates nothing. §6, §7, §8, §10, and §11 are revised accordingly to require a shared `packages/*` module (`@ai-gateway/gateway-runtime`) instead. §1–§5, §9, and §12 are substantively unchanged: the underlying finding (a lifecycle-contract incompatibility, not a business-logic gap) and the accepted risks (Findings 4–5) do not change. |
+
+---
+
+## 1. Executive Summary
+
+RuntimeOS's platform logic (`packages/*`) is already transport-agnostic and requires **no architectural change** to run on Vercel. Every package that implements orchestration, routing, provider adapters, middleware, and streaming is written against plain data interfaces and the standard `fetch` API; none of them import `node:http`, open a socket, or otherwise assume a specific hosting model. This was a deliberate, documented design goal (architecture-spec §"Portability": *"Runs identically on a single Node process, a container, or a serverless function"*) and the codebase honors it.
+
+The incompatibility with Vercel is narrow and fully localized to one composition root: **`apps/gateway-server`**, specifically its process entrypoint (`src/index.ts`) and HTTP bootstrap (`src/http/server.ts`), which construct a `node:http` server via `createServer()` and take ownership of the process via `server.listen(port, host)` plus self-managed `SIGTERM`/`SIGINT` draining (`src/lifecycle.ts`). This is a **process-lifecycle ownership model** — the application expects to *be* the long-running process. Vercel's Functions runtime does not support this model: Vercel invokes an exported request handler per request inside a platform-managed execution environment; application code never calls `.listen()` and never owns process lifecycle or shutdown signaling.
+
+This is the **entire architectural finding**. It does not require redesigning RuntimeOS, does not require a new "hosting adapter" *interface* inside `packages/*` (see §6's Option C, still rejected — a distinct question from what this revision does adopt), and does not touch any platform package's business logic, public interface, or dependency direction. The minimum architectural change is **two parts**: (a) extracting the existing, transport-agnostic composition logic — `bootstrap()`, the router, the route handlers, request parsing, validation, and response-shaping — out of `apps/gateway-server` into a new shared package, `@ai-gateway/gateway-runtime`; and (b) a second, Vercel-native composition root, sitting alongside `apps/gateway-server`, that depends on that shared package the same way `apps/gateway-server` now does, and exports it in the shape Vercel's Functions runtime expects instead of binding a socket.
+
+A second, independent finding — not a blocker, but material to the Board's decision and to any future ADR — is that RuntimeOS v1.0.2's in-memory state (rate limiting, response cache, circuit breaker, provider health) is **known and documented** (`docs/release/KNOWN_LIMITATIONS.md` §1.1) as a single-instance limitation. The architecture spec's own statement that RuntimeOS can be adapted to serverless (§25.3) *presupposes* the shared, Redis-backed state design described in architecture §23, which is the **target** design, not the **built** one as of v1.0.2. Vercel's execution model (many concurrent, non-affinity, frequently-recycled instances) makes this pre-existing gap more consequential than it is on a single-instance or fixed-replica container deployment, and the Board should treat it as a deployment-readiness caveat independent of the Vercel-specific finding above.
+
+**Bottom line:** RuntimeOS does **not** require architectural changes to become Vercel-compatible at the platform layer. It requires relocating one application's worth of already-transport-agnostic composition logic to a shared package, plus one small, additive deployment-target composition root at the application layer. No smaller change is available, because the incompatibility is with a lifecycle contract (`.listen()`/socket ownership), not with any piece of business logic that could instead be conditionally branched or configured.
+
+---
+
+## 2. Current RuntimeOS Deployment Architecture
+
+### 2.1 Platform shape
+
+```
+BrandOS
+   ↓
+RuntimeOS
+   ↓
+Groq / NVIDIA / OpenAI / Anthropic
+```
+
+RuntimeOS is a pnpm/Turborepo monorepo with a strict two-tier structure:
+
+- **`packages/*`** (`core-contracts`, `orchestrator`, `providers/groq`, `providers/nvidia-nim`, `providers/provider-sdk`, `config`, `middleware`, `model-registry`, `reliability`, `policy-engine`, `credential-resolver`, `streaming`, `telemetry`) — the reusable platform. Framework-agnostic TypeScript libraries exposing typed constructors and interfaces (`ExecutionOrchestrator`, `ProviderAdapter`, `MiddlewarePipeline`, `StreamManager`, etc.).
+- **`apps/gateway-server`** — the one existing composition root: a deployable HTTP process that wires every platform package together (`bootstrap.ts`) and exposes it over `node:http`.
+
+### 2.2 The existing composition root, concretely
+
+- **`apps/gateway-server/src/bootstrap.ts`** — `bootstrap(serverConfig, overrides?)` constructs one instance of every platform package (telemetry, config, model registry, credential resolver, health monitor, circuit breaker, policy engine, provider adapters, stream manager, orchestrator, and the auth/rate-limit/cache middleware pipeline) and returns a plain `GatewayApp` bundle. It is explicitly documented as "the single composition root... the only place in the entire codebase permitted to import a concrete implementation of every interface simultaneously."
+- **`apps/gateway-server/src/http/server.ts`** — `createHttpServer(app)` builds a small router (`/v1/execute`, `/v1/execute/stream`, `/v1/health`) and wraps it in `node:http`'s `createServer((req, res) => ...)`. Route handlers (`handleExecute`, `handleExecuteStream`, `handleHealth`) are plain functions typed against `IncomingMessage`/`ServerResponse` — they do not themselves depend on `createServer` or `.listen()`.
+- **`apps/gateway-server/src/index.ts`** — the process entrypoint (`start` script: `node dist/index.js`). Loads env-based config (fail-fast), calls `bootstrap()`, calls `createHttpServer(app)`, then explicitly does:
+  ```ts
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(serverConfig.http.port, serverConfig.http.host, () => { ... resolve(); });
+  });
+  registerGracefulShutdown(server, app.telemetry);
+  ```
+- **`apps/gateway-server/src/lifecycle.ts`** — registers `SIGTERM`/`SIGINT` handlers that call `server.close()`, let in-flight requests drain, and force-exit after a 10s grace period. This is standard container-orchestrator (Kubernetes/ECS) shutdown behavior.
+- **`apps/gateway-server/src/server-config.ts`** — all server configuration is loaded from `process.env` and validated with Zod at startup; there is no filesystem or platform-specific assumption here beyond `process.env`.
+
+### 2.3 What the existing deployment guide already assumes
+
+`docs/release/DEPLOYMENT.md` documents the deployment target as: Node.js ≥ 20, `pnpm build` (Turborepo, dependency-ordered), `node apps/gateway-server/dist/index.js` as the startup command, and explicitly states **"v1.0 targets a single-instance deployment"** with **"no external database or cache... every store is in-memory."** It recommends running "behind a TLS-terminating reverse proxy, load balancer, or ingress" — i.e., a traditional long-running-process / container deployment model. `runtime.saurabhtiwariai.com` is already named in this document as the reference deployment target, without a stated hosting platform.
+
+This confirms the prompt's premise directly from the source: the deployment guide assumes a traditional Node.js process deployment, and no `vercel.json` or Vercel-specific packaging exists anywhere in the repository.
+
+---
+
+## 3. Architectural Analysis of the Current Design
+
+### 3.1 The platform layer is already transport-agnostic
+
+A repository-wide check confirms `node:http` (or any Node HTTP module) is imported nowhere inside `packages/*` in production code — the only match anywhere under `packages/` is a test-only debug harness in `provider-sdk`'s test suite, not shipped code. Every provider adapter (`GroqAdapter`, `NimAdapter`) speaks to upstream providers via the standard `fetch` API, injected as `fetchImpl` for testability — `fetch` is available in Node ≥ 18/20, in Vercel's Node.js Functions runtime, and in Vercel's Edge runtime alike. `MiddlewarePipeline`, `ExecutionOrchestrator`, `DefaultStreamManager`, `PolicyEngine`, and every reliability primitive operate purely on typed request/response data structures (`@ai-gateway/core-contracts`), never on a raw socket, a specific server object, or a specific process model.
+
+This is not incidental — it is a stated architectural principle. The Architecture Specification's own comparison table states RuntimeOS's target **Portability** as: *"Runs identically on a single Node process, a container, or a serverless function; no provider-specific cloud dependencies in the core."* The platform layer, as built, honors that principle.
+
+### 3.2 The incompatibility is a lifecycle contract, not a business-logic gap
+
+The one place the codebase departs from "just a set of functions over data" is exactly where it has to: somewhere, something must own an HTTP endpoint. `apps/gateway-server` is that "somewhere," and it does so using the only model it was asked to support at EM-5 time: a self-managed `node:http.Server` bound to a host/port via `.listen()`, with the process itself responsible for opening the listener, handling `SIGTERM`/`SIGINT`, and draining connections before exiting.
+
+Vercel's Functions runtime (both the Node.js runtime and the Edge runtime) uses a fundamentally different contract: the platform, not the application, owns the process and the listener. Application code exports a request-handling function; Vercel invokes it per request inside a platform-managed execution environment. There is no `.listen()` call available or meaningful to make, and no `SIGTERM`-based graceful-drain window for the application to manage — the platform handles instance lifecycle and scaling itself.
+
+This is precisely why the incompatibility is small: it lives entirely in the three files responsible for *owning the process* (`index.ts`, `http/server.ts`'s `createServer` call, `lifecycle.ts`), not in the route-handling logic itself. `handleExecute`, `handleExecuteStream`, and `handleHealth` are already plain functions of `(req: IncomingMessage, res: ServerResponse, app: GatewayApp)` — they do not call `.listen()`, do not construct a server, and have no dependency on process-level signal handling. They are, structurally, already close to what a request-handler-per-invocation model needs.
+
+### 3.3 Streaming is a Node-native `res.write()` loop, not framework-specific
+
+`handleExecuteStream` (`apps/gateway-server/src/http/routes/execute-stream.ts`) opens an SSE response with `res.writeHead(200, {"content-type": "text/event-stream", ...})`, then iterates `app.orchestrator.executeStream(request)` as an async generator, calling `res.write(encodeSseChunk(chunk))` per chunk until `chunk.done`, listening for `req.on("close", ...)` to cancel the in-flight orchestration on client disconnect. This is standard Node `http.ServerResponse` streaming — it does not depend on `createServer`/`.listen()` and is portable to any runtime that gives the handler a writable, incrementally-flushable response stream and a bounded-or-unbounded invocation duration compatible with the stream's expected length.
+
+### 3.4 In-memory state is a pre-existing, documented limitation — not a new one introduced by Vercel
+
+`bootstrap.ts` constructs `InMemoryCircuitBreaker`, an in-process rate limiter (`RateLimitMiddleware`), an in-process response cache (`CacheMiddleware`), an in-process credential store (`InMemoryCredentialStore`), and an in-process health-state store behind `DefaultHealthMonitor` — once, per process, at startup. `docs/release/KNOWN_LIMITATIONS.md` §1.1 already documents this as **"Single-instance deployment only"**, listing exactly these four stores, and states plainly: *"Running more than one instance behind a load balancer also works, but each instance maintains an independent view of all four... A shared backend (e.g., Redis) for all four is required before a true multi-replica deployment, and is not built in v1.0."*
+
+Architecture §23 already anticipates the fix (a shared Redis/DB-backed store making the Execution Core "stateless" per Principle P3), but that design is explicitly **not yet implemented** — it is the target, not the current, architecture.
+
+---
+
+## 4. Compatibility Assessment for Vercel
+
+| Layer | Vercel-compatible as-built? | Basis |
+|---|---|---|
+| `packages/*` (orchestration, providers, middleware, streaming, policy, reliability, telemetry, config) | **Yes, unconditionally.** | No `node:http` dependency in production code; all I/O via `fetch`; pure data-in/data-out interfaces. |
+| `apps/gateway-server`'s route handlers (`handleExecute`, `handleExecuteStream`, `handleHealth`) | **Yes, structurally**, once given a caller that isn't `.listen()`-based. | Already typed against raw `IncomingMessage`/`ServerResponse`, no server-construction or process-lifecycle logic inside the handlers themselves. |
+| `apps/gateway-server`'s process entrypoint (`index.ts`), server construction (`http/server.ts`'s `createServer`), and shutdown (`lifecycle.ts`) | **No.** | These explicitly call `server.listen(host, port)` and register process-level `SIGTERM`/`SIGINT` handlers — a process-ownership contract Vercel Functions do not provide a hook for. |
+| Configuration (`server-config.ts`, env-var driven) | **Yes.** | Already 100% `process.env`-sourced with fail-fast Zod validation; Vercel Functions support environment variables natively. No filesystem or fixed-path assumptions beyond an optional `GATEWAY_CONFIG_PATH`. |
+| Streaming (`/v1/execute/stream`, SSE) | **Conditionally yes**, subject to Vercel's per-invocation execution-duration limits for the chosen runtime/plan, which the Board should confirm against the orchestrator's worst-case stream duration before committing this route to Vercel. | Vercel's Node.js Functions runtime supports streamed/chunked responses; this is a capacity/duration-budget question, not an architectural blocker, given the handler already streams via plain `res.write()`. |
+| Build tooling (pnpm workspaces + Turborepo) | **Yes.** | Vercel has native, first-class support for pnpm workspaces and Turborepo monorepos; no build-tooling change is implied by targeting Vercel. |
+| In-memory rate limit / cache / circuit breaker / health state | **Functionally degraded, not blocked.** | Already a documented multi-instance limitation (§1.1 above); Vercel's non-affinity, frequently-recycled execution model makes per-instance state reset more frequent and less predictable than on a fixed-replica container deployment, but does not prevent requests from being served correctly. |
+
+**Conclusion:** The current architecture is **not compatible with Vercel as packaged today**, solely because its one existing composition root insists on owning process lifecycle via `.listen()`. Every other layer — including the parts of `apps/gateway-server` that actually do the request handling — is already shaped correctly for a request-handler-per-invocation model.
+
+---
+
+## 5. Architectural Findings
+
+**Finding 1 — The incompatibility is a process-lifecycle contract mismatch, isolated to three files.**
+`apps/gateway-server/src/index.ts`, `src/http/server.ts` (its `createServer` call specifically, not its router/route-registration logic), and `src/lifecycle.ts` assume the application owns a socket and a process. This is the only architectural fact preventing Vercel deployment.
+
+**Finding 2 — The platform (`packages/*`) requires zero changes.** No package imports `node:http`, constructs a server, or reads `process.env` for anything beyond what is already injected by its constructor. This was a stated design goal (architecture-spec's Portability principle) and it holds as-built.
+
+**Finding 3 — The route-handling logic inside `apps/gateway-server` is already close to a Vercel-shaped handler.** `handleExecute`, `handleExecuteStream`, and `handleHealth` take `(req, res, app)` and contain no server-construction or process-signal logic. They are reusable, not rewritable.
+
+**Finding 4 — The serverless-readiness claim already in the architecture spec (§25.3) is conditioned on work not yet done.** §25.3 states RuntimeOS "can be adapted to a serverless function runtime for non-streaming requests" *because* "the core has no in-process long-lived state beyond a short-TTL cache" — but that statement describes the §23 target architecture (shared Redis-backed state), which `KNOWN_LIMITATIONS.md` §1.1 confirms is **not implemented** in v1.0.2. The Board should not read §25.3 as already-verified for the current codebase; the *routing/handler shape* is serverless-ready, but the *state model* is not yet the one §25.3 assumes.
+
+**Finding 5 — Streaming has an architecturally-acknowledged tension with classic short-lived FaaS**, independently flagged in the architecture spec itself: *"streaming requests require a runtime supporting long-lived connections (container/VM-based, not classic short-lived FaaS)."* Vercel's current Node.js Functions runtime is not classic short-lived FaaS in the way this sentence originally seems to have meant (it does support streamed responses), but it does still impose a maximum execution duration per invocation. This is a capacity question for the Board to size, not a structural incompatibility to design around.
+
+---
+
+## 6. Alternative Architectural Options
+
+Three options were considered. Per the milestone's constraints (preserve architectural integrity, avoid redesign unless technically necessary, prefer additive over replacement), Option A is recommended, revised per Revision 2 below; B and C are documented for completeness and remain rejected.
+
+### Option A — Additive Vercel composition root, backed by a shared runtime package (recommended; see §7)
+Extract `bootstrap()` and the HTTP composition layer (router, route handlers, request parsing, validation, response-shaping) out of `apps/gateway-server` into a new shared package, `@ai-gateway/gateway-runtime`. Add a second, small composition root alongside `apps/gateway-server` that depends on that package the same way `apps/gateway-server` now does, exporting it in Vercel's request-handler shape instead of binding a socket. No change to any *other* platform package. No behavioral change to `apps/gateway-server` (its dependency list and file layout change; its runtime behavior does not — see §10).
+
+*(Revision 1 of this document recommended a narrower version of Option A — either importing `apps/gateway-server`'s `bootstrap()`/handlers directly, or duplicating them — and left the choice to the implementation milestone. Duplication was implemented first; the Board's review of that implementation found it unnecessary, for the reason recorded in the Revision History above, and revised the recommendation to the shared-package form described here.)*
+
+### Option B — Modify `apps/gateway-server` in place to be hosting-agnostic
+Refactor `index.ts`/`http/server.ts` to detect the hosting environment and branch between `.listen()`-based startup and a handler-export shape. **Rejected**: this couples a single app's entrypoint to multiple, unrelated deployment targets' lifecycle contracts inside one file, increases the surface area of the one file this milestone identifies as the entire problem, and violates "prefer additive architecture over replacement" and "avoid redesign unless technically necessary" — nothing about the container/VM deployment path requires this, so changing it to accommodate Vercel is scope creep on a stable, tagged app. This reasoning is unaffected by Revision 2: extracting shared composition logic to a package is not the same change as branching hosting-lifecycle logic inside `apps/gateway-server`'s own entrypoint, which remains rejected.
+
+### Option C — Introduce a generic "hosting adapter" abstraction inside `packages/*`
+Add a new platform package that abstracts "how a request handler is exposed to a runtime" (Node http, Vercel, AWS Lambda, etc.) as a first-class RuntimeOS *interface* — i.e., new abstract contracts that every hosting target and every platform package would need to conform to. **Rejected for this milestone**: the constraints explicitly state *"Do not assume a hosting adapter is the correct solution,"* and the analysis above shows this isn't required — the actual gap is a lifecycle contract in one app, not a missing platform abstraction. If a *third* hosting target with materially different constraints emerges later, this option could be revisited as its own ADR — it is not justified by Vercel alone.
+
+**This remains distinct from, and rejected independent of, Revision 2's `@ai-gateway/gateway-runtime` package (Option A, revised).** `gateway-runtime` introduces no new interface, no new abstraction, and no hosting-target awareness anywhere in `packages/*` or in itself — it is the same concrete `bootstrap()`/router/handler code that already existed in `apps/gateway-server`, relocated to a location a second app can import as an ordinary `package` dependency. It does not abstract "how a request handler is exposed to a runtime"; each hosting layer (`apps/gateway-server`'s `http/server.ts`, `apps/vercel-adapter`'s `api/v1/[...path].ts`) still writes its own concrete answer to that question. Adopting Option A's revised form is therefore not a reversal of Option C's rejection.
+
+---
+
+## 7. Recommended Architecture
+
+**Two additive pieces**, together:
+
+**7a. A shared runtime package, `@ai-gateway/gateway-runtime`, under `packages/*`.** Contains exactly the code that was already hosting-lifecycle-agnostic in `apps/gateway-server` — it is a relocation, not a rewrite:
+- `bootstrap()` / `GatewayApp` — the composition root, unchanged in logic. Its config parameter (`GatewayRuntimeConfig`) drops the `http: { host, port }` field, which `bootstrap()` never read even before this extraction (see the package's own README).
+- The router, the three route handlers (`handleExecute`, `handleExecuteStream`, `handleHealth`), request parsing (`readJsonBody`), validation (`validateExecuteRequest`), the auth-header convention (`extractApiKey`), and response-shaping (`sendJson`/`sendError`).
+- A small dispatch function (`dispatchGatewayRequest`) that matches a `(method, path)` pair against the router and invokes the handler — the same logic `apps/gateway-server/src/http/server.ts`'s `createServer` callback contained, factored out so it can be `await`ed by a hosting layer whose invocation lifetime depends on that (Vercel), or fired-and-forgotten by one whose process lifetime doesn't (a real `http.Server`).
+
+This package depends on the same platform packages `apps/gateway-server` already depended on (`orchestrator`, `middleware`, `policy-engine`, `credential-resolver`, `reliability`, `streaming`, `telemetry`, `config`, `model-registry`, `core-contracts`, both provider adapters) via the same `workspace:*` mechanism, preserving dependency direction exactly: `packages/*` remains unaware of any `app`, and `gateway-runtime` itself is a `package`, not an `app` — nothing about the existing `apps` → `packages` direction changes, only which package holds this particular code.
+
+**7b. One new, additive application**, `apps/vercel-adapter` (naming is an implementation decision, out of scope for this document), that:
+
+1. Depends on `@ai-gateway/gateway-runtime` — a normal `package` dependency, exactly like every other `apps/*` → `packages/*` edge in this repository. This is not an app-to-app dependency and does not require any change to this codebase's existing app-isolation boundary (`eslint.config.mjs`'s `boundaries/element-types` rule, which has only ever restricted `app` → `app` imports, never `app` → `package`).
+2. Calls the shared `bootstrap()`, passing its own environment-derived `GatewayRuntimeConfig` and its own telemetry/audit identity (`instrumentationName`/`defaultActor` — a `BootstrapOverrides` field precisely so `apps/gateway-server`'s own identity, and its telemetry/audit output, stays byte-for-byte unchanged after the extraction).
+3. Reuses the shared route handlers and `dispatchGatewayRequest`, exported in whatever module shape Vercel's Node.js Functions runtime requires (a single catch-all handler that dispatches by path — an implementation detail, not this document's).
+4. Does **not** call `createServer()` or `.listen()`, and does **not** register `SIGTERM`/`SIGINT` handlers — both remain meaningless in, and unsupported by, Vercel's execution model, and their absence is not a regression, it is a correct reflection of who owns the process on that platform.
+5. `apps/gateway-server`'s own remaining files (`index.ts`, `lifecycle.ts`, `http/server.ts`, `server-config.ts`) keep 100% of their current runtime behavior (§10 details exactly what changes and what provably doesn't), continuing to be the reference deployment for any traditional container/VM/Kubernetes target, exactly as `DEPLOYMENT.md` and architecture §25.1/§25.2 already describe.
+
+This is the **minimum necessary architectural evolution**: it resolves Finding 1 (the only true incompatibility) without touching Findings 2–3 (which don't need touching) and without pre-emptively solving Finding 4 or 5 (which are deployment-readiness/capacity questions, not architecture questions, and are addressed as constraints below rather than as design changes). Relocating already-agnostic code to a shared package is not "redesign" in the sense the milestone's constraints warn against — no interface changes, no new abstraction, no behavior change — it is the direct consequence of two composition roots needing the same, already-existing logic, and this codebase's own `apps` → `packages` boundary being the correct, already-established place for shared, hosting-agnostic code to live.
+
+No smaller change is available. The incompatibility is with a lifecycle contract (who calls `.listen()`, who owns `SIGTERM`), which cannot be "configured away" inside the existing process-owning entrypoint — a process that has already decided to own a socket cannot simultaneously be the kind of module Vercel imports and invokes per request. Some new module, at the application layer, has to exist to be that second contract, and it needs the same composition/HTTP logic `apps/gateway-server` already has — the only remaining question was *where that logic lives so both composition roots can use it without duplication*, which §6's revised Option A now answers.
+
+---
+
+## 8. Architectural Trade-offs
+
+| Trade-off | Discussion |
+|---|---|
+| Two composition roots vs. one | Slightly more application-layer surface to maintain (two `apps/*` entries instead of one), in exchange for zero platform-layer risk and zero disruption to the existing, stable, tagged container/VM deployment path. Consistent with "preserve repository boundaries" and "avoid redesign." |
+| A shared `gateway-runtime` package vs. duplicating the HTTP layer per app | A shared package fully eliminates duplication of request-validation/error-shaping/dispatch logic (`validate-request.ts`, `respond.ts`, `auth-header.ts`, `router.ts`, the route handlers) at the cost of `apps/gateway-server` gaining one new dependency and losing local ownership of files it previously defined directly (behavior unchanged — see §10). This was the point Revision 1 left open; Revision 2 resolves it in favor of the shared package once the (mistaken) assumption that app-isolation blocked this was corrected. |
+| Deferring the in-memory-state gap (Finding 4) rather than resolving it as part of this change | Resolving it (wiring the §23 shared-Redis design) is a substantially larger, cross-package change explicitly out of this milestone's scope ("Architecture Document only... No implementation should be proposed"). Deferring it is consistent with "preserve business logic" and "avoid redesign unless technically necessary" — Vercel deployment is possible without it; it degrades rate-limit/cache/circuit-breaker guarantees rather than blocking requests, and is already an accepted, documented risk for any multi-instance deployment, not one newly introduced by Vercel. |
+| Streaming duration risk (Finding 5) is a sizing/config question left to the next milestone | Determining an exact bound requires load data on `executeStream`'s worst-case duration against real provider latencies, which is an implementation/operational concern, not an architectural one. |
+
+---
+
+## 9. Risks and Constraints
+
+- **In-memory state correctness under Vercel's execution model (carried forward from KNOWN_LIMITATIONS §1.1, sharpened by Finding 4).** Rate limiting, response caching, circuit-breaker state, and provider health tracking will behave per-instance, with instance lifetimes and counts controlled by Vercel rather than by the operator. This does not block deployment but materially weakens the guarantees these four subsystems are meant to provide, more so than on a fixed-replica container deployment. This should be tracked as an explicit, accepted risk — or resolved via the already-anticipated architecture §23 shared-store design — before Vercel is treated as more than a partial/non-authoritative deployment target for these guarantees.
+- **Streaming execution duration.** `/v1/execute/stream` runs an unbounded-until-`chunk.done` loop. The Board should confirm the selected Vercel plan/runtime's maximum function duration comfortably covers the orchestrator's worst-case stream length (including provider-side retries/failover via `DefaultRetryEngine`/`InMemoryCircuitBreaker`) before committing this route to Vercel without qualification.
+- **Model registry seed data.** `DEPLOYMENT.md`'s existing production recommendation — supply real `ModelDescriptor` rows via `bootstrap()`'s `overrides.modelRegistrySeed` rather than the placeholder `SEED_MODELS` — applies identically to a Vercel deployment and is unaffected by this review.
+- **`GATEWAY_ALLOW_DEV_DEFAULTS` must remain unset** in any Vercel production environment, exactly as it must for `apps/gateway-server` today — this constraint is deployment-target-independent.
+- **No built-in TLS.** Not a constraint under Vercel specifically (Vercel terminates TLS for the platform), but worth noting as a difference from the container/VM path, where `DEPLOYMENT.md` requires the operator to provide TLS termination.
+- **`runtime.saurabhtiwariai.com` DNS/domain assignment** to a Vercel deployment is an operational/provisioning detail, not an architectural one, and is out of scope for this document (consistent with `DEPLOYMENT.md`'s existing treatment of the same hostname for the container/VM path).
+
+---
+
+## 10. Impact Analysis
+
+| Area | Impact |
+|---|---|
+| `packages/*` (existing platform packages) | **None.** No source change to `core-contracts`, `config`, `telemetry`, `model-registry`, `credential-resolver`, `reliability`, `policy-engine`, `streaming`, `orchestrator`, `middleware`, or either provider adapter. |
+| `packages/*` (new) | **One net-new package**, `@ai-gateway/gateway-runtime`, containing the composition/HTTP logic relocated from `apps/gateway-server` (see §7a). This is the one place this revision's impact differs from Revision 1's "None." |
+| `apps/gateway-server` | **No behavioral change; a real, non-zero structural change.** `bootstrap.ts`, `http/router.ts`, `http/{auth-header,read-body,respond,validate-request}.ts`, and `http/routes/*.ts` move to `@ai-gateway/gateway-runtime`; `http/server.ts` becomes a thin wrapper around that package's `buildGatewayRouter`/`dispatchGatewayRequest`; `index.ts` and `server-config.ts` update their imports accordingly. `package.json`'s dependency list shrinks (direct dependencies on `orchestrator`, `providers/*`, etc. are replaced by one dependency on `gateway-runtime`). The implementation milestone is required to demonstrate, and did, that every externally-observable behavior — REST contract, status codes, error shapes, telemetry `instrumentationName`, credential-audit `actor` — is byte-for-byte identical before and after, verified by diffing the relocated files against the pre-extraction versions and by `apps/gateway-server`'s existing test suite passing unmodified in substance (route/handler-level tests move to `gateway-runtime`'s own suite, since that's now where that code lives; `apps/gateway-server`'s suite keeps its own config/lifecycle tests plus an integration suite proving correct assembly). |
+| Repository structure | **One net-new package directory** under `packages/*` and **one net-new application directory** under `apps/*`, both consistent with the existing `pnpm-workspace.yaml` globs — no workspace-config change required. |
+| Dependency graph / `depcruise` boundary rules | **One new additive entry** (`gateway-runtime`, alongside every other `packages/*` entry) and **two updated entries** (`apps/gateway-server` and `apps/vercel-adapter`, both now listing `gateway-runtime` instead of the individual platform packages their own code no longer imports directly). No existing entry's *rule shape* changes, and the `apps` → `packages` direction is preserved exactly — this is the one place Revision 1's "no new edges into or out of `packages/*`" is superseded: there is a new edge, `apps/* → gateway-runtime`, but it is the same *kind* of edge every other app-to-package dependency already is, not a new kind of edge. |
+| Documentation | `docs/release/DEPLOYMENT-VERCEL.md` (sibling to `DEPLOYMENT.md`, describing the Vercel deployment target's environment-variable/runtime configuration), `packages/gateway-runtime/README.md`, and both apps' `README.md`s are implementation-milestone deliverables, produced alongside the code per this revision's instruction not to treat documentation and implementation as separate activities. |
+| Existing tests, ADRs, CI | `apps/gateway-server`'s test suite is reorganized (see row above) but not reduced in coverage — the same assertions exist, now split between `gateway-runtime`'s suite (the logic) and `apps/gateway-server`'s suite (the assembly). One ADR (recorded as superseded) plus one new ADR document this revision's reasoning. CI workflows are unaffected in shape (`build`/`typecheck`/`lint`/`test`/`graph:check` remain the pipeline; they now also cover the new package). |
+
+---
+
+## 11. Engineering Scope (if architectural changes are required)
+
+Per this milestone's instructions, no implementation is proposed here beyond what's needed for the Board's planning purposes. The change identified in §7 is scoped as: **one new shared package** (`@ai-gateway/gateway-runtime`, §7a) containing the relocated `bootstrap()`/HTTP composition logic, plus **one new, small, additive application module** (§7b) that depends on it and adapts it to Vercel's Functions export contract. Unlike Revision 1, this is no longer an open choice left to the implementation milestone ("imports... from `apps/gateway-server` [...] or a shared extraction... if the Board prefers") — the Board's review of the first implementation attempt resolved that choice in favor of the shared package, for the reason in the Revision History. Sizing/sequencing the extraction itself (which files move first, how `apps/gateway-server`'s tests are reorganized) remains an implementation-milestone concern, not this document's.
+
+---
+
+## 12. Architecture Review Board Recommendation
+
+The Board finds:
+
+1. RuntimeOS's platform architecture (`packages/*`) is **already compatible with Vercel** and requires no change to any existing package. This was a stated design goal and holds as-built.
+2. RuntimeOS's one existing composition root (`apps/gateway-server`) is **not compatible with Vercel as packaged**, solely due to its `.listen()`-based process-lifecycle ownership in `index.ts`, `http/server.ts`, and `lifecycle.ts`. This is the entire architectural gap, and this finding is unchanged from Revision 1.
+3. The **minimum architectural change** required is (a) relocating the existing, already hosting-lifecycle-agnostic `bootstrap()`/HTTP composition logic into a new shared package, `@ai-gateway/gateway-runtime`, and (b) adding one new, additive, Vercel-shaped composition root that depends on it. No smaller change is available, because the gap is a lifecycle contract that cannot be satisfied by configuration alone, and no correct implementation of §7b can avoid needing the same composition logic §7a relocates — duplicating it instead of sharing it, as Revision 1's implementation initially did, was found by the Board to be an unforced, avoidable choice, not a constraint. No larger change (Options B or C in §6) is justified by the evidence.
+4. This recommendation preserves every constraint given for this milestone: architectural integrity over convenience, additive over replacement, repository/package boundaries intact (§10's new package and edges are additive, not a change to the boundary *rules* themselves), dependency direction intact (`apps` → `packages`, never the reverse), business logic untouched, and RuntimeOS's independence and reusability as a platform fully preserved — now with less duplicated surface to keep in sync than Revision 1's implementation had.
+5. Two items remain flagged as **risks to accept or resolve, not architecture to redesign now**, unchanged from Revision 1: (a) in-memory rate-limit/cache/circuit-breaker/health state behaving per-instance under Vercel's execution model (§9), and (b) streaming-duration sizing against the selected Vercel plan/runtime (§9). Both are pre-existing, documented characteristics of RuntimeOS v1.0.2, not new problems created by targeting Vercel, and neither is affected by the §6/§7 revision.
+
+**The Board approves the revised direction in §7 (shared `gateway-runtime` package plus additive Vercel composition root) as the architecture of record**, superseding Revision 1's narrower recommendation, contingent on the risks in §9 being explicitly acknowledged by whoever owns the `runtime.saurabhtiwariai.com` production decision.

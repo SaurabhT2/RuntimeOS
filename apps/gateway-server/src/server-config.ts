@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CREDENTIAL_SCOPES, type CredentialScope } from "@ai-gateway/config";
 import { ROLES, type ApiKeyRecord, type Role } from "@ai-gateway/middleware";
+import type { GatewayRuntimeConfig } from "@ai-gateway/gateway-runtime";
 
 /**
  * `apps/gateway-server`'s own bootstrap-level configuration — distinct
@@ -15,39 +16,21 @@ import { ROLES, type ApiKeyRecord, type Role } from "@ai-gateway/middleware";
  * *is* that composition root, and these are exactly the constructor
  * options ADR-0009 anticipated — not a `GatewayConfig` schema change.
  *
+ * `GatewayServerConfig` extends `@ai-gateway/gateway-runtime`'s
+ * `GatewayRuntimeConfig` with exactly one addition: `http` (listen
+ * address/port), which only this app's own `createServer().listen()`
+ * call needs — `bootstrap()` never reads it (see `gateway-runtime`'s
+ * README, "Why `GatewayRuntimeConfig` has no `http` section").
+ *
  * Every field is loaded from `process.env` and validated with Zod at
  * startup: an invalid or missing required value throws before the server
  * ever starts listening (fail-fast, no silent configuration failure).
  */
 
-export interface GatewayServerConfig {
+export interface GatewayServerConfig extends GatewayRuntimeConfig {
   http: {
     host: string;
     port: number;
-  };
-  /** Optional path to a `GatewayConfig` JSON file (`@ai-gateway/config`'s `FileConfigSource`). Falls back to `DEFAULT_GATEWAY_CONFIG` plus hot-reload disabled when omitted. */
-  gatewayConfigPath?: string;
-  /**
-   * Which environment variable holds each provider's platform-managed API
-   * key (`PlatformScopeResolver`'s own constructor shape, architecture
-   * §16.1 — "deliberately explicit rather than a naming convention").
-   * Both `groq` and `nvidia-nim` are required: EM-4's chaos-failover
-   * acceptance criterion (both real adapters registered and failover-
-   * capable) cannot hold with only one provider configured.
-   */
-  providerPlatformKeyEnvVars: {
-    groq: string;
-    "nvidia-nim": string;
-  };
-  credentialPriority: CredentialScope[];
-  apiKeys: ApiKeyRecord[];
-  rateLimit: {
-    requestsPerWindow?: number;
-    windowMs?: number;
-  };
-  cache: {
-    ttlMs?: number;
-    includeTenantInKey?: boolean;
   };
 }
 
