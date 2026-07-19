@@ -1,4 +1,66 @@
-# AI Gateway — Version 1.0 Release Notes
+# AI Gateway — Release Notes
+
+## Version 1.2.0 — Platform Hardening & Production Readiness (EM-6 – EM-11)
+
+### What's new since v1.0
+
+Version 1.2 builds on the v1.0 baseline below with three major
+capabilities and a full production-hardening pass:
+
+- **Strategy Layer** (opt-in, `enableStrategyLayer`) — capability-aware
+  and cost-aware model selection sits ahead of Policy Engine, with a
+  proven pass-through regression: leaving the flag off produces
+  byte-for-byte identical routing to v1.0.
+- **Pipeline Orchestration** (`POST /v1/execute/pipeline`) — sequential
+  multi-step execution, each step running through the exact same
+  `ExecutionOrchestrator.execute()` a single-step request uses. No second
+  execution engine, no ability to bypass Policy Engine or Strategy Layer
+  from a pipeline step.
+- **Budget Governance** — per-tenant daily/monthly spend budgets with
+  configurable actions (alert, downgrade to a cheaper model class,
+  exclude an over-cap provider, or block outright). Shipped shadow-mode
+  first; **as of v1.2, Enforcement Mode is live** for any tenant with a
+  budget policy configured — real requests can now be genuinely blocked,
+  downgraded, or alerted on by real, cumulative spend.
+
+### Before you enable Budget Governance enforcement
+
+Two of the four threshold actions are fully verified working in
+Enforcement Mode end-to-end: **`block`** and **`alert`**. A third,
+**`downgrade_model`**, is verified working as a soft routing bias. The
+fourth, **`switch_provider`**, does **not** currently affect real
+provider routing — a known, disclosed gap (not a defect discovered after
+the fact) that matters more now that enforcement is live than it did in
+shadow mode. If you're configuring budget policies for production, read
+[`docs/release/KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) §9.2 first —
+it explains exactly what does and doesn't work, and what to configure
+instead.
+
+### Validation for this release
+
+Full regression (every suite that passed at v1.0 and every milestone
+since still passes, 1,239/1,239 individual tests), provider conformance
+(both shipped adapters — Groq, NVIDIA NIM — re-validated against the
+shared conformance suite), and a chaos-scenario sweep (provider failure,
+retry exhaustion, circuit-breaker activation, failover, timeout handling,
+pipeline step failure, streaming cancellation, and a new Budget
+Governance infrastructure-failure scenario) all pass. See the EM-11
+Engineering Completion Report for full detail, including this release's
+performance-validation scope and its limits (an in-process framework-
+overhead smoke-test only — see that report for why a genuine
+production-scale load test isn't something this repository can produce
+on its own, consistent with the same limitation already documented for
+v1.1's EM-8 validation in §10 of `KNOWN_LIMITATIONS.md`).
+
+### Breaking changes
+
+None. Every frozen interface (`ExecuteRequest`, `ExecuteResponse`,
+`ExecutionPlan`, `PolicyEngine`, `ExecutionOrchestrator`,
+`StrategyDecision`) is unchanged since its freeze milestone.
+
+---
+
+## Version 1.0.0 — Baseline (EM-0 – EM-5)
 
 ## What is AI Gateway?
 

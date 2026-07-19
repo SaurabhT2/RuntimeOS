@@ -1,16 +1,92 @@
 # Changelog
 
-All notable changes to the AI Gateway platform are documented in this file.
-
-This is the **first official release**. There is no prior release history to
-reconcile — the entries below describe what Version 1.0.0 contains, not what
-changed relative to an earlier tag.
+All notable changes to the AI Gateway platform are documented in this file,
+most recent release first.
 
 For per-package semantic-versioning detail (each package versions
 independently via [Changesets](https://github.com/changesets/changesets)),
 see [`docs/release/VERSIONING.md`](docs/release/VERSIONING.md). For a
-narrative, user-facing description of this release, see
+narrative, user-facing description of a release, see
 [`docs/release/RELEASE_NOTES.md`](docs/release/RELEASE_NOTES.md).
+
+---
+
+## [1.2.0] — v1.2 Platform Hardening & Production Readiness (EM-6 – EM-11)
+
+### Overview
+
+AI Gateway v1.2.0 is the second tagged platform release, covering
+everything delivered since v1.0.0: the Strategy Layer (capability-aware,
+cost-aware, budget-governed request routing, opt-in via
+`enableStrategyLayer`), multi-step Pipeline Orchestration, Budget
+Governance (now promoted to Enforcement Mode by default for tenants that
+configure `budgetPolicies`), and this milestone's own platform-hardening
+pass — full regression/conformance/chaos validation, an in-process
+performance smoke-test, and a documentation-completeness pass across
+every release-governance document. No architectural concept, package,
+public interface, or execution path was introduced by EM-11 itself; its
+scope was validation and hardening only, per its own Engineering Work
+Order.
+
+### Milestone summary
+
+| Milestone | Scope delivered |
+|---|---|
+| **EM-6** | `capability-registry`, `execution-profile-registry`, Runtime Profiles foundation. |
+| **EM-7** | `cost-optimizer`, `prompt-optimizer`, learning extension points, plugin system foundation (Optimization Pipeline). |
+| **EM-8** | Strategy Layer integration — `strategy-layer` wires EM-6/EM-7 into a single `StrategyDecision`, consumed by `orchestrator` ahead of `policy-engine`, entirely behind `enableStrategyLayer` (default `false`). Runtime Profile activation (EM-9-attributed work) landed as part of this integration. |
+| **EM-10** | `pipeline-orchestrator` (multi-step execution via `ExecutionOrchestrator.execute()` only, `maxSteps`-capped) and `budget-governance` (shadow-mode-first cost governance: thresholds, per-provider caps, cumulative ledger). An Independent Architecture Review returned REQUIRES REWORK on two findings (`BudgetLedger.recordSpend` never wired to production traffic; a telemetry label defect); both were closed in a follow-up rework pass and independently re-verified. |
+| **EM-11** | Platform hardening and v1.2 production-readiness validation — no new architecture. Budget Governance promoted to Enforcement Mode. Full regression, provider conformance, chaos-scenario, and performance validation. Documentation finalized across `KNOWN_LIMITATIONS.md`, this changelog, `RELEASE_NOTES.md`, and `IMPLEMENTATION_PROGRESS.md`. |
+
+See [`docs/history/IMPLEMENTATION_PROGRESS.md`](docs/history/IMPLEMENTATION_PROGRESS.md)
+for full acceptance-criteria detail on each milestone, and the EM-11
+Engineering Completion Report for this release's validation evidence.
+
+### Major capabilities added since v1.0.0
+
+- **Strategy Layer (opt-in via `enableStrategyLayer`)** — capability
+  matching, execution-profile-aware routing, cost optimization, and
+  prompt optimization, composed into one immutable `StrategyDecision`
+  ahead of Policy Engine, with a proven pass-through regression when the
+  flag is off (byte-for-byte identical `provider`/`retries`/`failedOver`/
+  `finishReason` to the flag being absent).
+- **`POST /v1/execute/pipeline`** — sequential multi-step execution
+  through the same `ExecutionOrchestrator.execute()` every single-step
+  request uses (no second execution engine, no provider/policy bypass),
+  `maxSteps`-capped before any step runs, with required/non-required
+  per-step failure semantics.
+- **Budget Governance** — per-tenant daily/monthly spend budgets with
+  configurable threshold actions (`alert`, `downgrade_model`,
+  `switch_provider`, `block`), evaluated before execution and enforced
+  before Routing Rules. Shipped shadow-mode-first in EM-10; **promoted to
+  Enforcement Mode as of v1.2** for any tenant with `budgetPolicies`
+  configured. Cumulative spend genuinely accrues from real traffic
+  (`BudgetLedger.recordSpend` wired to a post-execution orchestrator hook
+  as of the EM-10 rework) and is proven end-to-end, not just unit-tested
+  in isolation.
+
+### Known exclusion carried forward with elevated visibility for this release
+
+**`switch_provider` threshold actions do not affect real provider
+routing** — the per-provider-cap check that would trigger them never
+runs in production (the only `evaluate()` call site always precedes
+provider selection), and even if it did, the frozen `StrategyDecision`
+interface has no field to carry the exclusion to Policy Engine. This was
+low-risk and fully disclosed while Budget Governance was shadow-mode-only
+(nothing was actually being enforced regardless); it is more
+operationally significant now that v1.2 promotes to Enforcement Mode.
+See [`docs/release/KNOWN_LIMITATIONS.md`](docs/release/KNOWN_LIMITATIONS.md)
+§9.2 and [ADR-0025](docs/adr/0025-budget-enforcer-provider-id-and-exclusion-gap.md)
+(proposed, undecided) for the full detail and operator recommendation.
+`block`, `alert`, and `downgrade_model` threshold actions are unaffected
+and verified working end-to-end.
+
+### Breaking changes
+
+None. `core-contracts` remains frozen at `1.0.0`; every frozen interface
+listed in `docs/release/VERSIONING.md` (`ExecuteRequest`, `ExecuteResponse`,
+`ExecutionPlan`, `PolicyEngine`, `ExecutionOrchestrator`, `StrategyDecision`)
+is unchanged since its respective freeze milestone.
 
 ---
 

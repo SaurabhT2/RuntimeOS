@@ -1619,3 +1619,141 @@ gaps were found.
   `execute()`-only scope decision); this addendum. No historical section
   of this document, and neither frozen architecture document, was
   rewritten.
+
+## EM-11 — Platform Hardening & v1.2 Production Readiness (Complete)
+
+Scope: validation, hardening, and documentation completion only, per this
+milestone's own Engineering Work Order — no new architectural concept,
+package, public interface, or execution path. Nothing above this section
+was rewritten; EM-11 is additive validation and documentation evidence
+on top of an unchanged implementation.
+
+### What was validated
+
+- **Full regression, fresh and forced** (bypassing any cached prior
+  results): `pnpm build` 26/26, `pnpm lint` 51/51, `pnpm typecheck`
+  51/51, `pnpm graph:check` 0 violations (380 modules/760 dependencies,
+  unchanged), `pnpm test` 51/51 task-runs, **1,239/1,239 individual
+  tests** (9 pre-existing, unrelated skips in `provider-sdk`/
+  `nvidia-nim`/`groq`, unchanged), up from EM-10 rework's 1,237 — the two
+  new tests are part of this milestone's Budget Governance production-
+  promotion validation, below.
+- **Provider conformance** re-run explicitly for both shipped adapters:
+  Groq (66/66 passed, 3 correctly-skipped `configureBehavior`-gated
+  scenarios covered instead by that adapter's own dedicated
+  error/timeout/malformed-stream tests) and NVIDIA NIM (52/52 passed,
+  same 3-skip pattern for the same reason). `provider-sdk`'s own shared
+  conformance harness: 36/36 passed (the harness's own skip-mechanism
+  self-test accounts for its 3 skips).
+- **Chaos-scenario coverage mapped against every scenario this
+  milestone's Work Order lists** (provider failure, network failure,
+  retry exhaustion, circuit-breaker activation, provider failover,
+  timeout handling, pipeline step failure, streaming interruption,
+  recovery behavior): found already strongly covered by existing
+  `reliability`/`orchestrator`/`pipeline-orchestrator`/`streaming`
+  suites (including a test literally named "the chaos-test scenario" in
+  `orchestrator/test/orchestrator.test.ts`). One genuine gap found and
+  closed: no test proved what happens when Budget Governance itself has
+  a genuine infrastructure failure (as opposed to a deliberate
+  `BUDGET_EXCEEDED` business decision) — e.g., the kind of failure a
+  future durable ledger's network error would produce. Added one test
+  in `packages/strategy-layer/test/strategy-layer.test.ts` proving this
+  fails closed cleanly (the error propagates out of `buildStrategy()`
+  rather than being swallowed into a false "allowed" decision, hanging,
+  or corrupting pipeline state).
+- **Budget Governance production promotion** — the milestone's most
+  consequential finding. All four `BudgetThresholdAction` values were
+  independently verified against the real, wired system (not just
+  isolated `budget-enforcer` unit tests, which already covered all four
+  in isolation):
+  - `block` — already proven end-to-end by the EM-10 rework's tests.
+  - `alert` — newly proven end-to-end (`bootstrap.test.ts`): a request
+    that blows well past an alert-only threshold still succeeds,
+    confirming alert-only configurations never silently degrade into
+    blocking behavior once enforcement is live tenant-wide.
+  - `downgrade_model` — traced end-to-end through
+    `budget-enforcement-stage.ts` → `strategy-signals.ts` →
+    `model-scorer.ts`'s cost-term scoring bonus; each link already
+    independently unit-tested; confirmed as a deliberate soft bias, not
+    a hard override, by design.
+  - `switch_provider` — **found non-functional in production**, and
+    empirically reconfirmed against the real system (`bootstrap.test.ts`):
+    a provider that breaches its `perProviderSpendCapUsd` by 12x with a
+    `switch_provider` threshold configured is still selected on the very
+    next request. Root cause is two-fold and was already disclosed on
+    paper via ADR-0025 before this milestone: (1) the only production
+    `BudgetEnforcer.evaluate()` call site always runs pre-provider-
+    selection, passing `NO_PROVIDER_SELECTED_YET`, which skips
+    per-provider-cap checks entirely; (2) even if triggered, the frozen
+    `StrategyDecision` interface has no carrier field for a provider
+    exclusion. Because closing this requires either a frozen-interface
+    change or a Board-approved alternative, and this milestone's
+    Architecture Constraints explicitly forbid introducing new public
+    interfaces or changing Strategy Layer behavior, **this was not
+    code-fixed in EM-11** — it was elevated from a paper disclosure to a
+    prominent, operator-facing release-documentation callout instead
+    (`docs/release/KNOWN_LIMITATIONS.md` §9.2, `CHANGELOG.md`'s v1.2.0
+    entry, `docs/release/RELEASE_NOTES.md`'s v1.2 section), since v1.2 is
+    the first release where this gap has live-traffic consequences
+    rather than shadow-mode-only ones.
+- **Performance** — an in-process framework-overhead smoke test only
+  (fake, zero-simulated-latency adapters, isolating Strategy Layer /
+  Budget Governance / Pipeline framework cost from real provider network
+  latency): overhead for each layer measured in the sub-millisecond
+  range per request, several orders of magnitude below typical real
+  provider response latency, with no throughput collapse observed as
+  concurrency increased from 1 to 50 in-process concurrent requests
+  against shared in-memory state (ledger, circuit breaker). This is
+  explicitly **not** a substitute for genuine production-scale,
+  concurrent, real-network load testing — no staging environment, load
+  corpus, or latency-measurement harness exists in this repository, the
+  same structural gap already disclosed for v1.1 in
+  `KNOWN_LIMITATIONS.md` §10.1 (formerly §9.1), extended here rather than
+  worked around.
+- **Repository governance sweep**: no `TODO`/`FIXME`/`XXX`/`HACK`
+  markers, no stray `console.log`/`debugger` statements, and no
+  accidental placeholder/stub implementations found anywhere in
+  production `src/` across every package and app — every "not
+  implemented" comment found (`model-registry`'s Redis pub/sub transport,
+  `policy-engine`'s soft-vs-hard routing preference) is a pre-existing,
+  deliberate, already-documented design decision, not debug residue.
+- **Documentation finalization**: `docs/release/KNOWN_LIMITATIONS.md`
+  updated with a new Budget Governance section (§9) — this document had
+  not been updated since roughly EM-8 and had zero mentions of Budget
+  Governance, Pipeline Orchestration, or Runtime Profiles before this
+  pass. `CHANGELOG.md` gained a `[1.2.0]` entry.
+  `docs/release/RELEASE_NOTES.md` gained a "Version 1.2.0" section ahead
+  of the existing v1.0 baseline content, which is left unchanged. This
+  addendum. One documentation-completeness observation, not fixed here
+  (fabricating retroactive historical content risks inaccuracy in a
+  document meant to be authoritative history): this document has no
+  standalone `## EM-9` section, even though other documents (this file's
+  own EM-10/EM-10-rework sections, the EM-10 Independent Architecture
+  Review) reference "EM-9's activation" of Runtime Profile scoring
+  adjustments as settled history — EM-9's work appears to have been
+  folded into EM-8's section at original authoring time rather than
+  omitted; a future documentation pass should confirm and either add a
+  standalone EM-9 section or a note explaining the merge.
+
+### Regression confirmed unchanged
+
+Every capability delivered EM-0 through EM-10 (including the EM-10
+rework) remains operational: `/v1/execute`, `/v1/execute/stream`,
+`/v1/execute/pipeline`, Strategy Layer pass-through regression, Policy
+Engine scoring, retry/failover/circuit-breaker behavior, credential
+resolution, multi-tenant isolation, rate limiting, response caching, and
+Budget Governance shadow-mode behavior (still available and unchanged for
+any tenant that has not opted into `budgetEnforcementMode: "enforcing"`)
+— confirmed by every pre-existing test across every package still
+passing unmodified, plus the two new gaps closed above.
+
+### What was deliberately not done
+
+Per this milestone's Architecture Constraints: no new package, no new
+public interface, no change to Strategy Layer/Policy Engine/Pipeline
+Orchestrator/Budget Governance architecture, no change to any Runtime
+Profile or Provider Adapter contract. The `switch_provider` gap found
+above was documented, not code-fixed, for exactly this reason — closing
+it needs an Architecture Review Board decision on ADR-0025, which is
+explicitly outside a hardening milestone's authority.
+

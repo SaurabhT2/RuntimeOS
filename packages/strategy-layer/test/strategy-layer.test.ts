@@ -69,5 +69,35 @@ describe("DefaultAIStrategyLayer", () => {
       expect(decision.requiredCapabilities).toBeDefined();
       expect(decision.optimizations.cost).toBeDefined();
     });
+
+    it(
+      "(EM-11 Chaos: budget enforcement failure) a genuine BudgetEnforcer infrastructure error " +
+        "(e.g. a durable ledger's network failure) — distinct from a deliberate BUDGET_EXCEEDED " +
+        "business decision — propagates as a clean, typed rejection out of buildStrategy() rather " +
+        "than hanging or corrupting pipeline state",
+      async () => {
+        const explodingEnforcer = {
+          evaluate: async () => {
+            throw new Error("ledger unavailable: ECONNREFUSED");
+          },
+        };
+        const layer = new DefaultAIStrategyLayer(seededOptions({ budgetEnforcer: explodingEnforcer }));
+        // Today's documented behavior (architecture §3's P6, the same
+        // uncaught-Strategy-Pipeline-stage-error mechanism EM-8's Review
+        // Closure Finding 5 already confirmed compliant): the failure is
+        // fail-closed — it propagates as-is, failing the whole request,
+        // rather than being silently swallowed into an "allowed" decision.
+        // With today's `InMemoryBudgetLedger` this is a low-likelihood
+        // scenario (an in-process array essentially cannot throw), but it
+        // becomes a real, live path the moment a durable/networked ledger
+        // (the disclosed non-durability Known Gap) replaces it — this test
+        // locks down that a Strategy Pipeline stage's raw infrastructure
+        // error is never mistaken for "no budget configured" or silently
+        // treated as "allowed".
+        await expect(layer.buildStrategy(baseRequest(), tenant())).rejects.toThrow(
+          "ledger unavailable: ECONNREFUSED",
+        );
+      },
+    );
   });
 });

@@ -1,12 +1,15 @@
-# AI Gateway v1.0 — Known Limitations
+# AI Gateway — Known Limitations (through v1.2)
 
 This is the single, authoritative consolidation of every documented
-limitation of the Version 1.0 release. It draws from package READMEs'
-"Deferred Work" sections, the Architecture Decision Records (ADRs), and
-the Engineering Blueprint's milestone scope statements. Nothing here is
-new — every item is already documented at least once elsewhere in this
-repository; this document exists so an operator or integrator does not
-have to read every package README and ADR to get the full picture.
+limitation of the platform, updated through the v1.2 (EM-11) release. It
+draws from package READMEs' "Deferred Work" sections, the Architecture
+Decision Records (ADRs), and the Engineering Blueprint's milestone scope
+statements. Nothing here is new — every item is already documented at
+least once elsewhere in this repository; this document exists so an
+operator or integrator does not have to read every package README and
+ADR to get the full picture. Sections 1–8 date from the v1.0 baseline and
+remain accurate unchanged; section 9 was added for v1.2's Budget
+Governance work.
 
 None of these are defects. Each was a deliberate scope decision made at
 the milestone where it was raised, and each is traceable to a specific
@@ -182,10 +185,11 @@ this release-governance pass.
 | [0006](../adr/0006-policy-engine-config-dependency-gap.md) | `policy-engine` has no dependency edge onto `@ai-gateway/config`, so scoring weights and routing rules are constructor options rather than config-sourced as architecture §13.3/§13.4 describe. |
 | [0009](../adr/0009-middleware-config-gap.md) | `middleware` has no `@ai-gateway/config` field for API keys, rate-limit thresholds, or cache TTL, for the same structural reason as ADR-0006. |
 | [0010](../adr/0010-gatewayconfig-reliability-section-unconsumed.md) | `GatewayConfig.reliability`, a fully-defined and validated config section, is read by no package anywhere in the codebase. |
+| [0025](../adr/0025-budget-enforcer-provider-id-and-exclusion-gap.md) | `switch_provider` budget threshold actions have no observable effect on real provider routing in production — see §9.2 below. **Elevated to a release-blocking-for-that-feature disclosure as of v1.2**, now that Budget Governance is promoted out of shadow mode; see §9.2. |
 
 See [`docs/adr/README.md`](../adr/README.md) for the complete ADR index,
-including the four **accepted** ADRs that are not limitations but
-settled design decisions.
+including the accepted ADRs that are not limitations but settled design
+decisions.
 
 ## 7. Observability
 
@@ -218,9 +222,96 @@ gateway does not invent real model IDs on an operator's behalf.
 *Source: `apps/gateway-server/README.md`, Engineering decision 2;
 `model-registry/README.md`.*
 
-## 9. v1.1 / Strategy Layer release validation
+## 9. Budget Governance (EM-10 / v1.2)
 
-### 9.1 A/B replay of EM-5 load-test traffic and gateway latency budget validation cannot be performed within this repository
+### 9.1 `InMemoryBudgetLedger` is non-durable
+
+Cumulative daily/monthly spend is tracked in a per-process, in-memory
+store with no persistence across a restart and no cross-instance
+synchronization — the same single-instance limitation already described
+in §1.1, extended to a fifth piece of state. A process restart silently
+resets every tenant's cumulative spend to zero, and (per §1.1) a
+multi-instance deployment gives each instance an independent, incomplete
+view of spend, which can under-count total cumulative spend against a
+tenant's real budget. `BudgetLedger`'s interface accommodates a durable,
+shared implementation additively; none is built as of v1.2.
+
+*Source: `packages/budget-governance/README.md` ("Known gap: no durable
+`BudgetLedger` implementation"); ADR-0022.*
+
+### 9.2 `switch_provider` threshold actions have no effect on real routing — read this before enabling Enforcement Mode
+
+**This is the most operationally important limitation in this document
+as of v1.2**, because v1.2 is the first release where Budget Governance
+is promoted out of shadow mode (see
+[`docs/history/IMPLEMENTATION_PROGRESS.md`](../history/IMPLEMENTATION_PROGRESS.md)'s
+EM-11 entry) into real enforcement — the release where a misunderstanding
+of this gap could translate into unmitigated real-provider spend, not
+just an inert shadow-mode log line.
+
+A `BudgetThresholdAction` configured with `action: "switch_provider"` is
+evaluated, and a corresponding `forcedProviderExclusion` decision is
+computed correctly by `DefaultBudgetEnforcer` — but that decision **never
+changes which provider a request is actually routed to**, for two
+independent, compounding reasons, both empirically confirmed against the
+real, wired system (not just read from source) as part of EM-11
+hardening:
+
+1. **The triggering check itself never runs in production.** The only
+   production call site of `BudgetEnforcer.evaluate()`
+   (`packages/strategy-layer/src/stages/budget-enforcement-stage.ts`)
+   always evaluates *before* Policy Engine has selected a provider, and
+   passes a `NO_PROVIDER_SELECTED_YET` sentinel as the `providerId`
+   argument. `perProviderSpendCapUsd` checks are explicitly skipped
+   whenever `providerId` is that sentinel — so a per-provider cap can
+   never actually be breached in the real request flow, regardless of
+   real spend.
+2. **Even if it did run, there is nowhere for the result to go.** The
+   frozen `StrategyDecision` interface (architecture §30, frozen since
+   EM-8) has no field capable of carrying a provider-exclusion set
+   forward to Policy Engine's routing rules — `budgetProviderExclusionRule`
+   is implemented and unit-tested in isolation in `budget-governance`,
+   but is not, and structurally cannot be, registered into
+   `policy-engine`'s routing rules without a change to a frozen
+   interface, which is out of scope for a hardening milestone.
+
+**Observable production behavior:** a tenant with a `perProviderSpendCapUsd`
++ `switch_provider` threshold configured will see that provider continue
+to receive traffic and continue accruing cost past the configured
+per-provider cap, exactly as if no such threshold had been configured at
+all — silently, with no error and no indication in the response that the
+configured protection did not apply. (Telemetry for the *tenant-wide*
+`dailyBudgetUsd`/`monthlyBudgetUsd` thresholds — `alert`, `downgrade_model`,
+`block` — is unaffected by this gap and functions correctly; this is
+specific to `perProviderSpendCapUsd` + `switch_provider`.)
+
+**What does work correctly in Enforcement Mode, verified end-to-end
+against the real system as part of EM-11:** `block` (a tenant-wide cap
+breach genuinely rejects the request with `BUDGET_EXCEEDED`),
+`downgrade_model` (genuinely biases Policy Engine's model scoring toward
+a cheaper class, verified via a full budget-governance → strategy-layer →
+policy-engine code-path trace, each link independently unit-tested), and
+`alert` (genuinely never blocks, verified end-to-end).
+
+**Recommendation for operators:** do not configure `perProviderSpendCapUsd`
+or a `switch_provider` threshold action expecting it to reroute traffic
+away from an over-cap provider in v1.2. Use `block` (tenant-wide) if hard
+protection is required, or `downgrade_model` if a softer, cost-reducing
+response is preferred. This gap is tracked as
+[ADR-0025](../adr/0025-budget-enforcer-provider-id-and-exclusion-gap.md)
+(proposed, undecided) and requires an Architecture Review Board decision
+to close, since closing it needs either a frozen-interface change or an
+architecturally-approved alternative carrier — neither of which a
+hardening milestone is authorized to introduce unilaterally.
+
+*Source: ADR-0025; `packages/budget-governance/README.md` ("Known gap:
+`forcedProviderExclusion` is computed but not enforced"); EM-11 Engineering
+Completion Report, Budget Governance Validation section (empirical
+end-to-end reconfirmation via `packages/gateway-runtime/test/bootstrap.test.ts`).*
+
+## 10. v1.1 / Strategy Layer release validation
+
+### 10.1 A/B replay of EM-5 load-test traffic and gateway latency budget validation cannot be performed within this repository
 
 The Engineering Blueprint's EM-8 entry (Section 7, "Strategy Layer
 Integration") lists, among its required tests: "Feature-flagged A/B test

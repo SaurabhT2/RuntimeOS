@@ -332,6 +332,113 @@ describe("bootstrap", () => {
         expect(await app.budgetLedger?.getSpend({ organizationId: "org-1" }, "day")).toBe(120);
       },
     );
+
+    describe("EM-11: Production Promotion — enforcement-mode action validation, real end-to-end flow", () => {
+      it("'alert' threshold action never blocks in enforcing mode, even once crossed", async () => {
+        const app = await bootstrap(
+          testRuntimeConfig({
+            enableStrategyLayer: true,
+            budgetEnforcementMode: "enforcing",
+            budgetPolicies: [
+              {
+                tenant: { organizationId: "org-1" },
+                dailyBudgetUsd: 50,
+                // Only an 'alert' threshold configured — no 'block' at any
+                // percentage — so a request that blows well past 100% of
+                // budget must still succeed; 'alert' is a notify-only
+                // action by architecture §43.2's own action taxonomy.
+                thresholds: [{ atPercentOfBudget: 50, action: "alert" }],
+              },
+            ],
+          }),
+          {
+            adapters: [fakeAdapter({ id: "groq", costUsd: 200 }), fakeAdapter({ id: "nvidia-nim", costUsd: 200 })],
+            modelRegistrySeed: TEST_MODEL_SEED,
+          },
+        );
+        const request = {
+          task: "summarization" as const,
+          input: { text: "summarize this" },
+          tenant: { organizationId: "org-1" },
+        };
+
+        // Two requests, $200 real cost each, against a $50 daily budget —
+        // the second request's *cumulative* view is 400% of budget, well
+        // past the 'alert' threshold. Both must still succeed: this is the
+        // production-promotion-specific guarantee that 'alert' alone,
+        // configured without an accompanying 'block' threshold, never
+        // degrades into blocking behavior once real enforcement is turned
+        // on tenant-wide, not just for this one policy.
+        const first = await app.orchestrator.execute(request);
+        expect(first.execution.providerId).toBeDefined();
+        const second = await app.orchestrator.execute(request);
+        expect(second.execution.providerId).toBeDefined();
+        expect(await app.budgetLedger?.getSpend({ organizationId: "org-1" }, "day")).toBe(400);
+      });
+
+      it(
+        "(ADR-0025, disclosed gap — empirically reconfirmed for EM-11 production promotion) " +
+          "a 'switch_provider' threshold breach has NO observable effect on real routing: the " +
+          "over-cap provider is still selected, because the only production evaluate() call site " +
+          "always runs pre-provider-selection (NO_PROVIDER_SELECTED_YET skips the per-provider " +
+          "check entirely) and forcedProviderExclusion has no StrategyDecision carrier even when " +
+          "computed",
+        async () => {
+          const app = await bootstrap(
+            testRuntimeConfig({
+              enableStrategyLayer: true,
+              budgetEnforcementMode: "enforcing",
+              budgetPolicies: [
+                {
+                  tenant: { organizationId: "org-1" },
+                  dailyBudgetUsd: 100_000, // tenant-wide budget effectively unlimited
+                  perProviderSpendCapUsd: { groq: 5 }, // groq specifically capped very low
+                  thresholds: [{ atPercentOfBudget: 1, action: "switch_provider" }],
+                },
+              ],
+            }),
+            {
+              // groq is the only candidate for TEST_MODEL_SEED's
+              // "fast-extraction" class that is free; nvidia-nim is the
+              // same class but priced — so if switch_provider actually
+              // excluded groq after its cap breach, Policy Engine's only
+              // remaining candidate would be nvidia-nim.
+              adapters: [
+                fakeAdapter({ id: "groq", costUsd: 60 }),
+                fakeAdapter({ id: "nvidia-nim", costUsd: 60 }),
+              ],
+              modelRegistrySeed: TEST_MODEL_SEED,
+            },
+          );
+          const request = {
+            task: "summarization" as const,
+            input: { text: "summarize this" },
+            tenant: { organizationId: "org-1" },
+          };
+
+          // Request 1 records $60 real spend against groq — 12x its $5
+          // per-provider cap, which should (per the policy's own
+          // switch_provider threshold at 1%) trigger an exclusion of groq
+          // starting with the next request, if the mechanism worked.
+          const first = await app.orchestrator.execute(request);
+          expect(first.execution.providerId).toBe("groq");
+
+          // Request 2: if switch_provider worked end-to-end, Policy Engine
+          // would never even consider groq as a candidate here, and this
+          // request would route to nvidia-nim instead. It does not: this
+          // assertion documents the real, current production behavior —
+          // groq is still selected, exactly as if no switch_provider
+          // threshold had ever been configured. This is the live-traffic
+          // confirmation of the gap ADR-0025 already discloses on paper;
+          // see that ADR and budget-governance's README for why (frozen
+          // StrategyDecision has no carrier field, and the only
+          // evaluate() call site always passes NO_PROVIDER_SELECTED_YET,
+          // which skips the per-provider check outright).
+          const second = await app.orchestrator.execute(request);
+          expect(second.execution.providerId).toBe("groq");
+        },
+      );
+    });
   });
 
   describe("EM-10: Pipeline Orchestrator wiring", () => {
