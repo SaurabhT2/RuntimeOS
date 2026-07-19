@@ -1,0 +1,26 @@
+{
+  "name": "@ai-gateway/em6-strategy-foundation-demo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "EM-6 demonstrable outcome: resolves task: \"summarization\" (and every other known task type) to a CapabilitySet, an ExecutionProfile, and an active RuntimeProfile, printed side by side — no live traffic affected.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf coverage *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ai-gateway/core-contracts": "workspace:*",
+    "@ai-gateway/capability-registry": "workspace:*",
+    "@ai-gateway/execution-profile-registry": "workspace:*",
+    "@ai-gateway/runtime-profiles": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

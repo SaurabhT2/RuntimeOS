@@ -1,0 +1,43 @@
+{
+  "name": "@ai-gateway/strategy-layer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Integration package for the AI Strategy Layer (architecture §30): resolves capabilities, execution profile, and runtime profile, runs the Optimization Pipeline, and produces an immutable StrategyDecision for the Policy Engine. Provider-agnostic and domain-agnostic.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist coverage *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ai-gateway/core-contracts": "workspace:*",
+    "@ai-gateway/capability-registry": "workspace:*",
+    "@ai-gateway/execution-profile-registry": "workspace:*",
+    "@ai-gateway/runtime-profiles": "workspace:*",
+    "@ai-gateway/cost-optimizer": "workspace:*",
+    "@ai-gateway/prompt-optimizer": "workspace:*",
+    "@ai-gateway/learning": "workspace:*",
+    "@ai-gateway/budget-governance": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

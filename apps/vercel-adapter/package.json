@@ -1,0 +1,33 @@
+{
+  "name": "@ai-gateway/vercel-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vercel-native composition root (EM-5.5, revised). Since the architecture revision, the platform-package wiring (bootstrap()/GatewayApp) and the HTTP layer (router/handlers/parsing/validation/response-shaping) live in @ai-gateway/gateway-runtime, shared with apps/gateway-server; this app owns only its own env-var loading and its own Vercel Function entrypoint/warm-instance lifecycle. Additive: apps/gateway-server is unmodified and remains the reference Node/container deployment.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "api"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src test api",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist coverage *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ai-gateway/gateway-runtime": "workspace:*",
+    "@ai-gateway/config": "workspace:*",
+    "@ai-gateway/middleware": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@ai-gateway/gateway-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deployable HTTP/streaming AI Gateway server — the EM-5 composition root wiring every platform package into a running v1.0 MVP. Since EM-5.5, the platform-package wiring itself (bootstrap()/GatewayApp) and the HTTP layer (router/handlers/parsing/validation/response-shaping) live in @ai-gateway/gateway-runtime, shared with apps/vercel-adapter; this app owns only its own env-var loading and its own createServer()/.listen()/signal-handling lifecycle.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint src test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist coverage *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ai-gateway/gateway-runtime": "workspace:*",
+    "@ai-gateway/config": "workspace:*",
+    "@ai-gateway/middleware": "workspace:*",
+    "@ai-gateway/telemetry": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

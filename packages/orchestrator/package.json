@@ -1,0 +1,43 @@
+{
+  "name": "@ai-gateway/orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ExecutionOrchestrator \u2014 the full request lifecycle.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist coverage *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ai-gateway/core-contracts": "workspace:*",
+    "@ai-gateway/policy-engine": "workspace:*",
+    "@ai-gateway/credential-resolver": "workspace:*",
+    "@ai-gateway/reliability": "workspace:*",
+    "@ai-gateway/streaming": "workspace:*",
+    "@ai-gateway/telemetry": "workspace:*",
+    "@ai-gateway/strategy-layer": "workspace:*"
+  },
+  "devDependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

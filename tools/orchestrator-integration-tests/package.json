@@ -1,0 +1,35 @@
+{
+  "name": "@ai-gateway/orchestrator-integration-tests",
+  "version": "0.0.0",
+  "private": true,
+  "description": "EM-4 end-to-end integration + chaos tests wiring the real orchestrator against real policy-engine/credential-resolver/reliability/streaming and both real provider adapters.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf coverage *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ai-gateway/config": "workspace:*",
+    "@ai-gateway/core-contracts": "workspace:*",
+    "@ai-gateway/orchestrator": "workspace:*",
+    "@ai-gateway/policy-engine": "workspace:*",
+    "@ai-gateway/model-registry": "workspace:*",
+    "@ai-gateway/credential-resolver": "workspace:*",
+    "@ai-gateway/reliability": "workspace:*",
+    "@ai-gateway/streaming": "workspace:*",
+    "@ai-gateway/telemetry": "workspace:*",
+    "@ai-gateway/provider-sdk": "workspace:*",
+    "@ai-gateway/groq": "workspace:*",
+    "@ai-gateway/nvidia-nim": "workspace:*"
+  },
+  "devDependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "task": "summarization",
+  "input": {
+    "messages": [
+      { "role": "system", "content": "You are a concise summarizer." },
+      { "role": "user", "content": "Summarize the attached quarterly report in three sentences." }
+    ],
+    "context": { "documentId": "doc_9f3a" }
+  },
+  "constraints": {
+    "maxLatencyMs": 4000,
+    "maxCostUsd": 0.02,
+    "streaming": false
+  },
+  "preferences": {
+    "prioritize": "quality",
+    "creativity": "low"
+  },
+  "tenant": {
+    "organizationId": "org_acme",
+    "workspaceId": "ws_growth",
+    "projectId": "proj_reports",
+    "userId": "user_kai"
+  },
+  "requestId": "req_01HZY2Q3K4M5N6P7Q8R9S0T1",
+  "correlationId": "corr_abc123"
+}

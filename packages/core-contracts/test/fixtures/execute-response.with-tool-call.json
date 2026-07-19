@@ -1,0 +1,26 @@
+{
+  "requestId": "req_01HZY2Q3K4M5N6P7Q8R9S0T2",
+  "output": {
+    "json": { "status": "scheduled" },
+    "toolCalls": [
+      {
+        "id": "call_001",
+        "name": "schedule_meeting",
+        "arguments": "{\"attendees\":[\"kai@acme.com\"],\"startTime\":\"2026-07-10T15:00:00Z\"}"
+      }
+    ]
+  },
+  "usage": {
+    "inputTokens": 220,
+    "outputTokens": 18,
+    "estimatedCostUsd": 0.0009
+  },
+  "execution": {
+    "providerId": "nvidia-nim",
+    "modelClass": "tool-use",
+    "latencyMs": 288,
+    "retries": 1,
+    "failedOver": true
+  },
+  "finishReason": "tool_call"
+}

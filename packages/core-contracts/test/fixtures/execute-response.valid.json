@@ -1,0 +1,19 @@
+{
+  "requestId": "req_01HZY2Q3K4M5N6P7Q8R9S0T1",
+  "output": {
+    "text": "Revenue grew 14% quarter over quarter, driven primarily by the new enterprise tier."
+  },
+  "usage": {
+    "inputTokens": 812,
+    "outputTokens": 34,
+    "estimatedCostUsd": 0.0041
+  },
+  "execution": {
+    "providerId": "groq",
+    "modelClass": "fast-summarization",
+    "latencyMs": 412,
+    "retries": 0,
+    "failedOver": false
+  },
+  "finishReason": "stop"
+}

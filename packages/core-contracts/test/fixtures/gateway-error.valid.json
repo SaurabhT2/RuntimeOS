@@ -1,0 +1,7 @@
+{
+  "name": "GatewayError",
+  "code": "ALL_PROVIDERS_UNAVAILABLE",
+  "message": "All eligible providers (groq, nvidia-nim) failed or were unhealthy for this request.",
+  "retryable": true,
+  "details": { "attemptedProviders": ["groq", "nvidia-nim"] }
+}
