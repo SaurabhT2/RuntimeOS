@@ -71,8 +71,39 @@ orchestration concern, not something an individual transformer decides for itsel
 
 ## Relationship to `orchestrator`/`strategy-layer`
 
-Not wired in. `DefaultPromptOptimizer` is a pure, injectable class — a future
-`strategy-layer` composition root (EM-8) calls `optimize()` once per request, upstream of
-the Cost Optimizer reading back a final token estimate (architecture §34.1), and the
-`OptimizedPrompt.messages` it returns become the eventual `NormalizedInvocation.messages`
-(architecture §12.1) every provider receives.
+**Now wired in and actually invoked as of EM-8** (this note previously
+said "not wired in... a future `strategy-layer` composition root (EM-8)
+calls `optimize()`" — EM-8 has since shipped and does exactly that;
+corrected here during the v1.2 documentation pass). Confirmed by
+inspection: `packages/strategy-layer/src/strategy-layer.ts` constructs a
+`PromptOptimizationStage` wrapping the injected `PromptOptimizer`, and
+that stage's `run()` genuinely calls `this.optimizer.optimize(messages,
+budget, ctx.executionProfile)` — this is not socket-wiring-only, unlike
+`@ai-gateway/learning`'s stage (see that package's README). `optimize()`
+runs upstream of the Cost Optimizer reading back a final token estimate
+(architecture §34.1), and the `OptimizedPrompt.messages` it returns
+become the eventual `NormalizedInvocation.messages` (architecture §12.1)
+every provider receives — but only when the Strategy Layer itself is
+enabled (`enableStrategyLayer: true`); with the flag off, this package is
+present but never invoked.
+
+## Dependencies
+
+`@ai-gateway/capability-registry`, `@ai-gateway/core-contracts`, and
+`@ai-gateway/execution-profile-registry` (all `workspace:*`). The
+dependency on `execution-profile-registry` is real but was not reflected
+in Engineering Blueprint §4.1's dependency table at the time it was
+introduced — see [ADR-0014](../../docs/adr/0014-prompt-optimizer-execution-profile-registry-dependency-gap.md),
+which documents this exact gap and remains open pending an Architecture
+Review Board decision on whether to correct the table. No dependency on
+`orchestrator` or `strategy-layer` in either direction — this package is
+called, it does not call out.
+
+## Architecture reference
+
+Architecture §34 (Prompt Optimization Pipeline) — §34.1 (pipeline
+placement, upstream of Cost Optimizer), §34.2/§34.3 (the six
+transformers this README's own section above documents), §34.4
+(interaction with Cost Optimization); §12.1
+(`NormalizedInvocation.messages`); §10.3 (token-budget context this
+package reads from). Engineering Blueprint §7 (EM-7 scope).

@@ -74,6 +74,75 @@ registered adapter (never a hardcoded `{status:"ok"}`) and reports
 can still serve traffic via failover), or `"unhealthy"` (503; none
 healthy).
 
+### `POST /v1/execute/pipeline` (v1.2, EM-10, architecture §41.3)
+
+Same auth as `POST /v1/execute` (`Authorization: Bearer <gateway-api-key>`
+or `x-api-key`). Always available — no feature flag, no config required
+beyond what a normal deployment already needs. Runs every step
+sequentially through the same `ExecutionOrchestrator.execute()` a
+single-step request uses; no second execution engine, no way to bypass
+Policy Engine or (if enabled) the Strategy Layer from a step. Capped at
+`maxPipelineSteps` (default 20) before any step runs.
+
+Body:
+
+```jsonc
+{
+  "id": "pipeline-1",
+  "tenant": { "organizationId": "acme", "workspaceId": "eng" }, // same shape as ExecuteRequest.tenant
+  "steps": [
+    {
+      "id": "step-1",
+      "task": "summarize",             // any TaskType
+      "input": { "text": "..." },       // literal input for this step
+      "required": true                  // optional, default true — see below
+    },
+    {
+      "id": "step-2",
+      "task": "chat",
+      "inputFrom": "step-1"             // OR: use step-1's ExecuteResponse.output as this step's input.text
+                                          // (output.text if present, else JSON.stringify(output.json))
+    }
+  ]
+}
+```
+
+Each step supplies exactly one of `input` (a literal
+`ExecuteRequest.input`) or `inputFrom` (a prior step's `id`) — not both,
+not neither. A step with `required: false` (default `true`) that fails
+does not stop the pipeline; a later step's `inputFrom` pointing at a
+failed or skipped step's `id` fails with `INVALID_TASK`.
+
+Returns `200` with a `PipelineResult`:
+
+```jsonc
+{
+  "pipelineId": "pipeline-1",
+  "stepResults": {
+    "step-1": { /* ExecuteResponse */ },
+    "step-2": { /* ExecuteResponse, or a serialized GatewayError if this step failed */ }
+  },
+  "totalCostUsd": 0.0031,     // sum of every successful step's usage.estimatedCostUsd
+  "durationMs": 842           // wall-clock duration of the whole call
+}
+```
+
+A step never reached because an earlier `required` step failed has no
+entry in `stepResults` at all. There is no dedicated caching step for
+pipeline results (architecture §41 doesn't call for one, and the shared
+`MiddlewarePipeline`'s cache step is typed for one `ExecuteRequest` in /
+`ExecuteResponse` out, which a multi-step pipeline doesn't fit).
+
+**Budget Governance note:** if a deployment has wired Budget Governance
+in via a custom composition root (see
+[`docs/release/DEPLOYMENT.md`](../../docs/release/DEPLOYMENT.md#budget-governance-em-10-v12) —
+the published `apps/gateway-server` binary cannot do this on its own),
+budget enforcement applies per step, the same as it would to an
+equivalent standalone `POST /v1/execute` call for that step.
+
+See [`examples/pipeline-client`](../../examples/pipeline-client) for a
+complete, runnable external client calling this endpoint.
+
 ## Runtime composition
 
 The composition root itself — `bootstrap()`, `GatewayApp`, the router, the
@@ -145,6 +214,16 @@ decisions describe now lives.
 
 - `/v1/tasks`, `/v1/usage`, `POST|DELETE /v1/credentials` — see Scope
   verification above.
+- **No environment variable or config-file field for Budget Governance.**
+  `server-config.ts`'s `loadServerConfigFromEnv` populates every other
+  `GatewayRuntimeConfig` field `bootstrap()` needs from `process.env` —
+  including `enableStrategyLayer` — but not `budgetPolicies` or
+  `budgetEnforcementMode`. This app cannot construct Budget Governance as
+  shipped; a deployment that wants it must write its own composition-root
+  entrypoint that calls `bootstrap()` with those fields directly, rather
+  than running `dist/index.js` as-is. See
+  [`docs/release/KNOWN_LIMITATIONS.md` §9.3](../../docs/release/KNOWN_LIMITATIONS.md#93-neither-deployment-application-has-a-configuration-surface-for-budget-governance)
+  and [`docs/release/DEPLOYMENT.md`](../../docs/release/DEPLOYMENT.md#budget-governance-em-10-v12).
 - Multi-instance deployment: `RateLimitMiddleware`/`CacheMiddleware`
   (in-memory) and `reliability`'s `CircuitBreaker`/`HealthMonitor`
   (also in-memory) have no cross-instance consistency. A real

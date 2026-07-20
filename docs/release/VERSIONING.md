@@ -17,7 +17,10 @@ conflate them:
 **A platform release tag does not require every package to read the
 same version number.** As of the `v1.0.0` platform tag, `core-contracts`
 is at `1.0.0` (frozen, see below); every other package is at `0.1.0`.
-This is expected and correct — it reflects that `core-contracts` is the
+This remains true as of the current `v1.2.0` tag — no package's public
+surface has yet crossed the "consumed outside this monorepo" threshold
+described below that would justify an independent version bump. This is
+expected and correct — it reflects that `core-contracts` is the
 one package with an external, independently-versioned compatibility
 promise today, while every other package's public surface is still
 consumed only from within this same monorepo, at the same commit, via
@@ -60,8 +63,9 @@ Two different kinds of "public API" exist in this codebase, with
 different stability guarantees:
 
 1. **The HTTP API** (`POST /v1/execute`, `POST /v1/execute/stream`,
-   `GET /v1/health`) — this is the contract external, non-monorepo
-   callers depend on (see `examples/*`). Changes here follow the same
+   `POST /v1/execute/pipeline` (v1.2), `GET /v1/health`) — this is the
+   contract external, non-monorepo callers depend on (see `examples/*`).
+   Changes here follow the same
    discipline as a `core-contracts` change: the request/response bodies
    are `core-contracts` types, so a breaking HTTP contract change is, by
    definition, a `core-contracts` breaking change.
@@ -78,7 +82,7 @@ different stability guarantees:
 
 If you are calling AI Gateway over its HTTP API (the supported
 integration path — see `examples/minimal-node-client`,
-`examples/streaming-client`):
+`examples/streaming-client`, `examples/pipeline-client`):
 
 - `ExecuteRequest`/`ExecuteResponse`/`GatewayError` shapes are stable
   within a major platform version; a breaking change to any of them
@@ -107,11 +111,12 @@ the v1.0.0 tag:
   proposed/draft ADR (see `docs/adr/README.md`'s legend), not silently
   patched — this applies after v1.0 exactly as it did during EM-0
   through EM-5.
-- The four currently open, proposed/draft ADRs (0004, 0005, 0006, 0009,
-  0010 — see `docs/release/KNOWN_LIMITATIONS.md` §6) remain open for the
-  Architecture Review Board's decision. Resolving one is an
-  architecture-review action, not a release-governance one, and is
-  explicitly out of scope for this document.
+- The ten currently open, proposed/draft ADRs (0004, 0005, 0006, 0007,
+  0009, 0010, 0014, 0019, 0020, 0025 — see
+  `docs/release/KNOWN_LIMITATIONS.md` §6 and `docs/adr/README.md` for the
+  full index) remain open for the Architecture Review Board's decision.
+  Resolving one is an architecture-review action, not a release-governance
+  one, and is explicitly out of scope for this document.
 
 ## Release process
 
@@ -134,4 +139,6 @@ the v1.0.0 tag:
 
 Per Engineering Blueprint §11: weekly canary releases from `main`, with
 a stable release tagged at the end of each Engineering Milestone. The
-`v1.0.0` tag corresponds to the end of EM-5.
+`v1.0.0` tag corresponds to the end of EM-5; `v1.2.0`, the current
+platform tag, corresponds to the end of EM-11 — see `CHANGELOG.md` for
+every milestone tagged in between.

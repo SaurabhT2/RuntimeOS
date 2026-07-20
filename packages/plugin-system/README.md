@@ -55,7 +55,34 @@ lifecycle, execution, isolation, and invalid plugin rejection — see
 
 ## Relationship to `orchestrator`
 
-Not wired in. `PluginHost.runOnRequest`/`runOnResponse` exist so this package's own
-execution/isolation behavior is independently testable against a real pipeline shape — a
-future `orchestrator` integration (EM-8) is expected to either reuse this class directly or
-call an equivalent seam at the appropriate point in the request lifecycle (architecture §17).
+**Still not wired in as of v1.2** (this note previously predicted a
+future `orchestrator` integration specifically "at EM-8" — EM-8 has
+since shipped, per `docs/history/IMPLEMENTATION_PROGRESS.md`, and did
+not integrate this package; confirmed by inspection, no
+`packages/orchestrator/src` or `packages/strategy-layer/src` file
+references `plugin-system` or `PluginHost` today). `PluginHost.runOnRequest`/
+`runOnResponse` exist so this package's own execution/isolation behavior
+is independently testable against a real pipeline shape — a future
+`orchestrator` integration (no longer tied to a specific milestone
+number) is expected to either reuse this class directly or call an
+equivalent seam at the appropriate point in the request lifecycle
+(architecture §17). See `README.md`'s "Roadmap" section (repository
+root) for this listed as a v1.3 candidate.
+
+## Dependencies
+
+`@ai-gateway/core-contracts` and `@ai-gateway/provider-sdk` (both
+`workspace:*`) — used for the request/response shapes a plugin's
+`runOnRequest`/`runOnResponse` hooks receive. No dependency on
+`orchestrator` or `strategy-layer` in either direction, and (see above)
+no dependency *from* either of those packages either — this package is
+currently unreferenced by anything outside its own tests.
+
+## Architecture reference
+
+Architecture §11 (Gateway Plugin System) and §17 (the request-lifecycle
+seam a future integration would call into). §27 ("Future Evolution")
+lists a plugin marketplace as V3 scope — a separate, later concern from
+simply wiring this package's existing, already-implemented framework
+into the running gateway. Engineering Blueprint §4.1 (dependency table)
+and §7 (EM-7 scope).

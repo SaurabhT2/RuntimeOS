@@ -57,8 +57,43 @@ structurally from `policy-engine`'s own already-declared `scoreCandidates` expor
 
 ## Relationship to `orchestrator`/`policy-engine`
 
-Not wired in. A future `strategy-layer` composition root (EM-8) is the one that, per
-architecture §36.3, has the `ModelScorer` call `adjustWeights` immediately before applying
-its weighted formula, if and only if a non-default `AdaptiveRankingStrategy` has been
-registered — with the shipped no-op default, v1.1's routing behavior stays byte-for-byte
-identical to v1.0.
+**Partially wired as of EM-8** — more than "not wired in" (this note's
+previous wording), but less than functionally active; corrected here
+during the v1.2 documentation pass to say precisely what's true.
+`strategy-layer`'s `LearningHookStage` (added in EM-8) does construct
+this package's `LearningRegistry` and confirm it resolves
+(`registry.getSignalCollector()`/`registry.getRankingStrategy()`), as
+part of the Strategy Layer pipeline — but, by that stage's own doc
+comment, deliberately calls neither `.record()` nor `adjustWeights()`:
+the stage runs before the Policy Engine and before any provider call, so
+no real `ExecutionOutcome` (`latencyMs`, `success`, `costUsd`,
+`failureReason` — all necessarily post-execution facts) exists yet to
+record. Per architecture §36.3, it is `policy-engine`'s `ModelScorer`
+that is meant to call `adjustWeights` immediately before applying its
+weighted formula, if and only if a non-default `AdaptiveRankingStrategy`
+has been registered — **no call site for `adjustWeights` exists in
+`policy-engine` today** (confirmed by inspection); with the shipped
+no-op default, v1.2's routing behavior stays byte-for-byte identical to
+v1.0 regardless. Closing this gap — giving `orchestrator` a real
+post-execution hook that calls `.record()` with genuine outcome data —
+remains future work, consistent with this package's EM-7 scope never
+having promised "Learning Intelligence" or "Adaptive Ranking" (see
+`strategy-layer`'s EM-8 Out-of-Scope list).
+
+## Dependencies
+
+`@ai-gateway/telemetry` and `@ai-gateway/policy-engine` (both
+`workspace:*`) — the latter is a type-only reference to the
+`ModelScorer`/ranking shapes this package's `AdaptiveRankingStrategy`
+interface is designed to plug into, not a runtime call today (see
+"Relationship to `orchestrator`/`policy-engine`," above). No dependency
+on `orchestrator` or `strategy-layer` in either direction.
+
+## Architecture reference
+
+Architecture §36 (Learning Extension Points) — §36.1 (the extension
+point shapes), §36.2 (`LearningSignalCollector.record`'s
+`ExecutionOutcome` contract, and why it can't be called from
+`strategy-layer` today), §36.3 (`adjustWeights`' intended call site in
+`policy-engine`'s `ModelScorer`, not yet implemented). Engineering
+Blueprint §7 (EM-7 scope).

@@ -63,7 +63,35 @@ per the architecture's own note — a recognized future extension point, not a g
 
 ## Relationship to `orchestrator`/`strategy-layer`
 
-Not wired in. `DefaultCostOptimizer` is a pure, injectable class — a future
-`strategy-layer` composition root (EM-8) constructs it, supplies a real `CacheClient`
-backend, and calls `optimize()` once per request between Execution Profile resolution and
-the Policy Engine, exactly as architecture §33.1 describes.
+**Now wired in as of EM-8** (this note previously said "not wired in...
+a future `strategy-layer` composition root (EM-8) constructs it" — EM-8
+has since shipped and done exactly that; corrected here during the v1.2
+documentation pass rather than left to mislead a reader into thinking
+this is still pending). `DefaultCostOptimizer` remains a pure, injectable
+class with no dependency of its own on `orchestrator` or `strategy-layer`
+(see "Dependencies," below) — `packages/strategy-layer/src/strategy-layer.ts`
+constructs it, supplies a real `CacheClient` backend, and calls
+`optimize()` once per request between Execution Profile resolution and
+the Policy Engine, exactly as architecture §33.1 describes. This only
+takes effect when the Strategy Layer itself is enabled
+(`enableStrategyLayer: true` — see `docs/release/DEPLOYMENT.md`); with
+the flag off, this package is present but never invoked.
+
+## Dependencies
+
+`@ai-gateway/capability-registry`, `@ai-gateway/execution-profile-registry`,
+and `@ai-gateway/runtime-profiles` (all `workspace:*`) — used to read the
+capability set, execution profile, and runtime profile a given request
+resolves to before deciding whether/how to downgrade it. No dependency on
+`orchestrator`, `strategy-layer`, or `policy-engine` in either direction —
+consistent with "Relationship to `orchestrator`/`strategy-layer`," above:
+this package is called, it does not call out.
+
+## Architecture reference
+
+Architecture §33 (Cost Optimization Engine) — §33.1 (pipeline
+placement), §33.2 (the table this README's "What this answers" section
+quotes), §33.3 (the never-downgrade-below-capability guarantee tested
+in "Testing," above); §34.4 (interaction with Prompt Optimization);
+§13.2 (interaction with response caching). Engineering Blueprint §4.1
+(dependency table) and §7 (EM-7 scope).

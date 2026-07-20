@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RuntimeOS Reference Playground</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <span class="brand-mark">RuntimeOS</span>
+          <span class="brand-sub">Reference Playground</span>
+        </div>
+        <div class="topbar-status" id="topbar-status">
+          <span class="status-dot status-dot--unknown" id="health-dot"></span>
+          <span id="health-text">checking target gateway…</span>
+        </div>
+      </header>
+
+      <div class="app-body">
+        <nav class="sidebar" id="sidebar">
+          <!-- populated by app.js: single source of truth for nav = PANELS -->
+        </nav>
+
+        <main class="workspace" id="workspace">
+          <!-- populated by app.js per active panel -->
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

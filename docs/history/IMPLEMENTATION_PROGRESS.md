@@ -221,6 +221,23 @@ See each package's README (`packages/config/README.md`,
 
 ---
 
+> **Documentation note (added during the v1.2 documentation-excellence
+> pass, not at original authoring time):** there is no standalone
+> `## EM-2` section in this document — the numbering goes directly from
+> `EM-1` (above) to `EM-3` (below). `CHANGELOG.md`'s milestone table
+> attributes `reliability`, `model-registry`, and `credential-resolver`
+> to "EM-2," and EM-3's own scope line below explicitly does **not**
+> include `model-registry` or `credential-resolver` — so those two
+> packages were almost certainly delivered in a milestone between EM-1
+> and EM-3 that was simply never given its own write-up here, rather
+> than in EM-3 itself. This has no effect on the implementation (all
+> three packages are complete and tested regardless of which milestone
+> number they're attributed to) — it is a gap in this historical record
+> only. Flagged here rather than silently invented, per this document's
+> own convention of recording findings rather than guessing at them; see
+> `README.md`'s "Engineering milestones" table (footnote) for the
+> parallel, reader-facing version of this same note.
+
 ## EM-3 — Policy Engine, Real Provider Adapters, Streaming (Complete)
 
 Scope per Blueprint §7: `policy-engine`, `providers/groq`,

@@ -169,23 +169,28 @@ Streaming is Server-Sent Events only.
 
 ## 6. Open architecture/implementation gaps (draft ADRs)
 
-The following four items are recorded as **proposed / draft** ADRs — a
+The following ten items are recorded as **proposed / draft** ADRs — a
 real, verified inconsistency between the frozen Architecture
 Specification and the implementation as it exists today, raised because
 a later milestone correctly implemented its own scope but, in doing so,
 exposed a gap or contradiction one layer up. None has been decided by
-the Architecture Review Board. They are listed here for completeness;
-resolving them is architecture-review work, explicitly out of scope for
-this release-governance pass.
+the Architecture Review Board. They are listed here for completeness
+(this table previously listed only six of the ten — corrected during the
+v1.2 documentation pass); resolving them is architecture-review work,
+explicitly out of scope for this release-governance pass.
 
 | ADR | Gap |
 |---|---|
 | [0004](../adr/0004-provider-adapter-cancellation-draft.md) | `ProviderAdapter` has no cancellation primitive, despite architecture §18.4/§24 assuming one exists. |
 | [0005](../adr/0005-backoff-strategy-config-mismatch.md) | Architecture §18.1 defines three `BackoffStrategy` values; `@ai-gateway/config`'s frozen (EM-1) type only has two. |
 | [0006](../adr/0006-policy-engine-config-dependency-gap.md) | `policy-engine` has no dependency edge onto `@ai-gateway/config`, so scoring weights and routing rules are constructor options rather than config-sourced as architecture §13.3/§13.4 describe. |
+| [0007](../adr/0007-stream-manager-signature-gap.md) | Architecture §11's literal `StreamManager` signature can't compile within this codebase's own frozen dependency boundaries, and `cancel(requestId)` has no addressable implementation path. Partially resolved by ADR-0008. |
 | [0009](../adr/0009-middleware-config-gap.md) | `middleware` has no `@ai-gateway/config` field for API keys, rate-limit thresholds, or cache TTL, for the same structural reason as ADR-0006. |
 | [0010](../adr/0010-gatewayconfig-reliability-section-unconsumed.md) | `GatewayConfig.reliability`, a fully-defined and validated config section, is read by no package anywhere in the codebase. |
-| [0025](../adr/0025-budget-enforcer-provider-id-and-exclusion-gap.md) | `switch_provider` budget threshold actions have no observable effect on real provider routing in production — see §9.2 below. **Elevated to a release-blocking-for-that-feature disclosure as of v1.2**, now that Budget Governance is promoted out of shadow mode; see §9.2. |
+| [0014](../adr/0014-prompt-optimizer-execution-profile-registry-dependency-gap.md) | Architecture §34.2's frozen `PromptOptimizer.optimize` signature requires a dependency edge (`prompt-optimizer` → `execution-profile-registry`) that Engineering Blueprint §4.1's table omits. The implementation is correct; only the table is wrong. |
+| [0019](../adr/0019-milestone-8-definition-conflict.md) | Architecture §38.2's "Milestone 8" (pass-through skeleton only) and the Engineering Blueprint's "EM-8" (full Wave 6–7 integration) describe incompatible scopes under the same number. |
+| [0020](../adr/0020-runtime-profile-read-sites-gap.md) | Two of architecture §37.4's four Runtime Profile read sites (Policy Engine lifecycle-state filtering; Circuit Breaker aggressiveness) have no implemented data path, and `RuntimeProfile`'s own schema has no field cleanly matching §37.4's `streaming`/`timeoutMs` claim. |
+| [0025](../adr/0025-budget-enforcer-provider-id-and-exclusion-gap.md) | `switch_provider` budget threshold actions have no observable effect on real provider routing in production — see §9.2 below. **Elevated to a release-blocking-for-that-feature disclosure as of v1.2**, now that Enforcement Mode has been verified end-to-end and documented as ready for a deployment to opt into (shadow remains the default; see §9.2/§9.3); see §9.2. |
 
 See [`docs/adr/README.md`](../adr/README.md) for the complete ADR index,
 including the accepted ADRs that are not limitations but settled design
@@ -241,13 +246,27 @@ shared implementation additively; none is built as of v1.2.
 
 ### 9.2 `switch_provider` threshold actions have no effect on real routing — read this before enabling Enforcement Mode
 
-**This is the most operationally important limitation in this document
-as of v1.2**, because v1.2 is the first release where Budget Governance
-is promoted out of shadow mode (see
+**Correction (this section previously stated that v1.2 promotes Budget
+Governance to Enforcement Mode "by default." That is inaccurate and has
+been corrected here, in `CHANGELOG.md`, and in `RELEASE_NOTES.md`.**
+Source (`packages/gateway-runtime/src/bootstrap.ts`) confirms
+`budgetEnforcementMode` still defaults to `"shadow"` even when
+`budgetPolicies` is configured — identical to EM-10's behavior. Nothing
+in v1.2 flips that default, and `apps/gateway-server` (the only
+deployable app in this repository) has no environment variable or
+config-file field for either setting at all; see §9.3, below.**
+
+**This is nonetheless the most operationally important limitation in
+this document as of v1.2**, because v1.2 is the first release where
+Enforcement Mode has been independently verified end-to-end against the
+real, wired system (see
 [`docs/history/IMPLEMENTATION_PROGRESS.md`](../history/IMPLEMENTATION_PROGRESS.md)'s
-EM-11 entry) into real enforcement — the release where a misunderstanding
-of this gap could translate into unmitigated real-provider spend, not
-just an inert shadow-mode log line.
+EM-11 entry) and documented as something a deployment can deliberately
+opt into — the release where a deployment that *does* explicitly set
+`budgetEnforcementMode: "enforcing"` (via a custom `bootstrap()` call;
+see §9.3) needs to understand this gap before doing so, since
+misunderstanding it there could translate into unmitigated real-provider
+spend, not just an inert shadow-mode log line.
 
 A `BudgetThresholdAction` configured with `action: "switch_provider"` is
 evaluated, and a corresponding `forcedProviderExclusion` decision is
@@ -308,6 +327,73 @@ hardening milestone is authorized to introduce unilaterally.
 `forcedProviderExclusion` is computed but not enforced"); EM-11 Engineering
 Completion Report, Budget Governance Validation section (empirical
 end-to-end reconfirmation via `packages/gateway-runtime/test/bootstrap.test.ts`).*
+
+### 9.3 Neither deployment application has a configuration surface for Budget Governance
+
+`budgetPolicies` and `budgetEnforcementMode` are fields on
+`@ai-gateway/gateway-runtime`'s `GatewayRuntimeConfig` (the object
+`bootstrap()` accepts), not on `@ai-gateway/config`'s `GatewayConfig`.
+Neither of this repository's two deployment applications' own
+environment-variable loaders populates either field:
+
+- `apps/gateway-server`'s (`apps/gateway-server/src/server-config.ts`'s
+  `loadServerConfigFromEnv`) populates every other `GatewayRuntimeConfig`
+  field it needs from `process.env` — including `enableStrategyLayer`,
+  via the literal `ENABLE_STRATEGY_LAYER` variable — but has **no
+  corresponding variable, and no `GATEWAY_CONFIG_PATH`-file field, for
+  `budgetPolicies` or `budgetEnforcementMode`**. Confirmed by inspection:
+  neither `apps/gateway-server/src/server-config.ts` nor
+  `apps/gateway-server/src/index.ts` references either field name
+  anywhere.
+- `apps/vercel-adapter`'s (`apps/vercel-adapter/src/vercel-config.ts`'s
+  `loadVercelConfigFromEnv`) has the identical gap, confirmed the same
+  way. Unlike `enableStrategyLayer` — which `apps/vercel-adapter` *can*
+  reach via a `GATEWAY_CONFIG_PATH` JSON file, just without a dedicated
+  env var (see
+  [`docs/release/RUNTIME_CONFIGURATION_MATRIX.md`](RUNTIME_CONFIGURATION_MATRIX.md))
+  — `budgetPolicies`/`budgetEnforcementMode` have no config-file route
+  either, since neither field exists in `@ai-gateway/config`'s
+  `GatewayConfig` Zod schema (`packages/config/src/schema.ts`) at all.
+
+**Practical effect:** running either published application binary with
+any combination of environment variables can never construct Budget
+Governance — `budgetLedger`/`budgetEnforcer` stay `undefined` in
+`bootstrap()` regardless of mode, because the
+`runtimeConfig.budgetPolicies` either app supplies is always empty. This
+is true independent of §9.1/§9.2 above: even a deployment that has read
+and understood the `switch_provider` gap and wants to configure `block`-
+or `downgrade_model`-only policies has no supported way to do so through
+either shipped app.
+
+**What does work:** the `budget-governance` package itself, and
+`@ai-gateway/gateway-runtime`'s `bootstrap()`, both fully support
+`budgetPolicies`/`budgetEnforcementMode` when a caller constructs and
+passes them programmatically — this is exactly how
+`packages/gateway-runtime/test/bootstrap.test.ts`'s Budget Governance
+suite (and EM-11's end-to-end verification) exercises the feature. A
+deployment that wants Budget Governance in v1.2 must write its own thin
+composition-root file (mirroring `apps/gateway-server/src/index.ts` or
+`apps/vercel-adapter/src/runtime.ts`) that calls `bootstrap()` directly
+with `budgetPolicies` and `budgetEnforcementMode` supplied in code or
+loaded from its own configuration mechanism — see
+[`docs/release/DEPLOYMENT.md`](DEPLOYMENT.md#budget-governance-em-10-v12)
+for a worked sketch.
+
+**Tracked, not left implicit:** closing this gap for both apps is a
+scoped engineering backlog item, not a RuntimeOS implementation defect —
+see
+[`docs/backlog/expose-complete-gatewayruntimeconfig-surface.md`](../backlog/expose-complete-gatewayruntimeconfig-surface.md),
+which also covers the smaller, related `maxPipelineSteps` gap (neither
+app exposes an override for the pipeline step cap either).
+
+*Source: `apps/gateway-server/src/server-config.ts` and
+`apps/vercel-adapter/src/vercel-config.ts` (no `budget`-related
+identifier anywhere in either file, confirmed by inspection);
+`packages/gateway-runtime/src/bootstrap.ts` (`GatewayRuntimeConfig`'s
+`budgetPolicies`/`budgetEnforcementMode` fields and their consumption);
+`apps/gateway-server/src/index.ts` and `apps/vercel-adapter/src/runtime.ts`
+(both pass their respective loader's result to `bootstrap()`
+unmodified).*
 
 ## 10. v1.1 / Strategy Layer release validation
 

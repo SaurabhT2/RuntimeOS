@@ -1,0 +1,13 @@
+{
+  "name": "ai-gateway-example-pipeline-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A minimal external Node.js client for AI Gateway's /v1/execute/pipeline endpoint (v1.2, EM-10) — no workspace dependencies, exactly what a real external caller would write against a deployed gateway.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

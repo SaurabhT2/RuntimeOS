@@ -19,8 +19,12 @@ AI Gateway v1.2.0 is the second tagged platform release, covering
 everything delivered since v1.0.0: the Strategy Layer (capability-aware,
 cost-aware, budget-governed request routing, opt-in via
 `enableStrategyLayer`), multi-step Pipeline Orchestration, Budget
-Governance (now promoted to Enforcement Mode by default for tenants that
-configure `budgetPolicies`), and this milestone's own platform-hardening
+Governance (Enforcement Mode is now available as an explicit opt-in —
+`budgetEnforcementMode: "enforcing"` — for tenants that configure
+`budgetPolicies`; **`"shadow"` remains the default** even when
+`budgetPolicies` is configured, unchanged from EM-10; see "Budget
+Governance" below for exactly what "available" means in this release),
+and this milestone's own platform-hardening
 pass — full regression/conformance/chaos validation, an in-process
 performance smoke-test, and a documentation-completeness pass across
 every release-governance document. No architectural concept, package,
@@ -36,7 +40,7 @@ Order.
 | **EM-7** | `cost-optimizer`, `prompt-optimizer`, learning extension points, plugin system foundation (Optimization Pipeline). |
 | **EM-8** | Strategy Layer integration — `strategy-layer` wires EM-6/EM-7 into a single `StrategyDecision`, consumed by `orchestrator` ahead of `policy-engine`, entirely behind `enableStrategyLayer` (default `false`). Runtime Profile activation (EM-9-attributed work) landed as part of this integration. |
 | **EM-10** | `pipeline-orchestrator` (multi-step execution via `ExecutionOrchestrator.execute()` only, `maxSteps`-capped) and `budget-governance` (shadow-mode-first cost governance: thresholds, per-provider caps, cumulative ledger). An Independent Architecture Review returned REQUIRES REWORK on two findings (`BudgetLedger.recordSpend` never wired to production traffic; a telemetry label defect); both were closed in a follow-up rework pass and independently re-verified. |
-| **EM-11** | Platform hardening and v1.2 production-readiness validation — no new architecture. Budget Governance promoted to Enforcement Mode. Full regression, provider conformance, chaos-scenario, and performance validation. Documentation finalized across `KNOWN_LIMITATIONS.md`, this changelog, `RELEASE_NOTES.md`, and `IMPLEMENTATION_PROGRESS.md`. |
+| **EM-11** | Platform hardening and v1.2 production-readiness validation — no new architecture. Budget Governance's Enforcement Mode independently verified end-to-end against the real, wired system for the first time (previously unit-tested in isolation only); the mode itself remains an explicit, off-by-default opt-in (`budgetEnforcementMode: "enforcing"`), not a new default. Full regression, provider conformance, chaos-scenario, and performance validation. Documentation finalized across `KNOWN_LIMITATIONS.md`, this changelog, `RELEASE_NOTES.md`, and `IMPLEMENTATION_PROGRESS.md`. |
 
 See [`docs/history/IMPLEMENTATION_PROGRESS.md`](docs/history/IMPLEMENTATION_PROGRESS.md)
 for full acceptance-criteria detail on each milestone, and the EM-11
@@ -58,12 +62,25 @@ Engineering Completion Report for this release's validation evidence.
 - **Budget Governance** — per-tenant daily/monthly spend budgets with
   configurable threshold actions (`alert`, `downgrade_model`,
   `switch_provider`, `block`), evaluated before execution and enforced
-  before Routing Rules. Shipped shadow-mode-first in EM-10; **promoted to
-  Enforcement Mode as of v1.2** for any tenant with `budgetPolicies`
-  configured. Cumulative spend genuinely accrues from real traffic
-  (`BudgetLedger.recordSpend` wired to a post-execution orchestrator hook
-  as of the EM-10 rework) and is proven end-to-end, not just unit-tested
-  in isolation.
+  before Routing Rules. Shipped shadow-mode-first in EM-10, unchanged in
+  v1.2: `budgetEnforcementMode` still defaults to `"shadow"` even when
+  `budgetPolicies` is configured — enforcement requires the caller to
+  explicitly pass `budgetEnforcementMode: "enforcing"` to `bootstrap()`.
+  What v1.2 actually adds is **independent, end-to-end verification that
+  Enforcement Mode works correctly** when a deployment does opt into it
+  (previously proven only via isolated `budget-enforcer` unit tests) —
+  see the EM-11 entry above. Cumulative spend genuinely accrues from real
+  traffic (`BudgetLedger.recordSpend` wired to a post-execution
+  orchestrator hook as of the EM-10 rework) whenever Budget Governance is
+  constructed at all (i.e., whenever `budgetPolicies` is non-empty),
+  regardless of mode. **Operationally significant gap:** `apps/gateway-server`
+  — the only deployable app in this repository — has no environment
+  variable or config-file field for `budgetPolicies` or
+  `budgetEnforcementMode` at all (see
+  `docs/release/KNOWN_LIMITATIONS.md` §9.3); enabling Budget Governance
+  in v1.2 requires a caller to invoke `@ai-gateway/gateway-runtime`'s
+  `bootstrap()` directly with those overrides, which the shipped
+  `apps/gateway-server` binary does not do.
 
 ### Known exclusion carried forward with elevated visibility for this release
 
@@ -72,9 +89,11 @@ routing** — the per-provider-cap check that would trigger them never
 runs in production (the only `evaluate()` call site always precedes
 provider selection), and even if it did, the frozen `StrategyDecision`
 interface has no field to carry the exclusion to Policy Engine. This was
-low-risk and fully disclosed while Budget Governance was shadow-mode-only
-(nothing was actually being enforced regardless); it is more
-operationally significant now that v1.2 promotes to Enforcement Mode.
+low-risk and fully disclosed while Enforcement Mode had only been proven
+in isolated unit tests; it is more operationally significant now that
+v1.2 has independently verified Enforcement Mode end-to-end and
+documented it as usable, for any deployment that explicitly opts in via
+`budgetEnforcementMode: "enforcing"`.
 See [`docs/release/KNOWN_LIMITATIONS.md`](docs/release/KNOWN_LIMITATIONS.md)
 §9.2 and [ADR-0025](docs/adr/0025-budget-enforcer-provider-id-and-exclusion-gap.md)
 (proposed, undecided) for the full detail and operator recommendation.

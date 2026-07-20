@@ -163,3 +163,26 @@ or folds a forced model-class downgrade into the already-existing
 `ctx.costOptimization.recommendedModelClassDowngrade` field. See that stage's own doc comment,
 `@ai-gateway/budget-governance`'s README, and ADR-0025 for what this milestone does *not* wire
 up (`forcedProviderExclusion` has no carrier to Policy Engine yet) and why.
+
+## Dependencies
+
+`@ai-gateway/core-contracts`, `@ai-gateway/capability-registry`,
+`@ai-gateway/execution-profile-registry`, `@ai-gateway/runtime-profiles`,
+`@ai-gateway/cost-optimizer`, `@ai-gateway/prompt-optimizer`,
+`@ai-gateway/learning`, and `@ai-gateway/budget-governance` (all
+`workspace:*`) — this package is the integration point for every EM-6/
+EM-7 foundation package (`plugin-system` is the one EM-7 package this
+package does **not** depend on or wire in; see that package's README).
+`orchestrator` depends on this package, not the reverse (ADR-0016) — see
+"Relationship to `orchestrator`/`policy-engine`," above.
+
+## Architecture reference
+
+Architecture §30 (Strategy Layer) — §30.3 (the frozen `StrategyDecision`
+shape and cache-hit short-circuit); §37.4 (Runtime Profile read sites,
+partially implemented — see
+[ADR-0020](../../docs/adr/0020-runtime-profile-read-sites-gap.md));
+§43.3 (Budget Enforcement's pipeline position); §45.5 (the
+"optional and orthogonal" contract every v1.1/v1.2 addition follows).
+Engineering Blueprint §4.1 (dependency table, with two corrections
+tracked in [ADR-0016](../../docs/adr/0016-strategy-layer-dependency-table-correction.md)).

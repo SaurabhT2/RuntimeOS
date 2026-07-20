@@ -1,7 +1,9 @@
 # Architecture Decision Records — Index
 
-Twenty-six ADRs are on record, spanning EM-0 through EM-10 (plus the
-EM-10 Engineering Rework).
+Twenty-seven ADRs are on record, spanning EM-0 through EM-10 (plus the
+EM-10 Engineering Rework), plus one roadmap recommendation (0027) filed
+during the v1.2 documentation-completion pass rather than by an
+engineering milestone.
 `0000-template.md` is the template used to write all of them, not a
 decision itself.
 
@@ -14,6 +16,15 @@ doing so, exposed a gap or contradiction one layer up. They are recorded
 rather than silently resolved, per the project's "document, don't invent a
 solution" rule for cross-milestone architectural findings. None of the
 open items has been decided by the Architecture Review Board yet.
+**ADR-0027 is a different kind of "Proposed"** — a forward-looking
+roadmap recommendation (generate OpenAPI from `core-contracts`' Zod
+schemas, rather than hand-write one), not a spec-vs-implementation
+inconsistency. It's listed in its own small table, below the
+implementation-gap ADRs, for exactly this reason — the "ten" figure
+elsewhere in this repository's release documentation (e.g.
+`KNOWN_LIMITATIONS.md` §6) refers to implementation-gap ADRs only and
+correctly excludes it; "eleven" (or "27 total ADRs") refers to every
+Proposed/Draft ADR including it.
 
 ## Accepted
 
@@ -55,6 +66,12 @@ open items has been decided by the Architecture Review Board yet.
 | [0019](0019-milestone-8-definition-conflict.md)                           | Architecture §38.2's "Milestone 8" and the Engineering Blueprint's "EM-8" name incompatible scopes            | Flags that Architecture §38.2's Milestone 8 (pass-through skeleton only) and the Engineering Blueprint's EM-8 (full Wave 6–7 integration — architecture Milestones 8, 9, 10, and 11's content combined) are not the same scope despite sharing a number. Raised by the EM-8 Independent Architecture & Engineering Review, Finding 3. |
 | [0020](0020-runtime-profile-read-sites-gap.md)                            | Architecture §37.4's Runtime Profile read sites 3 and 4, and its `streaming`/`timeoutMs` claim, remain unimplemented | Flags that two of §37.4's four Runtime Profile read sites (Policy Engine lifecycle-state filtering; Circuit Breaker/`maxFallbacks` aggressiveness) have no data path across `StrategyDecision`'s frozen boundary, and that `RuntimeProfile`'s own schema (§37.2) has no field mapping cleanly onto §37.4's `streaming`/`timeoutMs` claim. Raised by the EM-9 Independent Architecture & Engineering Review. |
 | [0025](0025-budget-enforcer-provider-id-and-exclusion-gap.md)             | `BudgetEnforcer.evaluate`'s `providerId` parameter, and `forcedProviderExclusion`'s missing carrier to Policy Engine | Flags that architecture §43.2's `evaluate(tenant, plannedCostUsd, providerId)` assumes a provider is already chosen at a pipeline position (§43.3) where none is yet, and that `BudgetDecision.forcedProviderExclusion` has no field on the frozen `StrategyDecision` (§30.3) to travel through to reach Policy Engine — computed correctly, not yet enforceable. Raised during EM-10. |
+
+## Proposed — roadmap recommendation (not an implementation gap)
+
+| ADR                                                | Title                        | Description                                                                                                                                                                                                                                                                                             |
+| --------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [0027](0027-api-contract-publication.md) | API Contract Publication — generate OpenAPI from `core-contracts`, don't hand-write it | Recommends a `core-contracts` → Zod schemas → generated OpenAPI pipeline for the currently-nonexistent API schema, explicitly ruling out a hand-maintained OpenAPI document. Filed during the v1.2 documentation-completion pass, not by an engineering milestone — a forward-looking recommendation, not a discovered spec-vs-implementation inconsistency. |
 
 ## Template
 

@@ -34,6 +34,22 @@ each item before tagging.
 - [ ] Cross-references between release documents resolve (no broken
       relative links between `CHANGELOG.md`, `docs/release/*.md`,
       `docs/adr/*.md`, `docs/architecture/*.md`).
+- [ ] Every environment variable or config field a new feature reads is
+      actually documented in `docs/release/DEPLOYMENT.md`'s environment
+      variable table or a dedicated section — and, just as importantly,
+      if a feature's config is **not** reachable via `apps/gateway-server`
+      (env var or `GATEWAY_CONFIG_PATH`), that gap itself is stated
+      explicitly rather than left for a reader to discover on their own.
+      (Added for v1.2 after this exact gap — Budget Governance's missing
+      config surface — was found undocumented across `README.md`,
+      `CHANGELOG.md`, `RELEASE_NOTES.md`, and `DEPLOYMENT.md`
+      simultaneously; see `KNOWN_LIMITATIONS.md` §9.3.)
+- [ ] Any claim that a feature is "enabled/enforced by default" is
+      checked against the actual default in source (e.g. the relevant
+      `bootstrap()` option's `??` fallback), not against what an earlier
+      draft of the release notes assumed — this exact category of
+      overstatement (claiming a stricter default than the code ships)
+      was found and corrected in three v1.2 documents simultaneously.
 
 ## 3. Validation
 
@@ -60,14 +76,17 @@ each item before tagging.
 - [ ] `tools/adapter-conformance-tests` — every provider adapter
       (`groq`, `nvidia-nim`, and the Mock Adapter) passes the shared
       conformance suite at 100%.
-- [ ] **v1.1 only, once `enableStrategyLayer` defaults to (or is being
-      flipped to) `true` for a release:** the Engineering Blueprint's
-      EM-8 A/B replay of EM-5's load-test traffic and gateway latency
-      budget validation has been run against a real staging deployment —
-      see [`KNOWN_LIMITATIONS.md` §9.1](KNOWN_LIMITATIONS.md#91-ab-replay-of-em-5-load-test-traffic-and-gateway-latency-budget-validation-cannot-be-performed-within-this-repository)
+- [ ] **Required once `enableStrategyLayer` defaults to (or is being
+      flipped to) `true` for a release — still not required as of v1.2
+      (it still defaults to `false`; see `README.md`'s "What v1.2
+      delivers"):** the Engineering Blueprint's EM-8 A/B replay of EM-5's
+      load-test traffic and gateway latency budget validation has been
+      run against a real staging deployment — see
+      [`KNOWN_LIMITATIONS.md` §10.1](KNOWN_LIMITATIONS.md#101-ab-replay-of-em-5-load-test-traffic-and-gateway-latency-budget-validation-cannot-be-performed-within-this-repository)
       for why this cannot be satisfied by any suite in this repository
-      alone. Not required for v1.0 (`enableStrategyLayer` defaults to
-      `false`).
+      alone. (This item previously cited `KNOWN_LIMITATIONS.md` §9.1 —
+      a broken cross-reference; the content it describes is at §10.1.
+      Fixed during the v1.2 documentation pass.)
 
 ## 5. Deployment
 
@@ -92,13 +111,18 @@ each item before tagging.
       `ExecuteResponse`.
 - [ ] `POST /v1/execute/stream` against a running instance returns a
       `text/event-stream` response terminating in a `done: true` chunk.
+- [ ] `POST /v1/execute/pipeline` against a running instance, with a
+      real configured API key and a 2-step pipeline, returns a `200`
+      with a well-formed `PipelineResult` (added for v1.2 — see
+      `apps/gateway-server/README.md`'s Public API section).
 - [ ] A request with a missing/invalid API key returns the expected
       `401`/`CREDENTIAL_INVALID` error shape, not an unhandled exception.
-- [ ] `examples/minimal-node-client` and `examples/streaming-client`
-      run successfully against the deployed instance (this is
-      Engineering Blueprint EM-5's own acceptance criterion: "external
-      example client completes a real request against a deployed
-      instance").
+- [ ] `examples/minimal-node-client`, `examples/streaming-client`, and
+      `examples/pipeline-client` all run successfully against the
+      deployed instance (this is Engineering Blueprint EM-5's own
+      acceptance criterion, extended to the v1.2 pipeline endpoint:
+      "external example client completes a real request against a
+      deployed instance").
 
 ## 7. Tagging
 

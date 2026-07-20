@@ -1,0 +1,32 @@
+{
+  "name": "@ai-gateway/runtime-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RuntimeOS Reference Playground — a browser-based reference client for a running AI Gateway instance (any deployment: apps/gateway-server, apps/vercel-adapter, or a custom composition root). Demonstrates every capability reachable through the public HTTP API (Execute, Streaming, Pipeline Orchestration), and is explicit — never simulated — about capabilities that exist in RuntimeOS but are not exposed by the target deployment's own configuration surface (Strategy Layer routing rationale, Budget Governance). This app has no workspace dependency on any other @ai-gateway/* package: like examples/*, it only talks to the public REST API, over HTTP, exactly as any external integrator would.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "public"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint src test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist coverage *.tsbuildinfo"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

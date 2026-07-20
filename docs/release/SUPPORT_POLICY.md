@@ -10,11 +10,11 @@ or for infrastructure you choose to run AI Gateway on.
 
 ## Supported version
 
-Only the current tagged platform release (`v1.0.x` as of this writing —
+Only the current tagged platform release (`v1.2.x` as of this writing —
 see [`VERSIONING.md`](VERSIONING.md) for how the platform tag relates to
 individual package versions) receives support. There is no long-term
-support (LTS) branch and no backport policy for older releases at this
-stage of the project's history.
+support (LTS) branch and no backport policy for older releases (`v1.0.x`,
+`v1.1.x`) at this stage of the project's history.
 
 ## How to get help
 
@@ -27,13 +27,14 @@ stage of the project's history.
   instead.
 - **Usage questions:** open a GitHub issue or discussion. See
   `apps/gateway-server/README.md` for the public API and
-  `examples/minimal-node-client`/`examples/streaming-client` for
+  `examples/minimal-node-client`/`examples/streaming-client`/`examples/pipeline-client` for
   reference client code.
-- **Feature requests / scope beyond v1.0:** open an issue describing the
+- **Feature requests / scope beyond v1.2:** open an issue describing the
   use case. Please note whether it maps to functionality already named
-  as a future milestone in the Engineering Blueprint (§7, `EM-6`
-  onward) — if so, it may already be planned, just not yet scheduled or
-  scoped for this repository's next release.
+  in [`README.md`](../../README.md)'s "Roadmap" section or as a future
+  milestone in the Engineering Blueprint (§7) — if so, it may already be
+  planned, just not yet scheduled or scoped for this repository's next
+  release.
 
 ## Response expectations
 
@@ -49,12 +50,17 @@ best-effort:
   document rather than actioned, unless it's re-scoped into a future
   milestone.
 
-## What "supported" means for v1.0
+## What "supported" means for the current release
 
 Supported means: a defect in functionality that
 `docs/release/RELEASE_NOTES.md` and `CHANGELOG.md` describe as shipping
-in v1.0 will be investigated and, if confirmed, fixed in a subsequent
-patch/minor release of the affected package(s).
+in the current tagged release (`v1.2.x`) will be investigated and, if
+confirmed, fixed in a subsequent patch/minor release of the affected
+package(s). A behavior explicitly documented as a known limitation in
+[`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) — for example, Budget
+Governance's `switch_provider` gap (§9.2) or its lack of an
+`apps/gateway-server` configuration surface (§9.3) — is not itself a
+defect and will be triaged per "Response expectations," above.
 
 It does **not** mean:
 

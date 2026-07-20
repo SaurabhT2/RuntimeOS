@@ -18,10 +18,30 @@ capabilities and a full production-hardening pass:
   from a pipeline step.
 - **Budget Governance** — per-tenant daily/monthly spend budgets with
   configurable actions (alert, downgrade to a cheaper model class,
-  exclude an over-cap provider, or block outright). Shipped shadow-mode
-  first; **as of v1.2, Enforcement Mode is live** for any tenant with a
-  budget policy configured — real requests can now be genuinely blocked,
-  downgraded, or alerted on by real, cumulative spend.
+  exclude an over-cap provider, or block outright). Shadow mode remains
+  the default in v1.2, exactly as it was at EM-10 — configuring
+  `budgetPolicies` alone still enforces nothing. What's new in v1.2 is
+  that **Enforcement Mode (`budgetEnforcementMode: "enforcing"`) has now
+  been independently verified end-to-end against the real, wired system**
+  and is documented as ready to opt into, not that it runs by default.
+  Note also that as shipped, `apps/gateway-server` exposes no environment
+  variable or config-file field for either `budgetPolicies` or
+  `budgetEnforcementMode` — see "Enabling Budget Governance," below.
+
+### Enabling Budget Governance
+
+`budgetPolicies` and `budgetEnforcementMode` are fields on
+`@ai-gateway/gateway-runtime`'s `GatewayRuntimeConfig`, consumed by
+`bootstrap()`. As shipped, `apps/gateway-server`'s environment-variable
+loader (`loadServerConfigFromEnv`) does not populate either field, so
+running the published `apps/gateway-server` binary as-is can never
+construct Budget Governance, regardless of mode. To use it today, a
+deployment must call `bootstrap()` directly from its own composition
+code (as `apps/gateway-server` itself does internally) and supply
+`budgetPolicies`/`budgetEnforcementMode` explicitly — see
+[`docs/release/DEPLOYMENT.md`](DEPLOYMENT.md#budget-governance-em-10-v12)
+for a worked example. This is tracked as
+[`KNOWN_LIMITATIONS.md` §9.3](KNOWN_LIMITATIONS.md#93-neither-deployment-application-has-a-configuration-surface-for-budget-governance).
 
 ### Before you enable Budget Governance enforcement
 
@@ -30,8 +50,7 @@ Enforcement Mode end-to-end: **`block`** and **`alert`**. A third,
 **`downgrade_model`**, is verified working as a soft routing bias. The
 fourth, **`switch_provider`**, does **not** currently affect real
 provider routing — a known, disclosed gap (not a defect discovered after
-the fact) that matters more now that enforcement is live than it did in
-shadow mode. If you're configuring budget policies for production, read
+the fact). If you're configuring budget policies for production, read
 [`docs/release/KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) §9.2 first —
 it explains exactly what does and doesn't work, and what to configure
 instead.
@@ -107,8 +126,9 @@ environment variables, with no external database or cache dependency
 required to run it. This is intentional: the v1.0 baseline targets a
 **single-instance deployment** — see Current Limitations below and
 [`docs/release/DEPLOYMENT.md`](DEPLOYMENT.md) for the full deployment
-guide, including the target reference deployment at
-`runtime.saurabhtiwariai.com`.
+guide, including the target reference deployment shape (a single
+Node.js process behind a TLS-terminating reverse proxy, at whatever
+hostname your organization assigns it — e.g. `https://gateway.example.com`).
 
 ### Intended audience
 
