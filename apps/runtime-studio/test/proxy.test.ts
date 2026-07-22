@@ -214,4 +214,68 @@ describe("proxyToGateway", () => {
     // no anything.
     expect(statusWritten).toBeUndefined();
   });
+
+  it("defaults to GET when req.method is undefined", async () => {
+    let seenMethod: string | undefined;
+    upstream = createServer((req, res) => {
+      seenMethod = req.method;
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    });
+    const upstreamUrl = await listen(upstream);
+
+    // A real IncomingMessage always has a method, so exercising the
+    // `req.method ?? "GET"` fallback needs a minimal fake request
+    // (method genuinely absent) rather than a real HTTP round trip.
+    const fakeReq = new EventEmitter() as EventEmitter & {
+      method?: string;
+      [Symbol.asyncIterator]: () => AsyncIterableIterator<Buffer>;
+    };
+    fakeReq[Symbol.asyncIterator] = async function* () {
+      // empty body
+    };
+    let statusWritten2: number | undefined;
+    const fakeRes = {
+      writeHead: (status: number) => {
+        statusWritten2 = status;
+      },
+      write: () => undefined,
+      end: () => undefined,
+    };
+
+    await proxyToGateway(
+      fakeReq as unknown as Parameters<typeof proxyToGateway>[0],
+      fakeRes as unknown as Parameters<typeof proxyToGateway>[1],
+      baseConfig(upstreamUrl),
+      "/v1/execute",
+    );
+
+    expect(statusWritten2).toBe(200);
+    expect(seenMethod).toBe("GET");
+  });
+
+  it("stops writing (without throwing) when the upstream body stream errors mid-read", async () => {
+    upstream = createServer((_req, res) => {
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      res.write("data: partial\n\n");
+      // Abruptly destroy the connection instead of calling res.end() —
+      // simulates a dropped upstream connection mid-stream, which should
+      // surface as a read error on the studio's side, not an uncaught
+      // exception.
+      setTimeout(() => res.destroy(), 10);
+    });
+    const upstreamUrl = await listen(upstream);
+    studio = createServer((req, res) => {
+      void proxyToGateway(req, res, baseConfig(upstreamUrl), "/v1/execute/stream");
+    });
+    const studioUrl = await listen(studio);
+
+    const res = await fetch(`${studioUrl}/studio-api/execute/stream`, { method: "POST" });
+    // The point of this test is that reading the (abruptly-terminated)
+    // body never throws an unhandled error — it's caught and treated as
+    // "nothing more to write" (src/proxy.ts). Whether the runtime
+    // surfaces the partial read as a rejected .text() call or a partial
+    // body depends on the HTTP client, so accept either outcome here.
+    await res.text().catch(() => undefined);
+  });
 });
