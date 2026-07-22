@@ -17,8 +17,14 @@ function buildEnforcer(
 
 describe("DefaultBudgetEnforcer — no policy configured", () => {
   it("allows everything when the tenant has no configured BudgetPolicy", async () => {
-    const { enforcer } = buildEnforcer(basePolicy({ tenant: tenant({ organizationId: "no-policy" }) }));
-    const decision = await enforcer.evaluate(tenant({ organizationId: "unconfigured" }), 10, "groq");
+    const { enforcer } = buildEnforcer(
+      basePolicy({ tenant: tenant({ organizationId: "no-policy" }) }),
+    );
+    const decision = await enforcer.evaluate(
+      tenant({ organizationId: "unconfigured" }),
+      10,
+      "groq",
+    );
     expect(decision).toEqual({ allowed: true, alertsTriggered: [] });
   });
 });
@@ -122,7 +128,10 @@ describe("DefaultBudgetEnforcer — enforcing mode", () => {
 
   it("accumulates spend already recorded in the ledger before evaluating a new request", async () => {
     const { enforcer, ledger } = buildEnforcer(
-      basePolicy({ dailyBudgetUsd: 100, thresholds: [{ atPercentOfBudget: 100, action: "block" }] }),
+      basePolicy({
+        dailyBudgetUsd: 100,
+        thresholds: [{ atPercentOfBudget: 100, action: "block" }],
+      }),
     );
     await ledger.recordSpend(tenant(), "groq", 90);
     const decision = await enforcer.evaluate(tenant(), 20, "groq"); // 90 + 20 = 110% of $100
@@ -168,7 +177,11 @@ describe("DefaultBudgetEnforcer — shadow mode (Blueprint §7 EM-10 default)", 
   it("defaults to shadow mode when `mode` is omitted entirely", async () => {
     const ledger = new InMemoryBudgetLedger();
     const policyProvider = new StaticBudgetPolicyProvider([basePolicy()]);
-    const enforcer = new DefaultBudgetEnforcer({ ledger, policyProvider, telemetry: fakeTelemetry() });
+    const enforcer = new DefaultBudgetEnforcer({
+      ledger,
+      policyProvider,
+      telemetry: fakeTelemetry(),
+    });
     const decision = await enforcer.evaluate(tenant(), 100, "groq");
     expect(decision.allowed).toBe(true); // would have blocked in enforcing mode
   });
@@ -213,9 +226,7 @@ describe("DefaultBudgetEnforcer — telemetry (architecture §43.6 / ADR-015)", 
       1,
       expect.objectContaining({ tenant: "org-1" }),
     );
-    const allMetricNames = (telemetry.recordMetric as Mock).mock.calls.map(
-      (c: unknown[]) => c[0],
-    );
+    const allMetricNames = (telemetry.recordMetric as Mock).mock.calls.map((c: unknown[]) => c[0]);
     expect(allMetricNames).not.toContain("gateway_failovers_total");
     expect(allMetricNames.every((n: string) => n.startsWith("gateway_budget_"))).toBe(true);
   });

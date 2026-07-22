@@ -1,4 +1,16 @@
-import { h, panelHeader, jsonBlock, badge, notice, metric, taskSelect, apiExecute, pushHistory, formatCost, formatMs } from "../shared.js";
+import {
+  h,
+  panelHeader,
+  jsonBlock,
+  badge,
+  notice,
+  metric,
+  taskSelect,
+  apiExecute,
+  pushHistory,
+  formatCost,
+  formatMs,
+} from "../shared.js";
 
 export function renderExecute(root) {
   const state = {
@@ -91,7 +103,11 @@ export function renderExecute(root) {
         state.task = v;
         render();
       }),
-      h("div", { class: "field-hint" }, "A known task type, or pick “custom task type…” to type your own — TaskType accepts any config-registered string, not just the known list."),
+      h(
+        "div",
+        { class: "field-hint" },
+        "A known task type, or pick “custom task type…” to type your own — TaskType accepts any config-registered string, not just the known list.",
+      ),
     ]);
     if (state.task === "__custom__") {
       taskField.append(
@@ -119,18 +135,31 @@ export function renderExecute(root) {
       ]),
       h("div", { class: "field" }, [
         h("label", {}, "Input · text"),
-        h("textarea", {
-          onInput: (e) => (state.text = e.target.value),
-        }, state.text),
+        h(
+          "textarea",
+          {
+            onInput: (e) => (state.text = e.target.value),
+          },
+          state.text,
+        ),
       ]),
       h("div", { class: "row" }, [
         h("div", { class: "field" }, [
           h("label", {}, "Constraints · maxLatencyMs (optional)"),
-          h("input", { type: "number", value: state.maxLatencyMs, onInput: (e) => (state.maxLatencyMs = e.target.value) }),
+          h("input", {
+            type: "number",
+            value: state.maxLatencyMs,
+            onInput: (e) => (state.maxLatencyMs = e.target.value),
+          }),
         ]),
         h("div", { class: "field" }, [
           h("label", {}, "Constraints · maxCostUsd (optional)"),
-          h("input", { type: "number", step: "0.001", value: state.maxCostUsd, onInput: (e) => (state.maxCostUsd = e.target.value) }),
+          h("input", {
+            type: "number",
+            step: "0.001",
+            value: state.maxCostUsd,
+            onInput: (e) => (state.maxCostUsd = e.target.value),
+          }),
         ]),
       ]),
       h("div", { class: "row" }, [
@@ -161,10 +190,18 @@ export function renderExecute(root) {
           value: state.executionProfileOverride,
           onInput: (e) => (state.executionProfileOverride = e.target.value),
         }),
-        h("div", { class: "field-hint" }, "Advanced, v1.1+. Only takes effect if the target gateway has ENABLE_STRATEGY_LAYER=true — the Strategy Layer's own resolution stage is the only thing that reads this field (orchestrator and policy-engine never consume it directly). An unresolvable profile ID fails the request rather than silently falling back. See the Execution Profiles panel."),
+        h(
+          "div",
+          { class: "field-hint" },
+          "Advanced, v1.1+. Only takes effect if the target gateway has ENABLE_STRATEGY_LAYER=true — the Strategy Layer's own resolution stage is the only thing that reads this field (orchestrator and policy-engine never consume it directly). An unresolvable profile ID fails the request rather than silently falling back. See the Execution Profiles panel.",
+        ),
       ]),
       h("div", { class: "btn-row" }, [
-        h("button", { class: "btn", disabled: state.running || undefined, onClick: run }, state.running ? "Running…" : "Execute"),
+        h(
+          "button",
+          { class: "btn", disabled: state.running || undefined, onClick: run },
+          state.running ? "Running…" : "Execute",
+        ),
       ]),
     ]);
     root.append(form);
@@ -192,7 +229,11 @@ export function renderExecute(root) {
         ]),
         h("div", { class: "field" }, [
           h("label", {}, "Output"),
-          h("div", { class: "output-text" }, body.output.text ?? JSON.stringify(body.output.json ?? body.output.toolCalls ?? "")),
+          h(
+            "div",
+            { class: "output-text" },
+            body.output.text ?? JSON.stringify(body.output.json ?? body.output.toolCalls ?? ""),
+          ),
         ]),
       );
     } else {
@@ -201,7 +242,9 @@ export function renderExecute(root) {
         notice(
           [
             h("strong", {}, `HTTP ${result.status}`),
-            err ? ` — ${err.code}: ${err.message} (retryable: ${err.retryable})` : " — request failed",
+            err
+              ? ` — ${err.code}: ${err.message} (retryable: ${err.retryable})`
+              : " — request failed",
           ],
           "danger",
         ),
@@ -213,8 +256,18 @@ export function renderExecute(root) {
         h("span", { class: "tab active" }, "Raw request/response — see below"),
       ]),
       h("div", { class: "row" }, [
-        h("div", {}, [h("div", { class: "field-hint" }, "Request JSON"), jsonBlock(result.request)]),
-        h("div", {}, [h("div", { class: "field-hint" }, `Response JSON (status ${result.status}, ${result.wallClockMs}ms wall clock)`), jsonBlock(result.body)]),
+        h("div", {}, [
+          h("div", { class: "field-hint" }, "Request JSON"),
+          jsonBlock(result.request),
+        ]),
+        h("div", {}, [
+          h(
+            "div",
+            { class: "field-hint" },
+            `Response JSON (status ${result.status}, ${result.wallClockMs}ms wall clock)`,
+          ),
+          jsonBlock(result.body),
+        ]),
       ]),
     );
 

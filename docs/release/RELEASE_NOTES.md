@@ -85,7 +85,7 @@ None. Every frozen interface (`ExecuteRequest`, `ExecuteResponse`,
 
 AI Gateway is a universal AI execution platform. Instead of calling a
 specific provider's API and hand-rolling your own retry, failover, and
-credential logic, you describe *what you want done* — a task, some
+credential logic, you describe _what you want done_ — a task, some
 content, and your constraints — and the gateway takes care of selecting
 a suitable model, executing the request, retrying transient failures,
 and failing over to another provider if one is unavailable. You never

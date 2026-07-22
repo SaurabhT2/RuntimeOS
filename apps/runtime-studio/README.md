@@ -40,7 +40,7 @@ to `$GATEWAY_URL`, and streams the response straight back — see
 `src/proxy.ts`. A pure static site would have to embed the key in
 client-side JavaScript, visible to anyone who opens the browser's
 network tab. This is the same reasoning `apps/gateway-server` and
-`apps/vercel-adapter` apply to *their* upstream provider credentials,
+`apps/vercel-adapter` apply to _their_ upstream provider credentials,
 applied one layer further out.
 
 ## Architecture
@@ -56,7 +56,7 @@ applied one layer further out.
 The four proxy routes (`src/server.ts`'s `PROXY_ROUTES`) map 1:1 onto
 the four routes `packages/gateway-runtime/src/dispatch.ts` registers —
 nothing else is forwarded, because nothing else exists to forward to.
-For the request path *inside* the target gateway once a call reaches
+For the request path _inside_ the target gateway once a call reaches
 it, see the root repository's own `README.md`, "Platform architecture
 at a glance" — this Studio's Architecture panel renders that same,
 verified path as an SVG diagram rather than duplicating it as a second,
@@ -81,13 +81,13 @@ API key on it (`GATEWAY_API_KEYS_JSON`, or
 
 ### Environment variables
 
-| Variable | Required | Default | Meaning |
-|---|---|---|---|
-| `GATEWAY_URL` | Yes | — | The target gateway's base URL, e.g. `http://localhost:3000`. |
-| `GATEWAY_API_KEY` | Yes | — | The API key this Studio authenticates to `GATEWAY_URL` with, server-side only. |
-| `STUDIO_HOST` | No | `0.0.0.0` | Host this Studio's own server binds to. |
-| `STUDIO_PORT` | No | `4000` | Port this Studio's own server listens on. |
-| `STUDIO_ACCESS_KEY` | No | unset | If set, every `/studio-api/*` request must send it as `x-studio-key`. See "Deployment and access control," below. |
+| Variable            | Required | Default   | Meaning                                                                                                           |
+| ------------------- | -------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `GATEWAY_URL`       | Yes      | —         | The target gateway's base URL, e.g. `http://localhost:3000`.                                                      |
+| `GATEWAY_API_KEY`   | Yes      | —         | The API key this Studio authenticates to `GATEWAY_URL` with, server-side only.                                    |
+| `STUDIO_HOST`       | No       | `0.0.0.0` | Host this Studio's own server binds to.                                                                           |
+| `STUDIO_PORT`       | No       | `4000`    | Port this Studio's own server listens on.                                                                         |
+| `STUDIO_ACCESS_KEY` | No       | unset     | If set, every `/studio-api/*` request must send it as `x-studio-key`. See "Deployment and access control," below. |
 
 ### Deployment and access control
 
@@ -121,18 +121,18 @@ apps/runtime-studio/
 
 ### The ten panels (`public/panels/`)
 
-| File | Sidebar item | Real API it calls | Honesty notes |
-|---|---|---|---|
-| `execute.js` | Execute | `POST /v1/execute` | — |
-| `streaming.js` | Streaming | `POST /v1/execute/stream` | No "reconnect" — `StreamChunk` has no resume cursor, so this panel says so instead of faking one. |
-| `pipeline.js` | Pipeline | `POST /v1/execute/pipeline` | Correctly distinguishes a failed step's flat `GatewayError` shape from a successful step's `ExecuteResponse` — see `apps/gateway-server/README.md`. |
-| `runtime-profiles.js` | Runtime Profiles | *(none — informational only)* | Deliberately non-interactive: there's no per-request field or introspection endpoint for this; it's deployment-wide config. |
-| `execution-profiles.js` | Execution Profiles | `POST /v1/execute` (with `preferences.executionProfileOverride`) | States plainly that this field only has any effect when the target has `ENABLE_STRATEGY_LAYER=true`, and that an unresolvable ID fails the request rather than silently falling back. |
-| `strategy-layer.js` | Strategy Layer | `POST /v1/execute` (as a probe) | No fake ON/OFF toggle — includes a table of what routing information the API does and doesn't expose (most of what a naive implementation might show — "routing reasoning," "strategy selected" — isn't real). |
-| `budget-governance.js` | Budget Governance | `POST /v1/execute` (as a probe) | Leads with the real, current gap: neither deployment app exposes this configuration at all. A `402 BUDGET_EXCEEDED` response, if one ever comes back, is genuinely surfaced — not simulated. |
-| `telemetry.js` | Telemetry | *(reads Request History only)* | Explicitly lists the two fields a naive telemetry panel might show that the API doesn't actually return (effective Runtime/Execution Profile, per-middleware timing breakdown). |
-| `history.js` | Request History | *(local only — replay re-calls the real API)* | — |
-| `architecture.js` | Architecture | *(reads Request History for pacing only)* | The "replay" animation is explicitly labeled as illustrative pacing (one real number spread evenly across stages), not measured per-stage telemetry, because the API doesn't report that. |
+| File                    | Sidebar item       | Real API it calls                                                | Honesty notes                                                                                                                                                                                                  |
+| ----------------------- | ------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `execute.js`            | Execute            | `POST /v1/execute`                                               | —                                                                                                                                                                                                              |
+| `streaming.js`          | Streaming          | `POST /v1/execute/stream`                                        | No "reconnect" — `StreamChunk` has no resume cursor, so this panel says so instead of faking one.                                                                                                              |
+| `pipeline.js`           | Pipeline           | `POST /v1/execute/pipeline`                                      | Correctly distinguishes a failed step's flat `GatewayError` shape from a successful step's `ExecuteResponse` — see `apps/gateway-server/README.md`.                                                            |
+| `runtime-profiles.js`   | Runtime Profiles   | _(none — informational only)_                                    | Deliberately non-interactive: there's no per-request field or introspection endpoint for this; it's deployment-wide config.                                                                                    |
+| `execution-profiles.js` | Execution Profiles | `POST /v1/execute` (with `preferences.executionProfileOverride`) | States plainly that this field only has any effect when the target has `ENABLE_STRATEGY_LAYER=true`, and that an unresolvable ID fails the request rather than silently falling back.                          |
+| `strategy-layer.js`     | Strategy Layer     | `POST /v1/execute` (as a probe)                                  | No fake ON/OFF toggle — includes a table of what routing information the API does and doesn't expose (most of what a naive implementation might show — "routing reasoning," "strategy selected" — isn't real). |
+| `budget-governance.js`  | Budget Governance  | `POST /v1/execute` (as a probe)                                  | Leads with the real, current gap: neither deployment app exposes this configuration at all. A `402 BUDGET_EXCEEDED` response, if one ever comes back, is genuinely surfaced — not simulated.                   |
+| `telemetry.js`          | Telemetry          | _(reads Request History only)_                                   | Explicitly lists the two fields a naive telemetry panel might show that the API doesn't actually return (effective Runtime/Execution Profile, per-middleware timing breakdown).                                |
+| `history.js`            | Request History    | _(local only — replay re-calls the real API)_                    | —                                                                                                                                                                                                              |
+| `architecture.js`       | Architecture       | _(reads Request History for pacing only)_                        | The "replay" animation is explicitly labeled as illustrative pacing (one real number spread evenly across stages), not measured per-stage telemetry, because the API doesn't report that.                      |
 
 ## What this Studio will and won't pretend
 

@@ -3,8 +3,8 @@
 **Status:** implemented (EM-3), **activated for the Strategy Layer as of
 EM-9** (Independent Architecture & Engineering Review of EM-9). Task-to-model
 scoring, ranking, and `ExecutionPlan` assembly (architecture §13; Blueprint
-§7, §8.7). Every pipeline *stage* is still exactly EM-3's five steps; EM-9
-made several of those stages' *inputs* come from a well-formed
+§7, §8.7). Every pipeline _stage_ is still exactly EM-3's five steps; EM-9
+made several of those stages' _inputs_ come from a well-formed
 `ctx.strategyDecision` when present, superseding EM-3's `ExecuteRequest`-only
 inputs — see "EM-9 Architecture Compliance Notes" below for the complete,
 field-by-field account.
@@ -84,12 +84,12 @@ Field-by-field account of what `ctx.strategyDecision` (when present and
 well-formed — every field is individually validated, `strategy-signals.ts`)
 changes, versus what stays exactly as EM-3 built it:
 
-| Pipeline stage | EM-3 input | EM-9 input when `strategyDecision` is present | Architecture reference |
-|---|---|---|---|
-| Task Classifier / Candidate Query | `classifyTask(req)`'s ad-hoc `CapabilityRequirement` | `requiredCapabilities` (`CapabilitySet`) supersedes `requiresJsonMode`/`requiresToolCalling`/`requiresStreaming`/`minContextTokens`/`reasoningAffinity`; `creativityAffinity` always from `classifyTask` | §32.2 |
-| Scoring | Four weighted terms only | `preferredModelClasses` nudges `quality`; `recommendedModelClassDowngrade`/`preferFreeTierProviders` nudge `cost` — soft signals only, never a new term, never a hard override | §31.2, §33.2 |
-| Plan Assembly | `resolveTemperature(req)`, hardcoded `maxOutputTokens`/`timeoutMs`/`DEFAULT_RETRY_POLICY`, `req.constraints?.streaming ?? false` | `executionProfile.inference`/`.timeoutMs`/`.retryPolicy`/`.streaming.defaultEnabled` supersede those defaults; `optimizations.cost.disableStreaming`, when `true`, forces `streaming: false` regardless | §31.1, §33.2 |
-| (orchestrator, not this package) | `resolveMessages(req)` | `optimizations.prompt.messages` supersedes it entirely | §34.5 |
+| Pipeline stage                    | EM-3 input                                                                                                                       | EM-9 input when `strategyDecision` is present                                                                                                                                                            | Architecture reference |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| Task Classifier / Candidate Query | `classifyTask(req)`'s ad-hoc `CapabilityRequirement`                                                                             | `requiredCapabilities` (`CapabilitySet`) supersedes `requiresJsonMode`/`requiresToolCalling`/`requiresStreaming`/`minContextTokens`/`reasoningAffinity`; `creativityAffinity` always from `classifyTask` | §32.2                  |
+| Scoring                           | Four weighted terms only                                                                                                         | `preferredModelClasses` nudges `quality`; `recommendedModelClassDowngrade`/`preferFreeTierProviders` nudge `cost` — soft signals only, never a new term, never a hard override                           | §31.2, §33.2           |
+| Plan Assembly                     | `resolveTemperature(req)`, hardcoded `maxOutputTokens`/`timeoutMs`/`DEFAULT_RETRY_POLICY`, `req.constraints?.streaming ?? false` | `executionProfile.inference`/`.timeoutMs`/`.retryPolicy`/`.streaming.defaultEnabled` supersede those defaults; `optimizations.cost.disableStreaming`, when `true`, forces `streaming: false` regardless  | §31.1, §33.2           |
+| (orchestrator, not this package)  | `resolveMessages(req)`                                                                                                           | `optimizations.prompt.messages` supersedes it entirely                                                                                                                                                   | §34.5                  |
 
 Every override above is field-level and independently validated
 (`deriveCapabilityRequirement`/`deriveStrategySignals`/`deriveExecutionPlanOverrides`,

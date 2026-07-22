@@ -86,7 +86,7 @@ been decided by the Architecture Review Board yet." That is not this ADR: the En
 Blueprint (§8.8, `policy-engine`'s Public APIs row) — itself authoritative, not this ADR's
 own reasoning — already resolves the apparent tension directly: "as of EM-8, this consumes
 a `StrategyDecision` rather than a raw request (architecture §13.5) — a change to the
-*caller*, not to this package's own logic." Blueprint §8.8's Future Evolution row goes
+_caller_, not to this package's own logic." Blueprint §8.8's Future Evolution row goes
 further, stating `policy-engine`'s public behavior is "explicitly designed (ADR-008,
 architecture §39) to never need to change" as the Strategy Layer evolves above it. This
 ADR's decision — signature unchanged, `policy-engine`'s own logic untouched, the value

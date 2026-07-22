@@ -235,7 +235,11 @@ describe("EM-9 (Independent Architecture & Engineering Review of EM-9): Active S
           estimatedCostUsd: 0.01,
           estimatedSavingsUsd: 0,
         },
-        prompt: { messages: optimizedMessages, estimatedTokens: 6, transformationsApplied: ["condense"] },
+        prompt: {
+          messages: optimizedMessages,
+          estimatedTokens: 6,
+          transformationsApplied: ["condense"],
+        },
       },
     });
     const strategyLayer = fakeStrategyLayer(decision);

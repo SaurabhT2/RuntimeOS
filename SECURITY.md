@@ -2,10 +2,10 @@
 
 ## Supported versions
 
-| Version | Supported |
-|---|---|
-| 1.0.x | :white_check_mark: Yes — current release |
-| < 1.0 (pre-release / unreleased) | :x: No — not a released version |
+| Version                          | Supported                                |
+| -------------------------------- | ---------------------------------------- |
+| 1.0.x                            | :white_check_mark: Yes — current release |
+| < 1.0 (pre-release / unreleased) | :x: No — not a released version          |
 
 AI Gateway's packages version independently (see
 [`docs/release/VERSIONING.md`](docs/release/VERSIONING.md)). This table

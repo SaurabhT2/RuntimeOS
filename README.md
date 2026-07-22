@@ -16,13 +16,13 @@ for what each milestone delivered.
 
 ## Find what you need — by role
 
-| If you are a... | Start here |
-| --- | --- |
-| **Executive / Product stakeholder** — what is this, why does it exist, what does it do today | This page's ["What is AI Gateway"](#what-is-ai-gateway) and ["What v1.2 delivers"](#what-v12-delivers) sections, then [`docs/release/RELEASE_NOTES.md`](docs/release/RELEASE_NOTES.md) |
-| **Enterprise Architect** — evaluating the platform's design, guarantees, and boundaries | This page's ["Platform architecture at a glance"](#platform-architecture-at-a-glance) diagram for a quick overview, then [`docs/architecture/architecture-spec.md`](docs/architecture/architecture-spec.md) (frozen source of truth), [`docs/adr/README.md`](docs/adr/README.md) (settled and open architectural decisions), [`docs/release/KNOWN_LIMITATIONS.md`](docs/release/KNOWN_LIMITATIONS.md) |
-| **Platform Engineer** — building or modifying a package in this monorepo | ["Repository layout"](#repository-layout) and ["Engineering milestones"](#engineering-milestones) below, [`docs/architecture/engineering-blueprint.md`](docs/architecture/engineering-blueprint.md), the README inside the package you're touching, [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| **Application Developer** — calling a running gateway from your own service | [`apps/runtime-studio`](apps/runtime-studio) (an interactive reference client — point it at a running gateway and exercise every endpoint from a browser), [`apps/gateway-server/README.md`](apps/gateway-server/README.md)'s Public API section, [`examples/minimal-node-client`](examples/minimal-node-client), [`examples/streaming-client`](examples/streaming-client), and [`examples/pipeline-client`](examples/pipeline-client) |
-| **Runtime Operator** — deploying and running the gateway | [`docs/release/DEPLOYMENT.md`](docs/release/DEPLOYMENT.md) (Node/container) or [`docs/release/DEPLOYMENT-VERCEL.md`](docs/release/DEPLOYMENT-VERCEL.md) (Vercel), [`docs/release/KNOWN_LIMITATIONS.md`](docs/release/KNOWN_LIMITATIONS.md), [`docs/release/SUPPORT_POLICY.md`](docs/release/SUPPORT_POLICY.md) |
+| If you are a...                                                                              | Start here                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Executive / Product stakeholder** — what is this, why does it exist, what does it do today | This page's ["What is AI Gateway"](#what-is-ai-gateway) and ["What v1.2 delivers"](#what-v12-delivers) sections, then [`docs/release/RELEASE_NOTES.md`](docs/release/RELEASE_NOTES.md)                                                                                                                                                                                                                                                 |
+| **Enterprise Architect** — evaluating the platform's design, guarantees, and boundaries      | This page's ["Platform architecture at a glance"](#platform-architecture-at-a-glance) diagram for a quick overview, then [`docs/architecture/architecture-spec.md`](docs/architecture/architecture-spec.md) (frozen source of truth), [`docs/adr/README.md`](docs/adr/README.md) (settled and open architectural decisions), [`docs/release/KNOWN_LIMITATIONS.md`](docs/release/KNOWN_LIMITATIONS.md)                                  |
+| **Platform Engineer** — building or modifying a package in this monorepo                     | ["Repository layout"](#repository-layout) and ["Engineering milestones"](#engineering-milestones) below, [`docs/architecture/engineering-blueprint.md`](docs/architecture/engineering-blueprint.md), the README inside the package you're touching, [`CONTRIBUTING.md`](CONTRIBUTING.md)                                                                                                                                               |
+| **Application Developer** — calling a running gateway from your own service                  | [`apps/runtime-studio`](apps/runtime-studio) (an interactive reference client — point it at a running gateway and exercise every endpoint from a browser), [`apps/gateway-server/README.md`](apps/gateway-server/README.md)'s Public API section, [`examples/minimal-node-client`](examples/minimal-node-client), [`examples/streaming-client`](examples/streaming-client), and [`examples/pipeline-client`](examples/pipeline-client) |
+| **Runtime Operator** — deploying and running the gateway                                     | [`docs/release/DEPLOYMENT.md`](docs/release/DEPLOYMENT.md) (Node/container) or [`docs/release/DEPLOYMENT-VERCEL.md`](docs/release/DEPLOYMENT-VERCEL.md) (Vercel), [`docs/release/KNOWN_LIMITATIONS.md`](docs/release/KNOWN_LIMITATIONS.md), [`docs/release/SUPPORT_POLICY.md`](docs/release/SUPPORT_POLICY.md)                                                                                                                         |
 
 ## What is AI Gateway
 
@@ -47,7 +47,7 @@ documents; section numbering is unchanged from the original.
 ## What v1.2 delivers
 
 - **Provider-agnostic execution core (v1.0, EM-0 – EM-5):** `POST
-  /v1/execute` and `POST /v1/execute/stream`, automatic retry/failover,
+/v1/execute` and `POST /v1/execute/stream`, automatic retry/failover,
   BYOK and platform-managed credentials with multi-tenant isolation,
   API-key auth, rate limiting, response caching, and a real
   `GET /v1/health` readiness check. Two production-capable provider
@@ -79,7 +79,7 @@ documents; section numbering is unchanged from the original.
   the running gateway constructs or calls a plugin yet. A later
   milestone's work.
 
-For the full, honestly-disclosed list of what does *not* work yet or has
+For the full, honestly-disclosed list of what does _not_ work yet or has
 a documented caveat, see
 [`docs/release/KNOWN_LIMITATIONS.md`](docs/release/KNOWN_LIMITATIONS.md)
 — it is the single consolidated source for this, current through v1.2.
@@ -192,38 +192,40 @@ current package responsibilities, see ["Repository layout"](#repository-layout)
 above; for the authoritative milestone sequence, see the Engineering
 Blueprint's §7 (`docs/architecture/engineering-blueprint.md`).
 
-| Milestone | Delivered |
-| --- | --- |
-| EM-0 | Monorepo scaffold, shared tooling, `core-contracts` implemented and frozen at `1.0.0` |
-| EM-1 | `config`, `telemetry`, `provider-sdk` (incl. Mock Adapter and conformance harness) |
-| EM-2 | `reliability` (retry engine, circuit breaker, timeout manager, health monitor), `model-registry`, `credential-resolver`[^em2] |
-| EM-3 | `policy-engine` (task-to-model scoring, ranking, `ExecutionPlan` assembly), `providers/groq`, `providers/nvidia-nim`, `streaming` |
-| EM-4 | `orchestrator` (full request lifecycle), end-to-end integration/chaos tests (`tools/orchestrator-integration-tests`) |
-| EM-5 | `middleware`, `apps/gateway-server` (the composition root), `examples/*` |
-| EM-6 | `capability-registry`, `execution-profile-registry`, `runtime-profiles` — the Strategy Layer foundation (architecture §30–§37); no orchestrator/policy-engine wiring yet |
-| EM-7 | `cost-optimizer`, `prompt-optimizer`, `learning`, `plugin-system` — Optimization Pipeline & Plugin System foundation (architecture §33/§34/§36/§11); no orchestrator/policy-engine wiring yet |
-| EM-8 | `strategy-layer` (architecture §30) — integrates every EM-6/EM-7 foundation package (except `plugin-system`) into an immutable `StrategyDecision`; wired into `orchestrator` behind the `enableStrategyLayer` feature flag (ADR-0017); `policy-engine` receives the decision via `PolicyContext`. Runtime Profile scoring activation is attributed elsewhere in this repository to "EM-9," but `docs/history/IMPLEMENTATION_PROGRESS.md` has no standalone EM-9 section — see that document's EM-11 entry for the open documentation note tracking this.[^em9] |
-| EM-10 | `pipeline-orchestrator` (multi-step execution via `ExecutionOrchestrator.execute()` only, `maxSteps`-capped) and `budget-governance` (shadow-mode-first cost governance: thresholds, per-provider caps, cumulative ledger). An Independent Architecture Review returned REQUIRES REWORK on two findings; both were closed in a follow-up rework pass and independently re-verified (ADR-0026). |
-| EM-11 | Platform hardening and v1.2 production-readiness validation — no new architecture, package, or interface. Full regression/conformance/chaos validation (1,239/1,239 tests), an in-process performance smoke-test, and a documentation-completeness pass. Budget Governance's Enforcement Mode independently verified end-to-end for the first time (it remains off by default — see ["What v1.2 delivers"](#what-v12-delivers) above). |
+| Milestone | Delivered                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| EM-0      | Monorepo scaffold, shared tooling, `core-contracts` implemented and frozen at `1.0.0`                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| EM-1      | `config`, `telemetry`, `provider-sdk` (incl. Mock Adapter and conformance harness)                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| EM-2      | `reliability` (retry engine, circuit breaker, timeout manager, health monitor), `model-registry`, `credential-resolver`[^em2]                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| EM-3      | `policy-engine` (task-to-model scoring, ranking, `ExecutionPlan` assembly), `providers/groq`, `providers/nvidia-nim`, `streaming`                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| EM-4      | `orchestrator` (full request lifecycle), end-to-end integration/chaos tests (`tools/orchestrator-integration-tests`)                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| EM-5      | `middleware`, `apps/gateway-server` (the composition root), `examples/*`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| EM-6      | `capability-registry`, `execution-profile-registry`, `runtime-profiles` — the Strategy Layer foundation (architecture §30–§37); no orchestrator/policy-engine wiring yet                                                                                                                                                                                                                                                                                                                                                                                       |
+| EM-7      | `cost-optimizer`, `prompt-optimizer`, `learning`, `plugin-system` — Optimization Pipeline & Plugin System foundation (architecture §33/§34/§36/§11); no orchestrator/policy-engine wiring yet                                                                                                                                                                                                                                                                                                                                                                  |
+| EM-8      | `strategy-layer` (architecture §30) — integrates every EM-6/EM-7 foundation package (except `plugin-system`) into an immutable `StrategyDecision`; wired into `orchestrator` behind the `enableStrategyLayer` feature flag (ADR-0017); `policy-engine` receives the decision via `PolicyContext`. Runtime Profile scoring activation is attributed elsewhere in this repository to "EM-9," but `docs/history/IMPLEMENTATION_PROGRESS.md` has no standalone EM-9 section — see that document's EM-11 entry for the open documentation note tracking this.[^em9] |
+| EM-10     | `pipeline-orchestrator` (multi-step execution via `ExecutionOrchestrator.execute()` only, `maxSteps`-capped) and `budget-governance` (shadow-mode-first cost governance: thresholds, per-provider caps, cumulative ledger). An Independent Architecture Review returned REQUIRES REWORK on two findings; both were closed in a follow-up rework pass and independently re-verified (ADR-0026).                                                                                                                                                                 |
+| EM-11     | Platform hardening and v1.2 production-readiness validation — no new architecture, package, or interface. Full regression/conformance/chaos validation (1,239/1,239 tests), an in-process performance smoke-test, and a documentation-completeness pass. Budget Governance's Enforcement Mode independently verified end-to-end for the first time (it remains off by default — see ["What v1.2 delivers"](#what-v12-delivers) above).                                                                                                                         |
 
-[^em2]: `CHANGELOG.md`'s milestone table also attributes `model-registry`
-and `credential-resolver` to EM-2; `docs/history/IMPLEMENTATION_PROGRESS.md`
-has no standalone `## EM-2` section to independently confirm this against
-(it goes from `## EM-1` directly to `## EM-3`), and EM-3's own scope line
-explicitly does not include either package. This table follows
-`CHANGELOG.md`'s attribution as the best available evidence; see that
-document's history section for the same open note.
+[^em2]:
+    `CHANGELOG.md`'s milestone table also attributes `model-registry`
+    and `credential-resolver` to EM-2; `docs/history/IMPLEMENTATION_PROGRESS.md`
+    has no standalone `## EM-2` section to independently confirm this against
+    (it goes from `## EM-1` directly to `## EM-3`), and EM-3's own scope line
+    explicitly does not include either package. This table follows
+    `CHANGELOG.md`'s attribution as the best available evidence; see that
+    document's history section for the same open note.
 
-[^em9]: Multiple documents in this repository (`packages/policy-engine/README.md`,
-`packages/strategy-layer/README.md`, ADR-0018) refer to "EM-9" as settled
-history for Runtime Profile scoring activation, but no standalone EM-9
-section exists in the implementation history. This is believed to be a
-documentation omission (the work was very likely folded into EM-8's
-section at original authoring time) rather than evidence the work didn't
-happen — the described behavior is implemented and tested regardless.
-Flagged for a future documentation pass rather than silently resolved,
-per this repository's own "document, don't invent a solution" convention
-for cross-milestone findings.
+[^em9]:
+    Multiple documents in this repository (`packages/policy-engine/README.md`,
+    `packages/strategy-layer/README.md`, ADR-0018) refer to "EM-9" as settled
+    history for Runtime Profile scoring activation, but no standalone EM-9
+    section exists in the implementation history. This is believed to be a
+    documentation omission (the work was very likely folded into EM-8's
+    section at original authoring time) rather than evidence the work didn't
+    happen — the described behavior is implemented and tested regardless.
+    Flagged for a future documentation pass rather than silently resolved,
+    per this repository's own "document, don't invent a solution" convention
+    for cross-milestone findings.
 
 ## Getting started
 
@@ -264,7 +266,7 @@ see [`docs/release/TROUBLESHOOTING.md`](docs/release/TROUBLESHOOTING.md).
 ## Tooling choices (Section 3 of [the Blueprint](docs/architecture/engineering-blueprint.md))
 
 | Concern                      | Choice                                              | Why                                                                                                                                                                                                  |
-| ----------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ---------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Package manager / workspaces | pnpm workspaces                                     | Strict, non-hoisted `node_modules` catches undeclared cross-package imports at resolution time — see `docs/adr/0003-boundary-enforcement-layers.md` for a worked example of this actually happening. |
 | Build orchestration          | Turborepo                                           | Dependency-graph-aware task scheduling and caching (`turbo.json` mirrors the package dependency graph).                                                                                              |
 | Language                     | TypeScript, strict mode                             | `tsconfig.base.json` — `strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`, etc.                                                                                                              |
@@ -298,17 +300,17 @@ limitation.
 A short glossary for readers new to the platform's vocabulary — see the
 Architecture Specification for the authoritative, complete definitions.
 
-| Term | Meaning |
-| --- | --- |
-| `TaskType` | The public vocabulary callers use instead of a model name — a known value from `core-contracts`'s `KNOWN_TASK_TYPES` (e.g. `"summarization"`, `"complex_reasoning"`, `"code_generation"`) or any custom, config-registered string; see `packages/core-contracts/src/task.ts` and architecture §10.1. |
-| `ExecutionPlan` | Policy Engine's output: a ranked list of candidate `(provider, model)` pairs for a given request. |
-| `StrategyDecision` | Strategy Layer's output (when enabled): an immutable bundle of capability, execution-profile, cost, and prompt-optimization decisions, consumed ahead of Policy Engine. |
-| Runtime Profile | A deployment/tenant-wide behavior overlay (provider preference, cost posture, telemetry, caching) selected via `GatewayConfig.runtimeProfileId`. |
-| Execution Profile | A per-task-type set of inference parameters, retry behavior, and streaming/caching defaults — distinct from a Runtime Profile; see `packages/runtime-profiles/README.md`'s "Distinction from Execution Profiles." |
-| Budget Policy | A tenant's spend limits and the ordered threshold actions (`alert`, `downgrade_model`, `switch_provider`, `block`) to take as spend approaches them. |
-| Shadow mode | A Budget Governance mode that computes real enforcement decisions and records them to telemetry, but never blocks or alters routing. The default mode, on or off `budgetPolicies`. |
-| Pipeline | A sequence of `ExecuteRequest`s run through `ExecutionOrchestrator.execute()` one after another via `POST /v1/execute/pipeline`. |
-| BYOK | Bring-your-own-key — a caller-supplied provider credential, as opposed to a platform-managed one. |
+| Term               | Meaning                                                                                                                                                                                                                                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TaskType`         | The public vocabulary callers use instead of a model name — a known value from `core-contracts`'s `KNOWN_TASK_TYPES` (e.g. `"summarization"`, `"complex_reasoning"`, `"code_generation"`) or any custom, config-registered string; see `packages/core-contracts/src/task.ts` and architecture §10.1. |
+| `ExecutionPlan`    | Policy Engine's output: a ranked list of candidate `(provider, model)` pairs for a given request.                                                                                                                                                                                                    |
+| `StrategyDecision` | Strategy Layer's output (when enabled): an immutable bundle of capability, execution-profile, cost, and prompt-optimization decisions, consumed ahead of Policy Engine.                                                                                                                              |
+| Runtime Profile    | A deployment/tenant-wide behavior overlay (provider preference, cost posture, telemetry, caching) selected via `GatewayConfig.runtimeProfileId`.                                                                                                                                                     |
+| Execution Profile  | A per-task-type set of inference parameters, retry behavior, and streaming/caching defaults — distinct from a Runtime Profile; see `packages/runtime-profiles/README.md`'s "Distinction from Execution Profiles."                                                                                    |
+| Budget Policy      | A tenant's spend limits and the ordered threshold actions (`alert`, `downgrade_model`, `switch_provider`, `block`) to take as spend approaches them.                                                                                                                                                 |
+| Shadow mode        | A Budget Governance mode that computes real enforcement decisions and records them to telemetry, but never blocks or alters routing. The default mode, on or off `budgetPolicies`.                                                                                                                   |
+| Pipeline           | A sequence of `ExecuteRequest`s run through `ExecutionOrchestrator.execute()` one after another via `POST /v1/execute/pipeline`.                                                                                                                                                                     |
+| BYOK               | Bring-your-own-key — a caller-supplied provider credential, as opposed to a platform-managed one.                                                                                                                                                                                                    |
 
 ## Release governance
 

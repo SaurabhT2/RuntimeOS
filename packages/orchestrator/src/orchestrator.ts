@@ -169,8 +169,7 @@ export class DefaultExecutionOrchestrator implements ExecutionOrchestrator {
   private readonly generateRequestId: () => string;
   private readonly strategyLayer: AIStrategyLayer | undefined;
   private readonly onExecutionCompleted:
-    | ((req: ExecuteRequest, response: ExecuteResponse) => void | Promise<void>)
-    | undefined;
+    ((req: ExecuteRequest, response: ExecuteResponse) => void | Promise<void>) | undefined;
 
   constructor(options: ExecutionOrchestratorOptions) {
     this.policyEngine = options.policyEngine;

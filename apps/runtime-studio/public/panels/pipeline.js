@@ -1,9 +1,29 @@
-import { h, panelHeader, jsonBlock, notice, metric, badge, taskSelect, apiPipeline, pushHistory, formatCost, formatMs } from "../shared.js";
+import {
+  h,
+  panelHeader,
+  jsonBlock,
+  notice,
+  metric,
+  badge,
+  taskSelect,
+  apiPipeline,
+  pushHistory,
+  formatCost,
+  formatMs,
+} from "../shared.js";
 
 let stepCounter = 0;
 function newStep(task) {
   stepCounter += 1;
-  return { id: `step-${stepCounter}`, task: task ?? "summarization", customTask: "", mode: "literal", text: "", inputFrom: "", required: true };
+  return {
+    id: `step-${stepCounter}`,
+    task: task ?? "summarization",
+    customTask: "",
+    mode: "literal",
+    text: "",
+    inputFrom: "",
+    required: true,
+  };
 }
 
 export function renderPipeline(root) {
@@ -15,7 +35,8 @@ export function renderPipeline(root) {
   };
   // Seed a realistic default so the panel is useful without editing —
   // mirrors examples/pipeline-client's own 2-step example.
-  state.steps[0].text = "AI Gateway routes requests by task type, retries transient failures, and fails over across providers automatically.";
+  state.steps[0].text =
+    "AI Gateway routes requests by task type, retries transient failures, and fails over across providers automatically.";
   state.steps[1].mode = "inputFrom";
   state.steps[1].inputFrom = state.steps[0].id;
 
@@ -77,53 +98,126 @@ export function renderPipeline(root) {
       h("div", { class: "card-title" }, "Steps"),
       h("div", { class: "field" }, [
         h("label", {}, "Tenant · organizationId"),
-        h("input", { type: "text", value: state.organizationId, onInput: (e) => (state.organizationId = e.target.value) }),
+        h("input", {
+          type: "text",
+          value: state.organizationId,
+          onInput: (e) => (state.organizationId = e.target.value),
+        }),
       ]),
-      h("div", { class: "pipeline-steps" }, state.steps.flatMap((step, i) => {
-        const priorIds = state.steps.slice(0, i).map((s) => s.id);
-        const stepEl = h("div", { class: "pipeline-step" }, [
-          h("div", { class: "pipeline-step-head" }, [
-            h("strong", {}, step.id),
-            h("button", { class: "btn btn--secondary", disabled: state.steps.length <= 1 || undefined, onClick: () => removeStep(step.id) }, "Remove"),
-          ]),
-          h("div", { class: "row" }, [
-            (() => {
-              const field = h("div", { class: "field" }, [h("label", {}, "Task"), taskSelect(step.task, (v) => { step.task = v; render(); })]);
-              if (step.task === "__custom__") {
-                field.append(h("input", { type: "text", value: step.customTask, onInput: (e) => (step.customTask = e.target.value) }));
-              }
-              return field;
-            })(),
+      h(
+        "div",
+        { class: "pipeline-steps" },
+        state.steps.flatMap((step, i) => {
+          const priorIds = state.steps.slice(0, i).map((s) => s.id);
+          const stepEl = h("div", { class: "pipeline-step" }, [
+            h("div", { class: "pipeline-step-head" }, [
+              h("strong", {}, step.id),
+              h(
+                "button",
+                {
+                  class: "btn btn--secondary",
+                  disabled: state.steps.length <= 1 || undefined,
+                  onClick: () => removeStep(step.id),
+                },
+                "Remove",
+              ),
+            ]),
+            h("div", { class: "row" }, [
+              (() => {
+                const field = h("div", { class: "field" }, [
+                  h("label", {}, "Task"),
+                  taskSelect(step.task, (v) => {
+                    step.task = v;
+                    render();
+                  }),
+                ]);
+                if (step.task === "__custom__") {
+                  field.append(
+                    h("input", {
+                      type: "text",
+                      value: step.customTask,
+                      onInput: (e) => (step.customTask = e.target.value),
+                    }),
+                  );
+                }
+                return field;
+              })(),
+              h("div", { class: "field" }, [
+                h("label", {}, "Required"),
+                h("select", { onChange: (e) => (step.required = e.target.value === "true") }, [
+                  h(
+                    "option",
+                    { value: "true", selected: step.required || undefined },
+                    "true (default) — pipeline stops if this step fails",
+                  ),
+                  h(
+                    "option",
+                    { value: "false", selected: !step.required || undefined },
+                    "false — pipeline continues if this step fails",
+                  ),
+                ]),
+              ]),
+            ]),
             h("div", { class: "field" }, [
-              h("label", {}, "Required"),
-              h("select", { onChange: (e) => (step.required = e.target.value === "true") }, [
-                h("option", { value: "true", selected: step.required || undefined }, "true (default) — pipeline stops if this step fails"),
-                h("option", { value: "false", selected: !step.required || undefined }, "false — pipeline continues if this step fails"),
-              ]),
+              h("label", {}, "Input source"),
+              h(
+                "select",
+                {
+                  onChange: (e) => {
+                    step.mode = e.target.value;
+                    render();
+                  },
+                },
+                [
+                  h(
+                    "option",
+                    { value: "literal", selected: step.mode === "literal" || undefined },
+                    "literal text",
+                  ),
+                  h(
+                    "option",
+                    {
+                      value: "inputFrom",
+                      selected: step.mode === "inputFrom" || undefined,
+                      disabled: priorIds.length === 0 || undefined,
+                    },
+                    "output of a prior step (inputFrom)",
+                  ),
+                ],
+              ),
             ]),
-          ]),
-          h("div", { class: "field" }, [
-            h("label", {}, "Input source"),
-            h("select", { onChange: (e) => { step.mode = e.target.value; render(); } }, [
-              h("option", { value: "literal", selected: step.mode === "literal" || undefined }, "literal text"),
-              h("option", { value: "inputFrom", selected: step.mode === "inputFrom" || undefined, disabled: priorIds.length === 0 || undefined }, "output of a prior step (inputFrom)"),
-            ]),
-          ]),
-          step.mode === "literal"
-            ? h("div", { class: "field" }, [h("textarea", { onInput: (e) => (step.text = e.target.value) }, step.text)])
-            : h("div", { class: "field" }, [
-                h("select", { onChange: (e) => (step.inputFrom = e.target.value) },
-                  priorIds.length === 0
-                    ? [h("option", {}, "no prior steps available")]
-                    : priorIds.map((id) => h("option", { value: id, selected: id === step.inputFrom || undefined }, id)),
-                ),
-              ]),
-        ]);
-        return i < state.steps.length - 1 ? [stepEl, h("div", { class: "pipeline-arrow" }, "↓")] : [stepEl];
-      })),
+            step.mode === "literal"
+              ? h("div", { class: "field" }, [
+                  h("textarea", { onInput: (e) => (step.text = e.target.value) }, step.text),
+                ])
+              : h("div", { class: "field" }, [
+                  h(
+                    "select",
+                    { onChange: (e) => (step.inputFrom = e.target.value) },
+                    priorIds.length === 0
+                      ? [h("option", {}, "no prior steps available")]
+                      : priorIds.map((id) =>
+                          h(
+                            "option",
+                            { value: id, selected: id === step.inputFrom || undefined },
+                            id,
+                          ),
+                        ),
+                  ),
+                ]),
+          ]);
+          return i < state.steps.length - 1
+            ? [stepEl, h("div", { class: "pipeline-arrow" }, "↓")]
+            : [stepEl];
+        }),
+      ),
       h("div", { class: "btn-row" }, [
         h("button", { class: "btn btn--secondary", onClick: addStep }, "+ Add step"),
-        h("button", { class: "btn", disabled: state.running || undefined, onClick: run }, state.running ? "Running…" : "Execute pipeline"),
+        h(
+          "button",
+          { class: "btn", disabled: state.running || undefined, onClick: run },
+          state.running ? "Running…" : "Execute pipeline",
+        ),
       ]),
     ]);
     root.append(stepsCard);
@@ -135,7 +229,15 @@ export function renderPipeline(root) {
     const card = h("div", { class: "card" }, [h("div", { class: "card-title" }, "Result")]);
 
     if (!result.ok) {
-      card.append(notice([h("strong", {}, `HTTP ${result.status}`), ` — ${result.body?.error?.code ?? "request failed"}: ${result.body?.error?.message ?? ""}`], "danger"));
+      card.append(
+        notice(
+          [
+            h("strong", {}, `HTTP ${result.status}`),
+            ` — ${result.body?.error?.code ?? "request failed"}: ${result.body?.error?.message ?? ""}`,
+          ],
+          "danger",
+        ),
+      );
       card.append(jsonBlock(result.body));
       return card;
     }
@@ -154,8 +256,15 @@ export function renderPipeline(root) {
       if (!stepResult) {
         card.append(
           h("div", { class: "pipeline-step" }, [
-            h("div", { class: "pipeline-step-head" }, [h("strong", {}, step.id), badge("not reached", "warn")]),
-            h("div", { class: "field-hint" }, "An earlier required step failed, so this step never ran — it has no entry in stepResults at all."),
+            h("div", { class: "pipeline-step-head" }, [
+              h("strong", {}, step.id),
+              badge("not reached", "warn"),
+            ]),
+            h(
+              "div",
+              { class: "field-hint" },
+              "An earlier required step failed, so this step never ran — it has no entry in stepResults at all.",
+            ),
           ]),
         );
         continue;
@@ -165,19 +274,35 @@ export function renderPipeline(root) {
         h("div", { class: "pipeline-step" }, [
           h("div", { class: "pipeline-step-head" }, [
             h("strong", {}, step.id),
-            failed ? badge(stepResult.code, "danger") : badge(stepResult.execution.providerId, "ok"),
+            failed
+              ? badge(stepResult.code, "danger")
+              : badge(stepResult.execution.providerId, "ok"),
           ]),
           failed
             ? h("div", {}, `${stepResult.message} (retryable: ${stepResult.retryable})`)
-            : h("div", { class: "output-text" }, stepResult.output.text ?? JSON.stringify(stepResult.output.json ?? "")),
+            : h(
+                "div",
+                { class: "output-text" },
+                stepResult.output.text ?? JSON.stringify(stepResult.output.json ?? ""),
+              ),
         ]),
       );
     }
 
     card.append(
       h("div", { class: "row" }, [
-        h("div", {}, [h("div", { class: "field-hint" }, "Request JSON"), jsonBlock(result.request)]),
-        h("div", {}, [h("div", { class: "field-hint" }, `Response JSON (status ${result.status}, ${result.wallClockMs}ms wall clock)`), jsonBlock(body)]),
+        h("div", {}, [
+          h("div", { class: "field-hint" }, "Request JSON"),
+          jsonBlock(result.request),
+        ]),
+        h("div", {}, [
+          h(
+            "div",
+            { class: "field-hint" },
+            `Response JSON (status ${result.status}, ${result.wallClockMs}ms wall clock)`,
+          ),
+          jsonBlock(body),
+        ]),
       ]),
     );
 

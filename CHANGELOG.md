@@ -34,12 +34,12 @@ Order.
 
 ### Milestone summary
 
-| Milestone | Scope delivered |
-|---|---|
-| **EM-6** | `capability-registry`, `execution-profile-registry`, Runtime Profiles foundation. |
-| **EM-7** | `cost-optimizer`, `prompt-optimizer`, learning extension points, plugin system foundation (Optimization Pipeline). |
-| **EM-8** | Strategy Layer integration — `strategy-layer` wires EM-6/EM-7 into a single `StrategyDecision`, consumed by `orchestrator` ahead of `policy-engine`, entirely behind `enableStrategyLayer` (default `false`). Runtime Profile activation (EM-9-attributed work) landed as part of this integration. |
-| **EM-10** | `pipeline-orchestrator` (multi-step execution via `ExecutionOrchestrator.execute()` only, `maxSteps`-capped) and `budget-governance` (shadow-mode-first cost governance: thresholds, per-provider caps, cumulative ledger). An Independent Architecture Review returned REQUIRES REWORK on two findings (`BudgetLedger.recordSpend` never wired to production traffic; a telemetry label defect); both were closed in a follow-up rework pass and independently re-verified. |
+| Milestone | Scope delivered                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **EM-6**  | `capability-registry`, `execution-profile-registry`, Runtime Profiles foundation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **EM-7**  | `cost-optimizer`, `prompt-optimizer`, learning extension points, plugin system foundation (Optimization Pipeline).                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **EM-8**  | Strategy Layer integration — `strategy-layer` wires EM-6/EM-7 into a single `StrategyDecision`, consumed by `orchestrator` ahead of `policy-engine`, entirely behind `enableStrategyLayer` (default `false`). Runtime Profile activation (EM-9-attributed work) landed as part of this integration.                                                                                                                                                                                                                                                                                           |
+| **EM-10** | `pipeline-orchestrator` (multi-step execution via `ExecutionOrchestrator.execute()` only, `maxSteps`-capped) and `budget-governance` (shadow-mode-first cost governance: thresholds, per-provider caps, cumulative ledger). An Independent Architecture Review returned REQUIRES REWORK on two findings (`BudgetLedger.recordSpend` never wired to production traffic; a telemetry label defect); both were closed in a follow-up rework pass and independently re-verified.                                                                                                                  |
 | **EM-11** | Platform hardening and v1.2 production-readiness validation — no new architecture. Budget Governance's Enforcement Mode independently verified end-to-end against the real, wired system for the first time (previously unit-tested in isolation only); the mode itself remains an explicit, off-by-default opt-in (`budgetEnforcementMode: "enforcing"`), not a new default. Full regression, provider conformance, chaos-scenario, and performance validation. Documentation finalized across `KNOWN_LIMITATIONS.md`, this changelog, `RELEASE_NOTES.md`, and `IMPLEMENTATION_PROGRESS.md`. |
 
 See [`docs/history/IMPLEMENTATION_PROGRESS.md`](docs/history/IMPLEMENTATION_PROGRESS.md)
@@ -128,14 +128,14 @@ and is delivered as a single deployable process,
 Per Engineering Blueprint §7, the following milestones are complete and
 included in this release:
 
-| Milestone | Scope delivered |
-|---|---|
-| **EM-0** | Monorepo scaffold and shared tooling; `core-contracts` implemented and frozen at `1.0.0`. |
-| **EM-1** | `provider-sdk` (`ProviderAdapter` interface, Mock Adapter, conformance harness), `telemetry`, `config`. |
-| **EM-2** | `reliability` (retry engine, circuit breaker, timeout manager, health monitor), `model-registry`, `credential-resolver`. |
-| **EM-3** | `policy-engine` (task-to-model scoring, ranking, `ExecutionPlan` assembly), the Groq and NVIDIA NIM provider adapters, `streaming`. |
-| **EM-4** | `orchestrator` (full request lifecycle: policy → credential resolution → retry → failover → streaming → completion), `middleware` (auth, rate limiting, response caching). |
-| **EM-5** | `apps/gateway-server` (the composition root), `examples/*`. |
+| Milestone | Scope delivered                                                                                                                                                            |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **EM-0**  | Monorepo scaffold and shared tooling; `core-contracts` implemented and frozen at `1.0.0`.                                                                                  |
+| **EM-1**  | `provider-sdk` (`ProviderAdapter` interface, Mock Adapter, conformance harness), `telemetry`, `config`.                                                                    |
+| **EM-2**  | `reliability` (retry engine, circuit breaker, timeout manager, health monitor), `model-registry`, `credential-resolver`.                                                   |
+| **EM-3**  | `policy-engine` (task-to-model scoring, ranking, `ExecutionPlan` assembly), the Groq and NVIDIA NIM provider adapters, `streaming`.                                        |
+| **EM-4**  | `orchestrator` (full request lifecycle: policy → credential resolution → retry → failover → streaming → completion), `middleware` (auth, rate limiting, response caching). |
+| **EM-5**  | `apps/gateway-server` (the composition root), `examples/*`.                                                                                                                |
 
 See [`docs/history/IMPLEMENTATION_PROGRESS.md`](docs/history/IMPLEMENTATION_PROGRESS.md)
 for full acceptance-criteria detail on each milestone.

@@ -47,12 +47,12 @@ replaceable" (EM-8's own constraint) is structural, not aspirational — `buildD
 just returns an array; any caller can swap, reorder, or drop entries.
 
 **EM-9: Runtime Profile → Execution Profile merge.** `RuntimeProfileResolutionStage`
-now runs *before* `ExecutionProfileResolutionStage` (the only stage-order change this
+now runs _before_ `ExecutionProfileResolutionStage` (the only stage-order change this
 milestone made) so the latter can read `ctx.runtimeProfile` and apply architecture
 §37.4's first read site: `caching.aggressiveness` → `ResolvedExecutionProfile.caching`,
 `reliability.retryAggressiveness` → `.retryPolicy` (which, once threaded through
 `StrategyDecision.executionProfile` to `policy-engine`'s Plan Assembly and from there to
-`orchestrator`'s Retry Engine, also satisfies §37.4's *fourth* read site — "Retry Engine
+`orchestrator`'s Retry Engine, also satisfies §37.4's _fourth_ read site — "Retry Engine
 ... to adjust `RetryPolicy`"). `adjustedBy` is populated only when at least one field
 actually changed — the default `"standard"`/`"standard"` runtime profile (`production`,
 `runtime-profiles/src/seed-data.ts`) is a no-op by construction, so this reordering does
@@ -83,13 +83,13 @@ interface StrategyDecision {
 This package implements §30.3 exactly, not the work order's paraphrase. Every EM-8
 concept the work order names is still real, just not a `StrategyDecision` field:
 
-| Work order concept                | Where it actually lives                                                                                                                                                                                                                                                                                                 |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `resolvedCapabilities`            | `StrategyDecision.requiredCapabilities` (same data, different name)                                                                                                                                                                                                                                                     |
-| `runtimeProfile`                  | Resolved internally by `RuntimeProfileResolutionStage`, consumed by both `ExecutionProfileResolutionStage` (EM-9: `caching`/`retryPolicy` adjustments) and `CostOptimizationStage` — never surfaced on the frozen decision type itself, since every downstream consumer that needs it reads it *inside* this package's own pipeline, before `StrategyDecision` is assembled                                                 |
-| `optimizedPrompt`                 | `StrategyDecision.optimizations.prompt`                                                                                                                                                                                                                                                                                 |
-| `optimizationMetadata`            | `StrategyDecision.optimizations` (cost + prompt) is the metadata                                                                                                                                                                                                                                                        |
-| `routingHints` / `executionHints` | Not part of this milestone's frozen decision shape at all — the closest real concept is `optimizations.cost.recommendedModelClassDowngrade`/`disableStreaming`/`preferFreeTierProviders`, which are soft signals `policy-engine` can read from `PolicyContext.strategyDecision` (ADR-0018), not a separate hints object |
+| Work order concept                | Where it actually lives                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resolvedCapabilities`            | `StrategyDecision.requiredCapabilities` (same data, different name)                                                                                                                                                                                                                                                                                                         |
+| `runtimeProfile`                  | Resolved internally by `RuntimeProfileResolutionStage`, consumed by both `ExecutionProfileResolutionStage` (EM-9: `caching`/`retryPolicy` adjustments) and `CostOptimizationStage` — never surfaced on the frozen decision type itself, since every downstream consumer that needs it reads it _inside_ this package's own pipeline, before `StrategyDecision` is assembled |
+| `optimizedPrompt`                 | `StrategyDecision.optimizations.prompt`                                                                                                                                                                                                                                                                                                                                     |
+| `optimizationMetadata`            | `StrategyDecision.optimizations` (cost + prompt) is the metadata                                                                                                                                                                                                                                                                                                            |
+| `routingHints` / `executionHints` | Not part of this milestone's frozen decision shape at all — the closest real concept is `optimizations.cost.recommendedModelClassDowngrade`/`disableStreaming`/`preferFreeTierProviders`, which are soft signals `policy-engine` can read from `PolicyContext.strategyDecision` (ADR-0018), not a separate hints object                                                     |
 
 ## Engineering decisions worth knowing
 
@@ -141,7 +141,7 @@ conditionally, based on `GatewayConfig.enableStrategyLayer`, ADR-0017). A `cache
 resulting decision short-circuits the Policy Engine and provider call entirely (architecture
 §30.3/§33.4); otherwise the decision is threaded into `PolicyContext.strategyDecision`
 (ADR-0018) before `orchestrator` calls the same, unchanged `policyEngine.selectExecutionPlan`.
-**Corrected from this section's original EM-8-era text:** `policy-engine`'s scoring *did*
+**Corrected from this section's original EM-8-era text:** `policy-engine`'s scoring _did_
 start reading `ctx.strategyDecision` as of EM-9 (Independent Architecture & Engineering
 Review of EM-9) — `selectExecutionPlan`'s own signature is still unchanged, but several of
 its pipeline stages' inputs now come from a well-formed `strategyDecision` when present. See
@@ -161,7 +161,7 @@ Policy Engine") and either throws a `GatewayError("BUDGET_EXCEEDED", ...)` (bloc
 request before Policy Engine, Credential Resolver, or any Provider Adapter is ever reached)
 or folds a forced model-class downgrade into the already-existing
 `ctx.costOptimization.recommendedModelClassDowngrade` field. See that stage's own doc comment,
-`@ai-gateway/budget-governance`'s README, and ADR-0025 for what this milestone does *not* wire
+`@ai-gateway/budget-governance`'s README, and ADR-0025 for what this milestone does _not_ wire
 up (`forcedProviderExclusion` has no carrier to Policy Engine yet) and why.
 
 ## Dependencies

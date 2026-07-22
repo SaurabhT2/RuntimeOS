@@ -7,8 +7,7 @@ describe("DefaultPipelineOrchestrator — the architecture §41.4 four-step work
   it("threads each step's output into the next step's input, in order, through the real orchestrator.execute()", async () => {
     const orchestrator = fakeOrchestrator({
       knowledge_extraction: fakeResponse({ output: { text: "extracted facts" } }),
-      summarization: (req) =>
-        fakeResponse({ output: { text: `summary of: ${req.input.text}` } }),
+      summarization: (req) => fakeResponse({ output: { text: `summary of: ${req.input.text}` } }),
       entity_extraction: (req) =>
         fakeResponse({ output: { json: { entities: [req.input.text] } } }),
       json_generation: (req) => fakeResponse({ output: { json: { final: req.input.text } } }),
@@ -50,7 +49,7 @@ describe("DefaultPipelineOrchestrator — the architecture §41.4 four-step work
     // Each downstream call actually received the *previous* step's output —
     // proof this is real threading, not four independent calls.
     expect(orchestrator.calls[1]?.input.text).toBe("extracted facts");
-    expect((orchestrator.calls[2]?.input.text as string)).toContain("summary of: extracted facts");
+    expect(orchestrator.calls[2]?.input.text as string).toContain("summary of: extracted facts");
     const formatInput = JSON.parse(orchestrator.calls[3]?.input.text as string);
     expect(formatInput.entities[0]).toContain("summary of:");
   });
@@ -66,7 +65,10 @@ describe("DefaultPipelineOrchestrator — the architecture §41.4 four-step work
         steps: [{ id: "s1", task: "summarization", buildInput: () => ({ input: { text: "x" } }) }],
       }),
     );
-    expect(orchestrator.calls[0]?.tenant).toEqual({ organizationId: "org-42", workspaceId: "ws-7" });
+    expect(orchestrator.calls[0]?.tenant).toEqual({
+      organizationId: "org-42",
+      workspaceId: "ws-7",
+    });
   });
 });
 
@@ -99,7 +101,12 @@ describe("DefaultPipelineOrchestrator — failure handling", () => {
     const result = await pipelineOrchestrator.executePipeline(
       pipeline({
         steps: [
-          { id: "s1", task: "summarization", required: true, buildInput: () => ({ input: { text: "x" } }) },
+          {
+            id: "s1",
+            task: "summarization",
+            required: true,
+            buildInput: () => ({ input: { text: "x" } }),
+          },
           { id: "s2", task: "json_generation", buildInput: () => ({ input: { text: "x" } }) },
         ],
       }),
@@ -117,7 +124,12 @@ describe("DefaultPipelineOrchestrator — failure handling", () => {
     const result = await pipelineOrchestrator.executePipeline(
       pipeline({
         steps: [
-          { id: "s1", task: "summarization", required: false, buildInput: () => ({ input: { text: "x" } }) },
+          {
+            id: "s1",
+            task: "summarization",
+            required: false,
+            buildInput: () => ({ input: { text: "x" } }),
+          },
           { id: "s2", task: "json_generation", buildInput: () => ({ input: { text: "x" } }) },
         ],
       }),
@@ -136,7 +148,12 @@ describe("DefaultPipelineOrchestrator — failure handling", () => {
     const result = await pipelineOrchestrator.executePipeline(
       pipeline({
         steps: [
-          { id: "s1", task: "summarization", required: false, buildInput: () => ({ input: { text: "x" } }) },
+          {
+            id: "s1",
+            task: "summarization",
+            required: false,
+            buildInput: () => ({ input: { text: "x" } }),
+          },
           {
             id: "s2",
             task: "json_generation",
@@ -145,7 +162,9 @@ describe("DefaultPipelineOrchestrator — failure handling", () => {
         ],
       }),
     );
-    expect((result.stepResults.s2 as ReturnType<typeof fakeResponse>).output.text).toBe("saw: no-s1");
+    expect((result.stepResults.s2 as ReturnType<typeof fakeResponse>).output.text).toBe(
+      "saw: no-s1",
+    );
   });
 
   it("wraps a non-GatewayError exception from orchestrator.execute as INTERNAL_ERROR rather than propagating it raw", async () => {
@@ -155,7 +174,9 @@ describe("DefaultPipelineOrchestrator — failure handling", () => {
     };
     const pipelineOrchestrator = new DefaultPipelineOrchestrator({ orchestrator });
     const result = await pipelineOrchestrator.executePipeline(
-      pipeline({ steps: [{ id: "s1", task: "summarization", buildInput: () => ({ input: { text: "x" } }) }] }),
+      pipeline({
+        steps: [{ id: "s1", task: "summarization", buildInput: () => ({ input: { text: "x" } }) }],
+      }),
     );
     expect(result.stepResults.s1).toBeInstanceOf(GatewayError);
     expect((result.stepResults.s1 as GatewayError).code).toBe("INTERNAL_ERROR");
@@ -165,16 +186,25 @@ describe("DefaultPipelineOrchestrator — failure handling", () => {
 describe("DefaultPipelineOrchestrator — cost and latency aggregation", () => {
   it("totalCostUsd sums only successful steps' usage.estimatedCostUsd", async () => {
     const orchestrator = fakeOrchestrator({
-      summarization: fakeResponse({ usage: { inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0.01 } }),
+      summarization: fakeResponse({
+        usage: { inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0.01 },
+      }),
       entity_extraction: new GatewayError("TIMEOUT", "failed", true),
-      json_generation: fakeResponse({ usage: { inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0.02 } }),
+      json_generation: fakeResponse({
+        usage: { inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0.02 },
+      }),
     });
     const pipelineOrchestrator = new DefaultPipelineOrchestrator({ orchestrator });
     const result = await pipelineOrchestrator.executePipeline(
       pipeline({
         steps: [
           { id: "s1", task: "summarization", buildInput: () => ({ input: { text: "x" } }) },
-          { id: "s2", task: "entity_extraction", required: false, buildInput: () => ({ input: { text: "x" } }) },
+          {
+            id: "s2",
+            task: "entity_extraction",
+            required: false,
+            buildInput: () => ({ input: { text: "x" } }),
+          },
           { id: "s3", task: "json_generation", buildInput: () => ({ input: { text: "x" } }) },
         ],
       }),
@@ -186,7 +216,9 @@ describe("DefaultPipelineOrchestrator — cost and latency aggregation", () => {
     const orchestrator = fakeOrchestrator({ summarization: fakeResponse() });
     const pipelineOrchestrator = new DefaultPipelineOrchestrator({ orchestrator });
     const result = await pipelineOrchestrator.executePipeline(
-      pipeline({ steps: [{ id: "s1", task: "summarization", buildInput: () => ({ input: { text: "x" } }) }] }),
+      pipeline({
+        steps: [{ id: "s1", task: "summarization", buildInput: () => ({ input: { text: "x" } }) }],
+      }),
     );
     expect(result.totalLatencyMs).toBeGreaterThanOrEqual(0);
   });
@@ -201,7 +233,9 @@ describe("DefaultPipelineOrchestrator — maxSteps (ADR-014)", () => {
       task: "summarization" as const,
       buildInput: () => ({ input: { text: "x" } }),
     }));
-    await expect(pipelineOrchestrator.executePipeline(pipeline({ steps }))).rejects.toThrow(GatewayError);
+    await expect(pipelineOrchestrator.executePipeline(pipeline({ steps }))).rejects.toThrow(
+      GatewayError,
+    );
     expect(orchestrator.calls).toHaveLength(0);
   });
 
@@ -280,7 +314,9 @@ describe("DefaultPipelineOrchestrator — cancellation", () => {
     const orchestrator = fakeOrchestrator({ summarization: fakeResponse() });
     const pipelineOrchestrator = new DefaultPipelineOrchestrator({ orchestrator });
     const result = await pipelineOrchestrator.executePipeline(
-      pipeline({ steps: [{ id: "s1", task: "summarization", buildInput: () => ({ input: { text: "x" } }) }] }),
+      pipeline({
+        steps: [{ id: "s1", task: "summarization", buildInput: () => ({ input: { text: "x" } }) }],
+      }),
     );
     expect(result.completed).toBe(true);
   });

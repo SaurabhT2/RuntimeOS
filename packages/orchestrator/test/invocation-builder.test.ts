@@ -87,28 +87,20 @@ describe("buildNormalizedInvocation", () => {
     });
 
     it("falls back to req-derived messages when optimizations.prompt is present but malformed", () => {
-      const invocation = buildNormalizedInvocation(
-        baseRequest({ input: { text: "hi" } }),
-        plan(),
-        {
-          requiredCapabilities: {},
-          executionProfile: {},
-          optimizations: { cost: {}, prompt: { messages: [{ role: "not-a-real-role" }] } },
-        },
-      );
+      const invocation = buildNormalizedInvocation(baseRequest({ input: { text: "hi" } }), plan(), {
+        requiredCapabilities: {},
+        executionProfile: {},
+        optimizations: { cost: {}, prompt: { messages: [{ role: "not-a-real-role" }] } },
+      });
       expect(invocation.messages).toEqual([{ role: "user", content: "hi" }]);
     });
 
     it("falls back to req-derived messages when optimizations.prompt.messages is an empty array", () => {
-      const invocation = buildNormalizedInvocation(
-        baseRequest({ input: { text: "hi" } }),
-        plan(),
-        {
-          requiredCapabilities: {},
-          executionProfile: {},
-          optimizations: { cost: {}, prompt: { messages: [] } },
-        },
-      );
+      const invocation = buildNormalizedInvocation(baseRequest({ input: { text: "hi" } }), plan(), {
+        requiredCapabilities: {},
+        executionProfile: {},
+        optimizations: { cost: {}, prompt: { messages: [] } },
+      });
       expect(invocation.messages).toEqual([{ role: "user", content: "hi" }]);
     });
   });

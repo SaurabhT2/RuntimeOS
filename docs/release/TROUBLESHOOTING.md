@@ -41,7 +41,7 @@ to refresh the lockfile before committing.
 
 This means the failing package's source imports a workspace package
 that isn't declared in its own `package.json` `dependencies`. Turbo's
-build ordering (`turbo.json`) only guarantees a package's *declared*
+build ordering (`turbo.json`) only guarantees a package's _declared_
 workspace dependencies build first — an undeclared import can appear to
 work by accident (if the other package happened to build earlier for
 unrelated reasons) and then break the moment build order changes.
@@ -173,7 +173,7 @@ file; if not, `vitest run --reporter=verbose` narrows it down.
 Package READMEs' "Testing strategy" sections state coverage as of the
 milestone that last touched that package — a small drift after a later
 milestone's changes is expected and not itself a defect. If a package's
-actual `pnpm test:coverage` output is *meaningfully* lower than its
+actual `pnpm test:coverage` output is _meaningfully_ lower than its
 README claims, that's a documentation-staleness bug in that README, not
 a code defect — file it as a doc fix in that package.
 

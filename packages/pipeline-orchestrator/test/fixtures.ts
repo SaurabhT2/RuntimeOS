@@ -1,4 +1,8 @@
-import { GatewayError, type ExecuteRequest, type ExecuteResponse } from "@ai-gateway/core-contracts";
+import {
+  GatewayError,
+  type ExecuteRequest,
+  type ExecuteResponse,
+} from "@ai-gateway/core-contracts";
 import type { ExecutionOrchestrator } from "@ai-gateway/orchestrator";
 import { vi } from "vitest";
 import type { ExecutionPipeline } from "../src/types.js";
@@ -8,7 +12,13 @@ export function fakeResponse(overrides: Partial<ExecuteResponse> = {}): ExecuteR
     requestId: "req-1",
     output: { text: "ok" },
     usage: { inputTokens: 10, outputTokens: 5, estimatedCostUsd: 0.001 },
-    execution: { providerId: "groq", modelClass: "fast-extraction", latencyMs: 5, retries: 0, failedOver: false },
+    execution: {
+      providerId: "groq",
+      modelClass: "fast-extraction",
+      latencyMs: 5,
+      retries: 0,
+      failedOver: false,
+    },
     finishReason: "stop",
     ...overrides,
   };
@@ -21,7 +31,10 @@ export function fakeResponse(overrides: Partial<ExecuteResponse> = {}): ExecuteR
  * `buildInput` produced). Records every call for assertions.
  */
 export function fakeOrchestrator(
-  script: Record<string, ExecuteResponse | GatewayError | ((req: ExecuteRequest) => ExecuteResponse | GatewayError)>,
+  script: Record<
+    string,
+    ExecuteResponse | GatewayError | ((req: ExecuteRequest) => ExecuteResponse | GatewayError)
+  >,
 ): ExecutionOrchestrator & { calls: ExecuteRequest[] } {
   const calls: ExecuteRequest[] = [];
   return {

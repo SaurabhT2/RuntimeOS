@@ -32,7 +32,10 @@ export function clear(node) {
 export function panelHeader(title, blurb, when) {
   return h("div", { class: "panel-header" }, [
     h("h1", { class: "panel-title" }, title),
-    h("p", { class: "panel-blurb" }, [blurb, when ? h("span", { class: "blurb-when" }, `When to use it: ${when}`) : null]),
+    h("p", { class: "panel-blurb" }, [
+      blurb,
+      when ? h("span", { class: "blurb-when" }, `When to use it: ${when}`) : null,
+    ]),
   ]);
 }
 
@@ -97,7 +100,12 @@ async function studioFetch(path, options) {
   } catch {
     body = text;
   }
-  return { status: res.status, ok: res.ok, headers: Object.fromEntries(res.headers.entries()), body };
+  return {
+    status: res.status,
+    ok: res.ok,
+    headers: Object.fromEntries(res.headers.entries()),
+    body,
+  };
 }
 
 export function apiExecute(request) {

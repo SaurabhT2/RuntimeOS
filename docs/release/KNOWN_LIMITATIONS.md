@@ -22,11 +22,11 @@ source below.
 Four pieces of state are held in-memory, per-process, with no
 cross-instance synchronization:
 
-| State | Package | Component |
-|---|---|---|
-| Rate-limit token buckets | `middleware` | `RateLimitMiddleware` |
-| Response cache | `middleware` | `CacheMiddleware` |
-| Circuit breaker state | `reliability` | `InMemoryCircuitBreaker` |
+| State                    | Package       | Component                                           |
+| ------------------------ | ------------- | --------------------------------------------------- |
+| Rate-limit token buckets | `middleware`  | `RateLimitMiddleware`                               |
+| Response cache           | `middleware`  | `CacheMiddleware`                                   |
+| Circuit breaker state    | `reliability` | `InMemoryCircuitBreaker`                            |
 | Provider health tracking | `reliability` | `InMemoryHealthStateStore` (behind `HealthMonitor`) |
 
 Running a single gateway process works correctly. Running more than one
@@ -37,10 +37,10 @@ are enforced per-instance rather than per-tenant globally. A shared
 backend (e.g., Redis) for all four is required before a true
 multi-replica deployment, and is not built in v1.0.
 
-*Source: `apps/gateway-server/README.md` (Deferred Work), `middleware/README.md`
+_Source: `apps/gateway-server/README.md` (Deferred Work), `middleware/README.md`
 (Design note 6, Deferred Work), `orchestrator/README.md` (Deferred Work).
 Architecture §23 describes the target multi-instance design (shared Redis/DB);
-that design is not yet implemented.*
+that design is not yet implemented._
 
 ### 1.2 No database or KMS in this repository
 
@@ -54,8 +54,8 @@ v1.0 — wiring one in is explicitly the responsibility of whoever operates
 `apps/gateway-server` in a given environment, via that package's
 override seams.
 
-*Source: `model-registry/README.md`, `credential-resolver/README.md`
-(Deferred Work), `config/README.md` (Extension points).*
+_Source: `model-registry/README.md`, `credential-resolver/README.md`
+(Deferred Work), `config/README.md` (Extension points)._
 
 ### 1.3 No built-in TLS or reverse proxy
 
@@ -63,8 +63,8 @@ override seams.
 terminate TLS itself. A production deployment must place a
 TLS-terminating reverse proxy, load balancer, or ingress in front of it.
 
-*Source: `apps/gateway-server/src/http/server.ts` (uses `node:http`, not
-`node:https`); architecture §20.1 assumes "TLS everywhere."*
+_Source: `apps/gateway-server/src/http/server.ts` (uses `node:http`, not
+`node:https`); architecture §20.1 assumes "TLS everywhere."_
 
 ## 2. Public API surface
 
@@ -78,14 +78,14 @@ yet; `/v1/tasks` and `/v1/usage` are reporting endpoints over data
 (task-type catalog, usage/cost accounting) that no package through EM-4
 persists or aggregates.
 
-*Source: `apps/gateway-server/README.md`, "Scope verification" section.*
+_Source: `apps/gateway-server/README.md`, "Scope verification" section._
 
 ### 2.2 No OpenAPI schema
 
 Nothing in the Architecture Specification or Engineering Blueprint
 mandates one for v1.0, and none is generated.
 
-*Source: `apps/gateway-server/README.md` (Deferred Work).*
+_Source: `apps/gateway-server/README.md` (Deferred Work)._
 
 ## 3. Authentication and authorization
 
@@ -98,7 +98,7 @@ role to permit or deny an action. Architecture §20.5 describes RBAC as
 v1.0. Every authenticated caller can currently perform any action the
 authenticated routes allow.
 
-*Source: `middleware/README.md` (Scope Verification, Deferred Work).*
+_Source: `middleware/README.md` (Scope Verification, Deferred Work)._
 
 ### 3.2 API keys are configured at startup, not managed at runtime
 
@@ -107,12 +107,12 @@ authenticated routes allow.
 development key when explicitly opted in) at process start. There is no
 API or admin flow to add, rotate, or revoke a gateway API key without a
 restart. This is a distinct, higher-layer concern from
-`credential-resolver`'s BYOK provider-credential rotation, which *is*
+`credential-resolver`'s BYOK provider-credential rotation, which _is_
 implemented (see 4.2).
 
-*Source: `apps/gateway-server/src/server-config.ts`; ADR-0009 (`middleware`
+_Source: `apps/gateway-server/src/server-config.ts`; ADR-0009 (`middleware`
 has no persistent `AuthKeyStore` — Option B in that ADR is the future
-direction).*
+direction)._
 
 ## 4. Credentials and secrets
 
@@ -124,7 +124,7 @@ Azure Key Vault, and GCP Secret Manager — all listed as first-class in
 architecture §15.3 — are not. `SecretSource`'s interface already
 accommodates them additively.
 
-*Source: `credential-resolver/README.md` (status line, Deferred Work).*
+_Source: `credential-resolver/README.md` (status line, Deferred Work)._
 
 ### 4.2 No live-validation on BYOK registration
 
@@ -135,8 +135,8 @@ calling `ProviderAdapter.healthCheck` against it first (architecture
 the natural candidate) would need to add this. It has not been added as
 of v1.0.
 
-*Source: `credential-resolver/README.md` (Design notes, Deferred Work);
-`orchestrator/README.md` (Deferred Work).*
+_Source: `credential-resolver/README.md` (Design notes, Deferred Work);
+`orchestrator/README.md` (Deferred Work)._
 
 ## 5. Reliability and streaming
 
@@ -150,8 +150,8 @@ primitive on `ProviderAdapter`. Streaming cancellation is cooperative
 caller) rather than preemptive. This is tracked as an open, undecided
 ADR — see 6.1 below.
 
-*Source: `reliability/README.md`; `streaming/README.md` (Deferred Work);
-`orchestrator/README.md` (Deferred Work); ADR-0004.*
+_Source: `reliability/README.md`; `streaming/README.md` (Deferred Work);
+`orchestrator/README.md` (Deferred Work); ADR-0004._
 
 ### 5.2 Streaming failover only before the first chunk
 
@@ -159,13 +159,13 @@ Once any chunk has reached the caller, a mid-stream provider failure
 surfaces as a terminal error rather than silently switching providers
 mid-response (which would splice two providers' output together).
 
-*Source: `orchestrator/README.md`, Design notes / Engineering Decision 5.*
+_Source: `orchestrator/README.md`, Design notes / Engineering Decision 5._
 
 ### 5.3 No WebSocket transport
 
 Streaming is Server-Sent Events only.
 
-*Source: `streaming/README.md` (Deferred Work).*
+_Source: `streaming/README.md` (Deferred Work)._
 
 ## 6. Open architecture/implementation gaps (draft ADRs)
 
@@ -179,18 +179,18 @@ the Architecture Review Board. They are listed here for completeness
 v1.2 documentation pass); resolving them is architecture-review work,
 explicitly out of scope for this release-governance pass.
 
-| ADR | Gap |
-|---|---|
-| [0004](../adr/0004-provider-adapter-cancellation-draft.md) | `ProviderAdapter` has no cancellation primitive, despite architecture §18.4/§24 assuming one exists. |
-| [0005](../adr/0005-backoff-strategy-config-mismatch.md) | Architecture §18.1 defines three `BackoffStrategy` values; `@ai-gateway/config`'s frozen (EM-1) type only has two. |
-| [0006](../adr/0006-policy-engine-config-dependency-gap.md) | `policy-engine` has no dependency edge onto `@ai-gateway/config`, so scoring weights and routing rules are constructor options rather than config-sourced as architecture §13.3/§13.4 describe. |
-| [0007](../adr/0007-stream-manager-signature-gap.md) | Architecture §11's literal `StreamManager` signature can't compile within this codebase's own frozen dependency boundaries, and `cancel(requestId)` has no addressable implementation path. Partially resolved by ADR-0008. |
-| [0009](../adr/0009-middleware-config-gap.md) | `middleware` has no `@ai-gateway/config` field for API keys, rate-limit thresholds, or cache TTL, for the same structural reason as ADR-0006. |
-| [0010](../adr/0010-gatewayconfig-reliability-section-unconsumed.md) | `GatewayConfig.reliability`, a fully-defined and validated config section, is read by no package anywhere in the codebase. |
-| [0014](../adr/0014-prompt-optimizer-execution-profile-registry-dependency-gap.md) | Architecture §34.2's frozen `PromptOptimizer.optimize` signature requires a dependency edge (`prompt-optimizer` → `execution-profile-registry`) that Engineering Blueprint §4.1's table omits. The implementation is correct; only the table is wrong. |
-| [0019](../adr/0019-milestone-8-definition-conflict.md) | Architecture §38.2's "Milestone 8" (pass-through skeleton only) and the Engineering Blueprint's "EM-8" (full Wave 6–7 integration) describe incompatible scopes under the same number. |
-| [0020](../adr/0020-runtime-profile-read-sites-gap.md) | Two of architecture §37.4's four Runtime Profile read sites (Policy Engine lifecycle-state filtering; Circuit Breaker aggressiveness) have no implemented data path, and `RuntimeProfile`'s own schema has no field cleanly matching §37.4's `streaming`/`timeoutMs` claim. |
-| [0025](../adr/0025-budget-enforcer-provider-id-and-exclusion-gap.md) | `switch_provider` budget threshold actions have no observable effect on real provider routing in production — see §9.2 below. **Elevated to a release-blocking-for-that-feature disclosure as of v1.2**, now that Enforcement Mode has been verified end-to-end and documented as ready for a deployment to opt into (shadow remains the default; see §9.2/§9.3); see §9.2. |
+| ADR                                                                               | Gap                                                                                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [0004](../adr/0004-provider-adapter-cancellation-draft.md)                        | `ProviderAdapter` has no cancellation primitive, despite architecture §18.4/§24 assuming one exists.                                                                                                                                                                                                                                                                        |
+| [0005](../adr/0005-backoff-strategy-config-mismatch.md)                           | Architecture §18.1 defines three `BackoffStrategy` values; `@ai-gateway/config`'s frozen (EM-1) type only has two.                                                                                                                                                                                                                                                          |
+| [0006](../adr/0006-policy-engine-config-dependency-gap.md)                        | `policy-engine` has no dependency edge onto `@ai-gateway/config`, so scoring weights and routing rules are constructor options rather than config-sourced as architecture §13.3/§13.4 describe.                                                                                                                                                                             |
+| [0007](../adr/0007-stream-manager-signature-gap.md)                               | Architecture §11's literal `StreamManager` signature can't compile within this codebase's own frozen dependency boundaries, and `cancel(requestId)` has no addressable implementation path. Partially resolved by ADR-0008.                                                                                                                                                 |
+| [0009](../adr/0009-middleware-config-gap.md)                                      | `middleware` has no `@ai-gateway/config` field for API keys, rate-limit thresholds, or cache TTL, for the same structural reason as ADR-0006.                                                                                                                                                                                                                               |
+| [0010](../adr/0010-gatewayconfig-reliability-section-unconsumed.md)               | `GatewayConfig.reliability`, a fully-defined and validated config section, is read by no package anywhere in the codebase.                                                                                                                                                                                                                                                  |
+| [0014](../adr/0014-prompt-optimizer-execution-profile-registry-dependency-gap.md) | Architecture §34.2's frozen `PromptOptimizer.optimize` signature requires a dependency edge (`prompt-optimizer` → `execution-profile-registry`) that Engineering Blueprint §4.1's table omits. The implementation is correct; only the table is wrong.                                                                                                                      |
+| [0019](../adr/0019-milestone-8-definition-conflict.md)                            | Architecture §38.2's "Milestone 8" (pass-through skeleton only) and the Engineering Blueprint's "EM-8" (full Wave 6–7 integration) describe incompatible scopes under the same number.                                                                                                                                                                                      |
+| [0020](../adr/0020-runtime-profile-read-sites-gap.md)                             | Two of architecture §37.4's four Runtime Profile read sites (Policy Engine lifecycle-state filtering; Circuit Breaker aggressiveness) have no implemented data path, and `RuntimeProfile`'s own schema has no field cleanly matching §37.4's `streaming`/`timeoutMs` claim.                                                                                                 |
+| [0025](../adr/0025-budget-enforcer-provider-id-and-exclusion-gap.md)              | `switch_provider` budget threshold actions have no observable effect on real provider routing in production — see §9.2 below. **Elevated to a release-blocking-for-that-feature disclosure as of v1.2**, now that Enforcement Mode has been verified end-to-end and documented as ready for a deployment to opt into (shadow remains the default; see §9.2/§9.3); see §9.2. |
 
 See [`docs/adr/README.md`](../adr/README.md) for the complete ADR index,
 including the accepted ADRs that are not limitations but settled design
@@ -210,10 +210,10 @@ adds OTel SDK exporter registration in their own deployment. Structured
 logs, by contrast, are written to stdout by default and require no
 additional wiring.
 
-*Source: `telemetry/README.md` (Design notes); confirmed by inspection of
+_Source: `telemetry/README.md` (Design notes); confirmed by inspection of
 `packages/gateway-runtime/src/bootstrap.ts`, which calls `createTelemetry()`
 with no exporter configuration. See
-[`docs/release/DEPLOYMENT.md`](DEPLOYMENT.md) for how to wire one.*
+[`docs/release/DEPLOYMENT.md`](DEPLOYMENT.md) for how to wire one._
 
 ## 8. Configuration
 
@@ -224,8 +224,8 @@ real provider-side model identifiers. A real deployment must supply its
 own seed data via `bootstrap()`'s `overrides.modelRegistrySeed` — the
 gateway does not invent real model IDs on an operator's behalf.
 
-*Source: `apps/gateway-server/README.md`, Engineering decision 2;
-`model-registry/README.md`.*
+_Source: `apps/gateway-server/README.md`, Engineering decision 2;
+`model-registry/README.md`._
 
 ## 9. Budget Governance (EM-10 / v1.2)
 
@@ -241,8 +241,8 @@ view of spend, which can under-count total cumulative spend against a
 tenant's real budget. `BudgetLedger`'s interface accommodates a durable,
 shared implementation additively; none is built as of v1.2.
 
-*Source: `packages/budget-governance/README.md` ("Known gap: no durable
-`BudgetLedger` implementation"); ADR-0022.*
+_Source: `packages/budget-governance/README.md` ("Known gap: no durable
+`BudgetLedger` implementation"); ADR-0022._
 
 ### 9.2 `switch_provider` threshold actions have no effect on real routing — read this before enabling Enforcement Mode
 
@@ -262,7 +262,7 @@ Enforcement Mode has been independently verified end-to-end against the
 real, wired system (see
 [`docs/history/IMPLEMENTATION_PROGRESS.md`](../history/IMPLEMENTATION_PROGRESS.md)'s
 EM-11 entry) and documented as something a deployment can deliberately
-opt into — the release where a deployment that *does* explicitly set
+opt into — the release where a deployment that _does_ explicitly set
 `budgetEnforcementMode: "enforcing"` (via a custom `bootstrap()` call;
 see §9.3) needs to understand this gap before doing so, since
 misunderstanding it there could translate into unmitigated real-provider
@@ -279,7 +279,7 @@ hardening:
 1. **The triggering check itself never runs in production.** The only
    production call site of `BudgetEnforcer.evaluate()`
    (`packages/strategy-layer/src/stages/budget-enforcement-stage.ts`)
-   always evaluates *before* Policy Engine has selected a provider, and
+   always evaluates _before_ Policy Engine has selected a provider, and
    passes a `NO_PROVIDER_SELECTED_YET` sentinel as the `providerId`
    argument. `perProviderSpendCapUsd` checks are explicitly skipped
    whenever `providerId` is that sentinel — so a per-provider cap can
@@ -295,14 +295,15 @@ hardening:
    interface, which is out of scope for a hardening milestone.
 
 **Observable production behavior:** a tenant with a `perProviderSpendCapUsd`
-+ `switch_provider` threshold configured will see that provider continue
-to receive traffic and continue accruing cost past the configured
-per-provider cap, exactly as if no such threshold had been configured at
-all — silently, with no error and no indication in the response that the
-configured protection did not apply. (Telemetry for the *tenant-wide*
-`dailyBudgetUsd`/`monthlyBudgetUsd` thresholds — `alert`, `downgrade_model`,
-`block` — is unaffected by this gap and functions correctly; this is
-specific to `perProviderSpendCapUsd` + `switch_provider`.)
+
+- `switch_provider` threshold configured will see that provider continue
+  to receive traffic and continue accruing cost past the configured
+  per-provider cap, exactly as if no such threshold had been configured at
+  all — silently, with no error and no indication in the response that the
+  configured protection did not apply. (Telemetry for the _tenant-wide_
+  `dailyBudgetUsd`/`monthlyBudgetUsd` thresholds — `alert`, `downgrade_model`,
+  `block` — is unaffected by this gap and functions correctly; this is
+  specific to `perProviderSpendCapUsd` + `switch_provider`.)
 
 **What does work correctly in Enforcement Mode, verified end-to-end
 against the real system as part of EM-11:** `block` (a tenant-wide cap
@@ -323,10 +324,10 @@ to close, since closing it needs either a frozen-interface change or an
 architecturally-approved alternative carrier — neither of which a
 hardening milestone is authorized to introduce unilaterally.
 
-*Source: ADR-0025; `packages/budget-governance/README.md` ("Known gap:
+_Source: ADR-0025; `packages/budget-governance/README.md` ("Known gap:
 `forcedProviderExclusion` is computed but not enforced"); EM-11 Engineering
 Completion Report, Budget Governance Validation section (empirical
-end-to-end reconfirmation via `packages/gateway-runtime/test/bootstrap.test.ts`).*
+end-to-end reconfirmation via `packages/gateway-runtime/test/bootstrap.test.ts`)._
 
 ### 9.3 Neither deployment application has a configuration surface for Budget Governance
 
@@ -347,7 +348,7 @@ environment-variable loaders populates either field:
   anywhere.
 - `apps/vercel-adapter`'s (`apps/vercel-adapter/src/vercel-config.ts`'s
   `loadVercelConfigFromEnv`) has the identical gap, confirmed the same
-  way. Unlike `enableStrategyLayer` — which `apps/vercel-adapter` *can*
+  way. Unlike `enableStrategyLayer` — which `apps/vercel-adapter` _can_
   reach via a `GATEWAY_CONFIG_PATH` JSON file, just without a dedicated
   env var (see
   [`docs/release/RUNTIME_CONFIGURATION_MATRIX.md`](RUNTIME_CONFIGURATION_MATRIX.md))
@@ -386,14 +387,14 @@ see
 which also covers the smaller, related `maxPipelineSteps` gap (neither
 app exposes an override for the pipeline step cap either).
 
-*Source: `apps/gateway-server/src/server-config.ts` and
+_Source: `apps/gateway-server/src/server-config.ts` and
 `apps/vercel-adapter/src/vercel-config.ts` (no `budget`-related
 identifier anywhere in either file, confirmed by inspection);
 `packages/gateway-runtime/src/bootstrap.ts` (`GatewayRuntimeConfig`'s
 `budgetPolicies`/`budgetEnforcementMode` fields and their consumption);
 `apps/gateway-server/src/index.ts` and `apps/vercel-adapter/src/runtime.ts`
 (both pass their respective loader's result to `bootstrap()`
-unmodified).*
+unmodified)._
 
 ## 10. v1.1 / Strategy Layer release validation
 
@@ -461,12 +462,12 @@ Governance decision, not one this review is positioned to make). Until
 those three exist, the v1.1 tag should not be cut on the strength of the
 in-repo pass-through regression suite alone.
 
-*Source: EM-8 Independent Architecture & Engineering Review, Finding 2;
+_Source: EM-8 Independent Architecture & Engineering Review, Finding 2;
 `docs/architecture/engineering-blueprint.md`, Section 7 (EM-8 Tests
-required, EM-8 Risks); `packages/gateway-runtime/test/integration/end-to-end.test.ts`.*
+required, EM-8 Risks); `packages/gateway-runtime/test/integration/end-to-end.test.ts`._
 
 ---
 
-*This document is maintained as part of release governance and should be
+_This document is maintained as part of release governance and should be
 updated whenever a package's Deferred Work section changes, a new ADR is
-filed, or an existing one is accepted/resolved.*
+filed, or an existing one is accepted/resolved._

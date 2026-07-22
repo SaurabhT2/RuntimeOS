@@ -91,7 +91,7 @@ each item before tagging.
 ## 5. Deployment
 
 - [ ] A clean-checkout build (`pnpm install --frozen-lockfile && pnpm
-      build`) succeeds on a fresh machine/container, not just an
+build`) succeeds on a fresh machine/container, not just an
       incrementally-cached CI runner.
 - [ ] `node apps/gateway-server/dist/index.js` starts successfully with
       a representative environment-variable configuration (see
@@ -151,6 +151,6 @@ each item before tagging.
 
 ---
 
-*This checklist is itself a release-governance artifact — update it
+_This checklist is itself a release-governance artifact — update it
 whenever a validation step, endpoint, or environment variable it
-references changes, so the next release's checklist stays accurate.*
+references changes, so the next release's checklist stays accurate._

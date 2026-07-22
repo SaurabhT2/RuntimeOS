@@ -45,7 +45,7 @@ cost.
 - The HTTP-layer distinction is reinforced independently: `BUDGET_EXCEEDED`
   maps to `402 Payment Required`, deliberately different from
   `ALL_PROVIDERS_UNAVAILABLE`'s `503 Service Unavailable` — so the two
-  are distinguishable at the metrics layer *and* the HTTP-status layer,
+  are distinguishable at the metrics layer _and_ the HTTP-status layer,
   not just one or the other.
 - `DefaultBudgetEnforcer`'s shadow-mode logging (`budget_governance.shadow_mode_decision`)
   is also its own, distinctly-named log event — not merged into any

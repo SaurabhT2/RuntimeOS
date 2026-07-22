@@ -151,9 +151,9 @@ describe("deriveExecutionPlanOverrides (EM-9)", () => {
   });
 
   it("extracts disableStreaming only when it is a boolean, independent of executionProfile", () => {
-    expect(deriveExecutionPlanOverrides(undefined, { disableStreaming: true }).disableStreaming).toBe(
-      true,
-    );
+    expect(
+      deriveExecutionPlanOverrides(undefined, { disableStreaming: true }).disableStreaming,
+    ).toBe(true);
     expect(
       deriveExecutionPlanOverrides(undefined, { disableStreaming: "true" }).disableStreaming,
     ).toBeUndefined();

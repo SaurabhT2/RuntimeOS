@@ -24,7 +24,7 @@ explicitly wires budget policies in. If you're calling
 `POST /v1/execute` today, you can upgrade the platform version underneath
 you with no client-side changes, full stop.
 
-Everything below is about *opting into* new capability, not about
+Everything below is about _opting into_ new capability, not about
 keeping up with a moving target underneath you.
 
 ## Adopting the Strategy Layer
@@ -101,7 +101,7 @@ straight to enforcement:**
 1. Start with `budgetEnforcementMode: "shadow"` (the default, and the
    only mode you should run in for at least one full billing/observation
    cycle). Nothing is blocked or altered; you get real telemetry on what
-   *would* happen.
+   _would_ happen.
 2. Watch that telemetry. Confirm the thresholds and actions you
    configured produce the outcomes you expect against real traffic
    patterns, not just the test fixtures in

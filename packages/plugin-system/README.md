@@ -75,7 +75,7 @@ root) for this listed as a v1.3 candidate.
 `workspace:*`) — used for the request/response shapes a plugin's
 `runOnRequest`/`runOnResponse` hooks receive. No dependency on
 `orchestrator` or `strategy-layer` in either direction, and (see above)
-no dependency *from* either of those packages either — this package is
+no dependency _from_ either of those packages either — this package is
 currently unreferenced by anything outside its own tests.
 
 ## Architecture reference

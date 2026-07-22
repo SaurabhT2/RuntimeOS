@@ -147,7 +147,8 @@ export class DefaultBudgetEnforcer implements BudgetEnforcer {
     // `percentOfBudget` is `undefined`, folded to `0` by `Math.max` above),
     // is attributed to "day" — the pre-existing, always-correct default
     // for the common single-window-configured case.
-    const drivingWindow: "day" | "month" = (monthlyPercent ?? 0) > (dailyPercent ?? 0) ? "month" : "day";
+    const drivingWindow: "day" | "month" =
+      (monthlyPercent ?? 0) > (dailyPercent ?? 0) ? "month" : "day";
 
     const { triggered, strongestAction } = evaluateThresholds(policy.thresholds, percentReached);
 

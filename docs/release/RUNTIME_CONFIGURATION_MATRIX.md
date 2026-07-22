@@ -12,18 +12,18 @@ root code. That distinction is the entire point of this document; see
 "How to read '⚠ not exposed'," below, before drawing any conclusion from
 this table.
 
-| Capability | RuntimeOS runtime supports | `apps/gateway-server` exposes | `apps/vercel-adapter` exposes |
-|---|---|---|---|
-| Strategy Layer (`enableStrategyLayer`) | ✅ Yes | ✅ `ENABLE_STRATEGY_LAYER` env var (takes precedence), or `enableStrategyLayer` in a `GATEWAY_CONFIG_PATH` JSON file | ✅ Only via `enableStrategyLayer` in a `GATEWAY_CONFIG_PATH` JSON file — **no dedicated environment variable exists for this app** |
-| Runtime Profiles (`runtimeProfileId`) | ✅ Yes | ✅ Only via `runtimeProfileId` in a `GATEWAY_CONFIG_PATH` JSON file — no dedicated env var in either app | ✅ Same — only via `GATEWAY_CONFIG_PATH` JSON file |
-| Budget Governance (`budgetPolicies`, `budgetEnforcementMode`) | ✅ Yes | ⚠ Not exposed — no environment variable, and not a field in `@ai-gateway/config`'s `GatewayConfig` schema, so no `GATEWAY_CONFIG_PATH` route either | ⚠ Not exposed — identical gap |
-| Pipeline Orchestrator (`POST /v1/execute/pipeline`) | ✅ Yes | ✅ Endpoint always registered, no flag needed | ✅ Endpoint always registered, no flag needed |
-| Pipeline step cap (`maxPipelineSteps`) | ✅ Yes (defaults to the `pipeline-orchestrator` package's own default of 20) | ⚠ Not exposed — always uses the package default | ⚠ Not exposed — always uses the package default |
-| Rate limiting (`rateLimit.requestsPerWindow`/`windowMs`) | ✅ Yes | ✅ `RATE_LIMIT_REQUESTS_PER_WINDOW`, `RATE_LIMIT_WINDOW_MS` | ✅ Same two env vars, identical names/semantics |
-| Response cache (`cache.ttlMs`/`includeTenantInKey`) | ✅ Yes | ✅ `CACHE_TTL_MS`, `CACHE_INCLUDE_TENANT` | ✅ Same two env vars, identical names/semantics |
-| BYOK / platform-managed credentials | ✅ Yes | ✅ `GATEWAY_API_KEYS_JSON`, `CREDENTIAL_PRIORITY`, `GROQ_PLATFORM_API_KEY_ENV_VAR`, `NVIDIA_NIM_PLATFORM_API_KEY_ENV_VAR` | ✅ Same four env vars, identical names/semantics |
+| Capability                                                    | RuntimeOS runtime supports                                                   | `apps/gateway-server` exposes                                                                                                                       | `apps/vercel-adapter` exposes                                                                                                      |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Strategy Layer (`enableStrategyLayer`)                        | ✅ Yes                                                                       | ✅ `ENABLE_STRATEGY_LAYER` env var (takes precedence), or `enableStrategyLayer` in a `GATEWAY_CONFIG_PATH` JSON file                                | ✅ Only via `enableStrategyLayer` in a `GATEWAY_CONFIG_PATH` JSON file — **no dedicated environment variable exists for this app** |
+| Runtime Profiles (`runtimeProfileId`)                         | ✅ Yes                                                                       | ✅ Only via `runtimeProfileId` in a `GATEWAY_CONFIG_PATH` JSON file — no dedicated env var in either app                                            | ✅ Same — only via `GATEWAY_CONFIG_PATH` JSON file                                                                                 |
+| Budget Governance (`budgetPolicies`, `budgetEnforcementMode`) | ✅ Yes                                                                       | ⚠ Not exposed — no environment variable, and not a field in `@ai-gateway/config`'s `GatewayConfig` schema, so no `GATEWAY_CONFIG_PATH` route either | ⚠ Not exposed — identical gap                                                                                                      |
+| Pipeline Orchestrator (`POST /v1/execute/pipeline`)           | ✅ Yes                                                                       | ✅ Endpoint always registered, no flag needed                                                                                                       | ✅ Endpoint always registered, no flag needed                                                                                      |
+| Pipeline step cap (`maxPipelineSteps`)                        | ✅ Yes (defaults to the `pipeline-orchestrator` package's own default of 20) | ⚠ Not exposed — always uses the package default                                                                                                     | ⚠ Not exposed — always uses the package default                                                                                    |
+| Rate limiting (`rateLimit.requestsPerWindow`/`windowMs`)      | ✅ Yes                                                                       | ✅ `RATE_LIMIT_REQUESTS_PER_WINDOW`, `RATE_LIMIT_WINDOW_MS`                                                                                         | ✅ Same two env vars, identical names/semantics                                                                                    |
+| Response cache (`cache.ttlMs`/`includeTenantInKey`)           | ✅ Yes                                                                       | ✅ `CACHE_TTL_MS`, `CACHE_INCLUDE_TENANT`                                                                                                           | ✅ Same two env vars, identical names/semantics                                                                                    |
+| BYOK / platform-managed credentials                           | ✅ Yes                                                                       | ✅ `GATEWAY_API_KEYS_JSON`, `CREDENTIAL_PRIORITY`, `GROQ_PLATFORM_API_KEY_ENV_VAR`, `NVIDIA_NIM_PLATFORM_API_KEY_ENV_VAR`                           | ✅ Same four env vars, identical names/semantics                                                                                   |
 
-*Every claim in this table was checked directly against
+_Every claim in this table was checked directly against
 `packages/gateway-runtime/src/bootstrap.ts`'s `GatewayRuntimeConfig`
 interface and doc comments, `apps/gateway-server/src/server-config.ts`,
 and `apps/vercel-adapter/src/vercel-config.ts` — not inferred from either
@@ -35,7 +35,7 @@ config-file fallback (`bootstrap()`'s
 `runtimeConfig.enableStrategyLayer ?? parsedGatewayConfig.data.enableStrategyLayer ?? false`)
 is reachable by both apps identically, since both forward
 `gatewayConfigPath` unconditionally. Only the environment-variable
-shortcut differs between them.*
+shortcut differs between them._
 
 ## How to read "⚠ not exposed"
 

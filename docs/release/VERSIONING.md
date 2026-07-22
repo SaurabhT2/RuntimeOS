@@ -87,7 +87,7 @@ integration path — see `examples/minimal-node-client`,
 - `ExecuteRequest`/`ExecuteResponse`/`GatewayError` shapes are stable
   within a major platform version; a breaking change to any of them
   requires both a `core-contracts` major version bump and an ADR.
-  Architecture §24 states this policy directly: "Contract tests... 
+  Architecture §24 states this policy directly: "Contract tests...
   ensure `ExecuteRequest`/`ExecuteResponse`/`GatewayError` remain
   backward compatible across releases."
 - New optional request fields, new response fields, and new
@@ -125,7 +125,7 @@ the v1.0.0 tag:
 2. Run `pnpm version-packages` to apply accumulated changesets — this
    bumps affected packages' versions and updates their changelogs.
 3. Run the full validation suite (`pnpm build lint typecheck test
-   test:coverage graph:check format:check`) against the resulting commit.
+test:coverage graph:check format:check`) against the resulting commit.
 4. Tag the platform release (e.g. `git tag v1.0.0`) once
    `docs/release/RELEASE_CHECKLIST.md` is fully satisfied.
 5. Publish `CHANGELOG.md`/`docs/release/RELEASE_NOTES.md` updates for

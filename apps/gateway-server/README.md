@@ -93,17 +93,17 @@ Body:
   "steps": [
     {
       "id": "step-1",
-      "task": "summarize",             // any TaskType
-      "input": { "text": "..." },       // literal input for this step
-      "required": true                  // optional, default true — see below
+      "task": "summarize", // any TaskType
+      "input": { "text": "..." }, // literal input for this step
+      "required": true, // optional, default true — see below
     },
     {
       "id": "step-2",
       "task": "chat",
-      "inputFrom": "step-1"             // OR: use step-1's ExecuteResponse.output as this step's input.text
-                                          // (output.text if present, else JSON.stringify(output.json))
-    }
-  ]
+      "inputFrom": "step-1", // OR: use step-1's ExecuteResponse.output as this step's input.text
+      // (output.text if present, else JSON.stringify(output.json))
+    },
+  ],
 }
 ```
 
@@ -119,11 +119,11 @@ Returns `200` with a `PipelineResult`:
 {
   "pipelineId": "pipeline-1",
   "stepResults": {
-    "step-1": { /* ExecuteResponse */ },
-    "step-2": { /* ExecuteResponse, or a serialized GatewayError if this step failed */ }
+    "step-1": {/* ExecuteResponse */},
+    "step-2": {/* ExecuteResponse, or a serialized GatewayError if this step failed */},
   },
-  "totalCostUsd": 0.0031,     // sum of every successful step's usage.estimatedCostUsd
-  "durationMs": 842           // wall-clock duration of the whole call
+  "totalCostUsd": 0.0031, // sum of every successful step's usage.estimatedCostUsd
+  "durationMs": 842, // wall-clock duration of the whole call
 }
 ```
 

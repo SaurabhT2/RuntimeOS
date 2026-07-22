@@ -51,5 +51,5 @@ pipeline calls; the common case (a handful of steps, per architecture
 
 No cap, relying on the existing per-tenant rate limiter (architecture
 §20.4) to catch runaway usage indirectly — rejected because rate limiting
-operates on request *count*, not on the amplification factor a single
+operates on request _count_, not on the amplification factor a single
 oversized pipeline request represents.

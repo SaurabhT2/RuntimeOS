@@ -169,8 +169,7 @@ export class DefaultPolicyEngine implements PolicyEngine {
     // this pipeline (architecture §33.3's "never overrides a hard
     // requirement" principle, applied here to the one field a caller can
     // hard-constrain directly).
-    const timeoutMs =
-      req.constraints?.maxLatencyMs ?? overrides.timeoutMs ?? this.defaultTimeoutMs;
+    const timeoutMs = req.constraints?.maxLatencyMs ?? overrides.timeoutMs ?? this.defaultTimeoutMs;
     const retryPolicy = overrides.retryPolicy ?? DEFAULT_RETRY_POLICY;
     // Same precedence for streaming: an explicit caller ask always wins;
     // otherwise the resolved profile's own default; otherwise EM-3's

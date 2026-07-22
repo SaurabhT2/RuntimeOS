@@ -81,11 +81,11 @@ these locally waste review cycles.
 
 ### Test coverage expectations by package tier
 
-| Tier | Packages (examples) | Bar |
-|---|---|---|
-| Contract tier | `core-contracts` | 100% of exported types exercised by a round-trip (parses/rejects) test. |
-| Core logic tier | `policy-engine`, `reliability` | 90%+ line coverage, enforced in CI. |
-| Adapter tier | `providers/*` | 100% pass rate on the shared conformance suite; line coverage is secondary. |
+| Tier                  | Packages (examples)                                 | Bar                                                                                           |
+| --------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Contract tier         | `core-contracts`                                    | 100% of exported types exercised by a round-trip (parses/rejects) test.                       |
+| Core logic tier       | `policy-engine`, `reliability`                      | 90%+ line coverage, enforced in CI.                                                           |
+| Adapter tier          | `providers/*`                                       | 100% pass rate on the shared conformance suite; line coverage is secondary.                   |
 | Thin/composition tier | `orchestrator`, `middleware`, `apps/gateway-server` | Integration coverage of every request-lifecycle node, rather than a line-coverage percentage. |
 
 ## Documentation expectations
@@ -95,7 +95,7 @@ these locally waste review cycles.
   fact drifts from what actually shipped.
 - **Every exported interface, type, and public function carries a TSDoc
   comment.** Don't hand-maintain a separate API reference.
-- **A package's README states what it does *not* implement**, not just
+- **A package's README states what it does _not_ implement**, not just
   what it does, whenever a reasonable reader might otherwise assume
   broader scope than what shipped (see any existing package README's
   "Deferred Work" or "Scope Verification" section for the pattern this
@@ -126,7 +126,7 @@ for one:
    `docs/adr/0000-template.md`.
 2. **Finding a real, verified inconsistency between the Architecture
    Specification and the implementation.** This project's convention is
-   to *document* such a gap as a proposed ADR rather than silently
+   to _document_ such a gap as a proposed ADR rather than silently
    resolve it with a local workaround, so the Architecture Review Board
    can make the call with full context. See `docs/adr/README.md`'s
    "Proposed / Draft" section for five worked examples of this pattern.
@@ -184,7 +184,7 @@ follow from that:
   you find while implementing something else.** Document it (an ADR, or
   a note in the relevant package's README) and let it be decided at the
   appropriate review level. This keeps the Architecture Specification
-  and Engineering Blueprint as reliable a record of *intent* as the code
+  and Engineering Blueprint as reliable a record of _intent_ as the code
   is a record of what was actually built — the two are expected to be
   cross-checked against each other, not silently reconciled by whoever
   happens to notice a gap first.

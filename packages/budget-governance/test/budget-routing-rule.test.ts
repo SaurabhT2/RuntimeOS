@@ -23,7 +23,9 @@ describe("budgetProviderExclusionRule", () => {
   });
 
   it("does not apply when forcedProviderExclusion is absent or empty", () => {
-    const ctx: PolicyContextWithBudgetDecision = { budgetDecision: { allowed: true, alertsTriggered: [] } };
+    const ctx: PolicyContextWithBudgetDecision = {
+      budgetDecision: { allowed: true, alertsTriggered: [] },
+    };
     expect(budgetProviderExclusionRule.applies(ctx)).toBe(false);
 
     const ctxEmpty: PolicyContextWithBudgetDecision = {
@@ -50,7 +52,11 @@ describe("budgetProviderExclusionRule", () => {
 
   it("never empties the candidate list entirely — falls back to the unfiltered set", () => {
     const ctx: PolicyContextWithBudgetDecision = {
-      budgetDecision: { allowed: true, alertsTriggered: [], forcedProviderExclusion: ["groq", "nvidia-nim"] },
+      budgetDecision: {
+        allowed: true,
+        alertsTriggered: [],
+        forcedProviderExclusion: ["groq", "nvidia-nim"],
+      },
     };
     const candidates = [candidate("groq"), candidate("nvidia-nim")];
     const result = budgetProviderExclusionRule.apply(candidates, ctx);

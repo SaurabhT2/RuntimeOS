@@ -1452,7 +1452,7 @@ execution logic" instruction.
 - **`packages/pipeline-orchestrator`** (`@ai-gateway/pipeline-orchestrator`):
   `PipelineStep`/`ExecutionPipeline`/`PipelineContext`/`PipelineResult`
   (architecture §41.2) and `DefaultPipelineOrchestrator.executePipeline`,
-  which sequences ordinary `ExecuteRequest`s through the *unmodified*
+  which sequences ordinary `ExecuteRequest`s through the _unmodified_
   `ExecutionOrchestrator.execute()` — no provider, `PolicyEngine`, or
   `AIStrategyLayer` calls of its own. Sequential only (§41.5's explicitly
   deferred DAG/parallel scope). `maxSteps` (ADR-0023, ratifying
@@ -1478,9 +1478,8 @@ execution logic" instruction.
   instance with no Budget Governance configured is byte-for-byte
   unaffected. A block throws `GatewayError("BUDGET_EXCEEDED", ...)`,
   reusing the exact "uncaught Strategy Pipeline exception propagates to
-  the caller as a typed error" mechanism the EM-8 Review Closure (Finding
-  5) already confirmed is architecture-compliant — no `orchestrator` code
-  change needed for this. A forced downgrade overrides the *already-existing*
+  the caller as a typed error" mechanism the EM-8 Review Closure (Finding 5) already confirmed is architecture-compliant — no `orchestrator` code
+  change needed for this. A forced downgrade overrides the _already-existing_
   `ctx.costOptimization.recommendedModelClassDowngrade` field — the same
   "later stage overrides an earlier one's field" mechanism EM-9 used for
   Runtime Profile adjustments.
@@ -1599,7 +1598,7 @@ gaps were found.
   `emitAlertMetric` call site uses that real value. No change to
   `BudgetDecision`'s public shape.
 - ✅ **Finding 3 (Major) closed** — `gateway-runtime`'s `bootstrap.test.ts`
-  gained three new end-to-end tests, all exercising the *real* execution
+  gained three new end-to-end tests, all exercising the _real_ execution
   flow (real `bootstrap()`, real `orchestrator`, a `fakeAdapter` extended
   with a controllable, non-zero `costUsd` — the previous hardcoded `$0`
   made cumulative accrual untestable) rather than mocked ledger state:
@@ -1773,4 +1772,3 @@ Profile or Provider Adapter contract. The `switch_provider` gap found
 above was documented, not code-fixed, for exactly this reason — closing
 it needs an Architecture Review Board decision on ADR-0025, which is
 explicitly outside a hardening milestone's authority.
-
