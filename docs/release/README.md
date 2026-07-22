@@ -14,6 +14,7 @@ the next release.
 | [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) | The single, consolidated, sourced list of every documented limitation, current through v1.2. |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | How to build, configure, run, and operate the Node/container gateway server (`apps/gateway-server`), current through v1.2. |
 | [`DEPLOYMENT-VERCEL.md`](DEPLOYMENT-VERCEL.md) | The equivalent deployment guide for the Vercel-hosted composition root (`apps/vercel-adapter`). |
+| [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) | Common install/build/runtime failures across `apps/gateway-server`, `apps/vercel-adapter`, and `apps/runtime-studio`, and their fixes. Added during the RR-1 release-readiness audit. |
 | [`RUNTIME_CONFIGURATION_MATRIX.md`](RUNTIME_CONFIGURATION_MATRIX.md) | What RuntimeOS supports vs. what each deployment app currently exposes, capability by capability — and why that distinction matters. Added during the v1.2 documentation-completion pass. |
 | [`MIGRATION.md`](MIGRATION.md) | For an existing v1.0 integration adopting the Strategy Layer, Pipeline Orchestration, or Budget Governance. Added during the v1.2 documentation pass. |
 | [`VERSIONING.md`](VERSIONING.md) | Semantic versioning policy, API stability, and the release process. |

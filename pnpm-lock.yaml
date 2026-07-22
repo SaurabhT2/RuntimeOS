@@ -82,6 +82,21 @@ importers:
         specifier: ^2.1.5
         version: 2.1.9(@types/node@22.20.0)
 
+  apps/runtime-studio:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.20.0
+      '@vitest/coverage-v8':
+        specifier: ^2.1.5
+        version: 2.1.9(vitest@2.1.9(@types/node@22.20.0))
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.5
+        version: 2.1.9(@types/node@22.20.0)
+
   apps/vercel-adapter:
     dependencies:
       '@ai-gateway/config':
@@ -111,6 +126,8 @@ importers:
         version: 2.1.9(@types/node@22.20.0)
 
   examples/minimal-node-client: {}
+
+  examples/pipeline-client: {}
 
   examples/streaming-client: {}
 

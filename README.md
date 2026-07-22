@@ -258,7 +258,8 @@ is a browser-based reference client covering every public endpoint,
 built specifically to be honest about which RuntimeOS capabilities your
 target deployment does and doesn't currently expose — see that app's own
 README before assuming a panel that shows "not configured" means
-RuntimeOS itself lacks the capability.
+RuntimeOS itself lacks the capability. If any of the above steps fail,
+see [`docs/release/TROUBLESHOOTING.md`](docs/release/TROUBLESHOOTING.md).
 
 ## Tooling choices (Section 3 of [the Blueprint](docs/architecture/engineering-blueprint.md))
 

@@ -320,7 +320,9 @@ apply identically regardless of hostname.
 
 ## Deployment limitations
 
-See [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) for the full list.
+See [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) for common install/build/
+runtime failures and their fixes, and [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md)
+for the full list of intentional scope limitations (not defects).
 The ones most relevant to a deployment operator specifically are: §1.1
 (single-instance state), §1.2 (no database/KMS), §1.3 (no built-in TLS),
 §7.1 (no telemetry exporter registered by default), §9.2 (`switch_provider`
