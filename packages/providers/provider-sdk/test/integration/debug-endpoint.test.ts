@@ -54,7 +54,14 @@ describe("EM-1 vertical slice: POST /debug/execute", () => {
       });
       expect(response.status).toBe(200);
       const body = await response.json();
-      expect(body.execution.latencyMs).toBeGreaterThanOrEqual(20);
+      // Confirms the simulated latency actually elapsed end-to-end (as
+      // opposed to being bypassed entirely, which would read ~0ms) —
+      // not a precision claim. Date.now()-based measurement around a
+      // setTimeout-based delay() can read a millisecond or two under
+      // the configured value on some CI runners' clock resolution, so
+      // this allows a small tolerance rather than asserting the exact
+      // configured floor.
+      expect(body.execution.latencyMs).toBeGreaterThanOrEqual(15);
     } finally {
       adapter.reset();
     }
