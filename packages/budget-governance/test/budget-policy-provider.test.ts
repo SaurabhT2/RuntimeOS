@@ -21,7 +21,10 @@ describe("StaticBudgetPolicyProvider", () => {
 
   it("distinguishes an organization-level policy from a workspace-level one", async () => {
     const orgPolicy = basePolicy({ tenant: tenant() });
-    const workspacePolicy = basePolicy({ tenant: tenant({ workspaceId: "ws-1" }), dailyBudgetUsd: 5 });
+    const workspacePolicy = basePolicy({
+      tenant: tenant({ workspaceId: "ws-1" }),
+      dailyBudgetUsd: 5,
+    });
     const provider = new StaticBudgetPolicyProvider([orgPolicy, workspacePolicy]);
     expect(await provider.getPolicy(tenant())).toEqual(orgPolicy);
     expect(await provider.getPolicy(tenant({ workspaceId: "ws-1" }))).toEqual(workspacePolicy);
@@ -76,7 +79,9 @@ describe("budgetPolicyListSchema", () => {
   it("rejects an unknown threshold action", () => {
     expect(() =>
       budgetPolicyListSchema.parse([
-        basePolicy({ thresholds: [{ atPercentOfBudget: 50, action: "not-a-real-action" as never }] }),
+        basePolicy({
+          thresholds: [{ atPercentOfBudget: 50, action: "not-a-real-action" as never }],
+        }),
       ]),
     ).toThrow();
   });

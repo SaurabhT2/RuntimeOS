@@ -54,7 +54,11 @@ describe("DefaultAIStrategyLayer", () => {
 
     it("a blocking BudgetDecision propagates as a BUDGET_EXCEEDED GatewayError out of buildStrategy() itself", async () => {
       const fakeEnforcer = {
-        evaluate: async () => ({ allowed: false, alertsTriggered: [], reason: "BUDGET_EXCEEDED" as const }),
+        evaluate: async () => ({
+          allowed: false,
+          alertsTriggered: [],
+          reason: "BUDGET_EXCEEDED" as const,
+        }),
       };
       const layer = new DefaultAIStrategyLayer(seededOptions({ budgetEnforcer: fakeEnforcer }));
       await expect(layer.buildStrategy(baseRequest(), tenant())).rejects.toMatchObject({
@@ -81,7 +85,9 @@ describe("DefaultAIStrategyLayer", () => {
             throw new Error("ledger unavailable: ECONNREFUSED");
           },
         };
-        const layer = new DefaultAIStrategyLayer(seededOptions({ budgetEnforcer: explodingEnforcer }));
+        const layer = new DefaultAIStrategyLayer(
+          seededOptions({ budgetEnforcer: explodingEnforcer }),
+        );
         // Today's documented behavior (architecture §3's P6, the same
         // uncaught-Strategy-Pipeline-stage-error mechanism EM-8's Review
         // Closure Finding 5 already confirmed compliant): the failure is

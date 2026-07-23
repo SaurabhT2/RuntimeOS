@@ -1,5 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { isGatewayError, type ExecuteResponse, type GatewayError } from "@ai-gateway/core-contracts";
+import {
+  isGatewayError,
+  type ExecuteResponse,
+  type GatewayError,
+} from "@ai-gateway/core-contracts";
 import type { PipelineResult } from "@ai-gateway/pipeline-orchestrator";
 import type { GatewayApp } from "../../bootstrap.js";
 import { extractApiKey } from "../auth-header.js";

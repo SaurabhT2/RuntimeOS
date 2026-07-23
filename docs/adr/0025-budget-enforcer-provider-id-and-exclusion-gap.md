@@ -19,7 +19,7 @@
 `providerId` parameter assumes a specific provider is already known.**
 Architecture §43.3 places Budget Enforcement "as the last step of the
 Optimization Pipeline ... immediately before the `StrategyDecision` is
-handed to the Policy Engine" — i.e., *before* Policy Engine's Candidate
+handed to the Policy Engine" — i.e., _before_ Policy Engine's Candidate
 Query/Scoring/Ranking (§13.2) has selected, or even enumerated, any
 candidate. At that point in the pipeline, there is no "the provider" for
 `perProviderSpendCapUsd` to check against. `@ai-gateway/budget-governance`'s
@@ -34,12 +34,12 @@ one correct interpretation unilaterally.
 **(b) `BudgetDecision.forcedProviderExclusion` has no carrier from
 `strategy-layer` (where it's computed) to `policy-engine` (where it would
 need to be applied).** `forcedModelClassDowngrade` doesn't have this
-problem: it's folded into the *already-existing*
+problem: it's folded into the _already-existing_
 `optimizations.cost.recommendedModelClassDowngrade` field
 (`BudgetEnforcementStage`), which was already part of `StrategyDecision`
 (§30.3) and already flows to `policy-engine` (EM-9's activation).
 `forcedProviderExclusion` has no analogous existing field — `StrategyDecision`
-is frozen, and `AIStrategyLayer.buildStrategy`'s return type (the *only*
+is frozen, and `AIStrategyLayer.buildStrategy`'s return type (the _only_
 channel from `strategy-layer` to `orchestrator`) cannot be widened without
 violating that freeze. `@ai-gateway/budget-governance`'s
 `budgetProviderExclusionRule` is a real, independently-tested
@@ -62,7 +62,7 @@ unilaterally. For EM-10 specifically:
   definition (`budget-governance`'s `budget-enforcer.ts`) and in that
   package's README, "The `providerId` parameter, before a provider is
   chosen." Not changed further pending Board input.
-- (b) is *not* implemented — `forcedProviderExclusion` is computed
+- (b) is _not_ implemented — `forcedProviderExclusion` is computed
   correctly (visible in `BudgetDecision`, in shadow-mode telemetry, and in
   `budget-governance`'s own tests) but has no effect on a live request.
   `budgetProviderExclusionRule` exists, tested, unregistered — ready for
@@ -101,8 +101,8 @@ ones (a question this milestone has no production data to answer).
 - A `BudgetPolicy` configuring a `switch_provider` threshold action today
   gets a `BudgetDecision.forcedProviderExclusion` value that is correctly
   computed but has no observable effect on routing — `DefaultBudgetEnforcer`'s
-  own tests demonstrate the *decision* is right; nothing in this milestone
-  claims the *enforcement* of that specific action is complete. Documented
+  own tests demonstrate the _decision_ is right; nothing in this milestone
+  claims the _enforcement_ of that specific action is complete. Documented
   in `budget-governance`'s README so this isn't discovered by surprise in
   production.
 - Whichever option the Board picks, `budgetProviderExclusionRule` is

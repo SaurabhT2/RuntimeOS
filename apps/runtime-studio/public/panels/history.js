@@ -1,4 +1,16 @@
-import { h, panelHeader, jsonBlock, badge, loadHistory, clearHistory, apiExecute, apiPipeline, pushHistory, formatCost, formatMs } from "../shared.js";
+import {
+  h,
+  panelHeader,
+  jsonBlock,
+  badge,
+  loadHistory,
+  clearHistory,
+  apiExecute,
+  apiPipeline,
+  pushHistory,
+  formatCost,
+  formatMs,
+} from "../shared.js";
 
 export function renderHistory(root) {
   const state = { compareIds: [] };
@@ -17,10 +29,24 @@ export function renderHistory(root) {
   async function replay(entry) {
     if (entry.panel === "pipeline") {
       const result = await apiPipeline(entry.request);
-      pushHistory({ panel: "pipeline", summary: `replay of ${entry.id.slice(0, 8)}`, request: entry.request, response: result.body, status: result.status, ok: result.ok });
+      pushHistory({
+        panel: "pipeline",
+        summary: `replay of ${entry.id.slice(0, 8)}`,
+        request: entry.request,
+        response: result.body,
+        status: result.status,
+        ok: result.ok,
+      });
     } else {
       const result = await apiExecute(entry.request);
-      pushHistory({ panel: entry.panel, summary: `replay of ${entry.id.slice(0, 8)}`, request: entry.request, response: result.body, status: result.status, ok: result.ok });
+      pushHistory({
+        panel: entry.panel,
+        summary: `replay of ${entry.id.slice(0, 8)}`,
+        request: entry.request,
+        response: result.body,
+        status: result.status,
+        ok: result.ok,
+      });
     }
     render();
   }
@@ -49,14 +75,37 @@ export function renderHistory(root) {
 
     root.append(
       h("div", { class: "btn-row", style: "margin-bottom: 16px" }, [
-        h("button", { class: "btn btn--secondary", disabled: history.length === 0 || undefined, onClick: exportHistory }, "Export as JSON"),
-        h("button", { class: "btn btn--danger", disabled: history.length === 0 || undefined, onClick: () => { clearHistory(); render(); } }, "Clear history"),
-        state.compareIds.length === 2 ? h("span", { class: "field-hint" }, "2 selected for compare — see below") : null,
+        h(
+          "button",
+          {
+            class: "btn btn--secondary",
+            disabled: history.length === 0 || undefined,
+            onClick: exportHistory,
+          },
+          "Export as JSON",
+        ),
+        h(
+          "button",
+          {
+            class: "btn btn--danger",
+            disabled: history.length === 0 || undefined,
+            onClick: () => {
+              clearHistory();
+              render();
+            },
+          },
+          "Clear history",
+        ),
+        state.compareIds.length === 2
+          ? h("span", { class: "field-hint" }, "2 selected for compare — see below")
+          : null,
       ]),
     );
 
     if (history.length === 0) {
-      root.append(h("div", { class: "card" }, [h("div", { class: "empty-state" }, "No requests yet.")]));
+      root.append(
+        h("div", { class: "card" }, [h("div", { class: "empty-state" }, "No requests yet.")]),
+      );
       return;
     }
 
@@ -67,20 +116,40 @@ export function renderHistory(root) {
           h("div", { class: "card" }, [
             h("div", { class: "card-title" }, "Compare"),
             h("div", { class: "row" }, [
-              h("div", {}, [h("div", { class: "field-hint" }, `${a.panel} · ${new Date(a.at).toLocaleString()}`), jsonBlock({ request: a.request, response: a.response })]),
-              h("div", {}, [h("div", { class: "field-hint" }, `${b.panel} · ${new Date(b.at).toLocaleString()}`), jsonBlock({ request: b.request, response: b.response })]),
+              h("div", {}, [
+                h(
+                  "div",
+                  { class: "field-hint" },
+                  `${a.panel} · ${new Date(a.at).toLocaleString()}`,
+                ),
+                jsonBlock({ request: a.request, response: a.response }),
+              ]),
+              h("div", {}, [
+                h(
+                  "div",
+                  { class: "field-hint" },
+                  `${b.panel} · ${new Date(b.at).toLocaleString()}`,
+                ),
+                jsonBlock({ request: b.request, response: b.response }),
+              ]),
             ]),
           ]),
         );
       }
     }
 
-    const listCard = h("div", { class: "card" }, [h("div", { class: "card-title" }, `All requests (${history.length})`)]);
+    const listCard = h("div", { class: "card" }, [
+      h("div", { class: "card-title" }, `All requests (${history.length})`),
+    ]);
     for (const entry of history) {
       listCard.append(
         h("div", { class: "history-row" }, [
           h("div", {}, [
-            h("input", { type: "checkbox", checked: state.compareIds.includes(entry.id) || undefined, onChange: () => toggleCompare(entry.id) }),
+            h("input", {
+              type: "checkbox",
+              checked: state.compareIds.includes(entry.id) || undefined,
+              onChange: () => toggleCompare(entry.id),
+            }),
             " ",
             badge(entry.panel, "info"),
             " ",

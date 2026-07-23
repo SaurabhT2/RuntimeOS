@@ -19,7 +19,7 @@ default (Blueprint §7 EM-10's explicit risk mitigation).
   `ConfigSource`) and `StaticBudgetPolicyProvider` (a plain in-memory map,
   for tests/small deployments) are both provided.
 - `BudgetEnforcer` / `BudgetDecision` — `DefaultBudgetEnforcer.evaluate(tenant,
-  plannedCostUsd, providerId)` is the one method this package's every other
+plannedCostUsd, providerId)` is the one method this package's every other
   piece exists to support.
 - `budgetProviderExclusionRule` — a real, tested `policy-engine` `RoutingRule`
   that is currently unregistered by necessity, not oversight (see "Known
@@ -32,9 +32,9 @@ default (Blueprint §7 EM-10's explicit risk mitigation).
    mitigated by shipping with a 'shadow mode' (log what would have been
    blocked, block nothing) for the first release, promoted to enforcing
    mode only after a burn-in period." `DefaultBudgetEnforcer` always
-   *computes* the real decision (so shadow-mode telemetry reflects the
+   _computes_ the real decision (so shadow-mode telemetry reflects the
    true would-be outcome), but in `"shadow"` mode (the constructor
-   default) the *returned* decision always has `allowed: true` and no
+   default) the _returned_ decision always has `allowed: true` and no
    forced constraints — a fresh deployment enforces nothing until a
    human explicitly passes `mode: "enforcing"`.
 2. **A tenant with no configured `BudgetPolicy` experiences nothing.**
@@ -60,7 +60,7 @@ default (Blueprint §7 EM-10's explicit risk mitigation).
 5. **`forcedModelClassDowngrade` reuses `CostOptimizationResult.recommendedModelClassDowngrade`'s
    exact shape and travel path — no new carrier needed.** `strategy-layer`'s
    `BudgetEnforcementStage` (not this package) applies this by overriding
-   the *already-existing* field `cost-optimizer` populated earlier in the
+   the _already-existing_ field `cost-optimizer` populated earlier in the
    same pipeline run, exactly the same "a later stage can override an
    earlier one's field, `StrategyDecision`'s own shape is unchanged"
    mechanism EM-9 used for Runtime Profile adjustments. See that stage's
@@ -68,7 +68,7 @@ default (Blueprint §7 EM-10's explicit risk mitigation).
 6. **The `providerId` parameter, before a provider is chosen.**
    Architecture §43.2's `evaluate(tenant, plannedCostUsd, providerId)`
    assumes a specific provider is already known, but §43.3 places Budget
-   Enforcement *before* Policy Engine has selected any candidate — there
+   Enforcement _before_ Policy Engine has selected any candidate — there
    is no "the provider" yet at that point in the pipeline.
    `strategy-layer`'s `BudgetEnforcementStage` passes
    `NO_PROVIDER_SELECTED_YET` (`"*"`) in that position; this package's
@@ -103,7 +103,7 @@ just this package's own pre-existing, ledger-mocked unit tests.
 ## Fixed (EM-10 Engineering Rework): `gateway_budget_alert_total`'s `window` label
 
 The same Review's Finding 2 identified that `emitAlertMetric` always
-tagged `window: "day"`, even when a *monthly* threshold — not the daily
+tagged `window: "day"`, even when a _monthly_ threshold — not the daily
 one — actually drove the alert. `DefaultBudgetEnforcer.computeRealDecision`
 now determines and returns which window drove `percentReached`, and
 `evaluate` tags every alert with that real value. No public shape changed:

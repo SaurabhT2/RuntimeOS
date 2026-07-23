@@ -127,7 +127,10 @@ export class ExecutionProfileResolutionStage implements StrategyPipelineStage {
       fieldsOverridden.push("retryPolicy");
     }
 
-    const adjustedCaching = adjustCaching(profile.caching, ctx.runtimeProfile.caching.aggressiveness);
+    const adjustedCaching = adjustCaching(
+      profile.caching,
+      ctx.runtimeProfile.caching.aggressiveness,
+    );
     if (adjustedCaching !== profile.caching) {
       fieldsOverridden.push("caching");
     }

@@ -116,7 +116,11 @@ export class DefaultPipelineOrchestrator {
   ): Promise<ExecuteResponse | GatewayError> {
     const input = step.buildInput(ctx);
     try {
-      return await this.orchestrator.execute({ ...input, task: step.task, tenant: pipeline.tenant });
+      return await this.orchestrator.execute({
+        ...input,
+        task: step.task,
+        tenant: pipeline.tenant,
+      });
     } catch (error) {
       // `ExecutionOrchestrator.execute` never rejects with anything but a
       // `GatewayError` (its own doc comment, architecture §17) — this

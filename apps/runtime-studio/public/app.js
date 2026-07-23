@@ -15,9 +15,19 @@ const PANELS = [
   { id: "streaming", icon: "≋", label: "Streaming", render: renderStreaming },
   { id: "pipeline", icon: "⛓", label: "Pipeline", render: renderPipeline },
   { id: "runtime-profiles", icon: "◧", label: "Runtime Profiles", render: renderRuntimeProfiles },
-  { id: "execution-profiles", icon: "◨", label: "Execution Profiles", render: renderExecutionProfiles },
+  {
+    id: "execution-profiles",
+    icon: "◨",
+    label: "Execution Profiles",
+    render: renderExecutionProfiles,
+  },
   { id: "strategy-layer", icon: "◆", label: "Strategy Layer", render: renderStrategyLayer },
-  { id: "budget-governance", icon: "$", label: "Budget Governance", render: renderBudgetGovernance },
+  {
+    id: "budget-governance",
+    icon: "$",
+    label: "Budget Governance",
+    render: renderBudgetGovernance,
+  },
   { id: "telemetry", icon: "▤", label: "Telemetry", render: renderTelemetry },
   { id: "history", icon: "↺", label: "Request History", render: renderHistory },
   { id: "architecture", icon: "▦", label: "Architecture", render: renderArchitecture },
@@ -86,7 +96,8 @@ async function refreshHealth() {
     healthText.textContent = `${meta.body?.gatewayUrl ?? "target gateway"} — ${status} (${healthyCount}/${providerCount} providers)`;
   } catch {
     healthDot.className = "status-dot status-dot--unhealthy";
-    healthText.textContent = "could not reach target gateway — check GATEWAY_URL/GATEWAY_API_KEY on this Studio process";
+    healthText.textContent =
+      "could not reach target gateway — check GATEWAY_URL/GATEWAY_API_KEY on this Studio process";
   }
 }
 

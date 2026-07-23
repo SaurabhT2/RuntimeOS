@@ -1,5 +1,9 @@
 import { GatewayError } from "@ai-gateway/core-contracts";
-import type { BudgetDecision, BudgetEnforcer, BudgetTenantRef } from "@ai-gateway/budget-governance";
+import type {
+  BudgetDecision,
+  BudgetEnforcer,
+  BudgetTenantRef,
+} from "@ai-gateway/budget-governance";
 import { NO_PROVIDER_SELECTED_YET } from "@ai-gateway/budget-governance";
 import { describe, expect, it, vi } from "vitest";
 import { BudgetEnforcementStage } from "../../src/stages/budget-enforcement-stage.js";
@@ -40,7 +44,11 @@ describe("BudgetEnforcementStage", () => {
     const stage = new BudgetEnforcementStage(enforcer);
     await stage.run(baseCtx({ tenant: tenant({ organizationId: "org-9" }) }));
     expect(enforcer.calls).toEqual([
-      { tenant: { organizationId: "org-9" }, plannedCostUsd: 0.05, providerId: NO_PROVIDER_SELECTED_YET },
+      {
+        tenant: { organizationId: "org-9" },
+        plannedCostUsd: 0.05,
+        providerId: NO_PROVIDER_SELECTED_YET,
+      },
     ]);
   });
 
@@ -52,7 +60,11 @@ describe("BudgetEnforcementStage", () => {
   });
 
   it("throws a BUDGET_EXCEEDED GatewayError when the decision is not allowed", async () => {
-    const enforcer = fakeEnforcer({ allowed: false, alertsTriggered: [], reason: "BUDGET_EXCEEDED" });
+    const enforcer = fakeEnforcer({
+      allowed: false,
+      alertsTriggered: [],
+      reason: "BUDGET_EXCEEDED",
+    });
     const stage = new BudgetEnforcementStage(enforcer);
     await expect(stage.run(baseCtx())).rejects.toMatchObject({ code: "BUDGET_EXCEEDED" });
     await expect(stage.run(baseCtx())).rejects.toBeInstanceOf(GatewayError);

@@ -206,8 +206,6 @@ describe("RuntimeProfile read sites (architecture §37.4, Blueprint §8.16)", ()
 
   it("covers every seed preset (matrix is exhaustive, not a subset)", async () => {
     const { SEED_RUNTIME_PROFILES } = await import("../src/seed-data.js");
-    expect(EXPECTED.map((e) => e.id).sort()).toEqual(
-      SEED_RUNTIME_PROFILES.map((p) => p.id).sort(),
-    );
+    expect(EXPECTED.map((e) => e.id).sort()).toEqual(SEED_RUNTIME_PROFILES.map((p) => p.id).sort());
   });
 });

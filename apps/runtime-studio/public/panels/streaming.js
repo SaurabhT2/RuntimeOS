@@ -1,4 +1,14 @@
-import { h, panelHeader, jsonBlock, notice, metric, taskSelect, apiExecuteStream, pushHistory, formatMs } from "../shared.js";
+import {
+  h,
+  panelHeader,
+  jsonBlock,
+  notice,
+  metric,
+  taskSelect,
+  apiExecuteStream,
+  pushHistory,
+  formatMs,
+} from "../shared.js";
 
 export function renderStreaming(root) {
   const state = {
@@ -103,10 +113,19 @@ export function renderStreaming(root) {
 
     const taskField = h("div", { class: "field" }, [
       h("label", {}, "Task"),
-      taskSelect(state.task, (v) => { state.task = v; render(); }),
+      taskSelect(state.task, (v) => {
+        state.task = v;
+        render();
+      }),
     ]);
     if (state.task === "__custom__") {
-      taskField.append(h("input", { type: "text", value: state.customTask, onInput: (e) => (state.customTask = e.target.value) }));
+      taskField.append(
+        h("input", {
+          type: "text",
+          value: state.customTask,
+          onInput: (e) => (state.customTask = e.target.value),
+        }),
+      );
     }
 
     root.append(
@@ -115,7 +134,11 @@ export function renderStreaming(root) {
         h("div", { class: "row" }, [
           h("div", { class: "field" }, [
             h("label", {}, "Tenant · organizationId"),
-            h("input", { type: "text", value: state.organizationId, onInput: (e) => (state.organizationId = e.target.value) }),
+            h("input", {
+              type: "text",
+              value: state.organizationId,
+              onInput: (e) => (state.organizationId = e.target.value),
+            }),
           ]),
           taskField,
         ]),
@@ -124,8 +147,16 @@ export function renderStreaming(root) {
           h("textarea", { onInput: (e) => (state.text = e.target.value) }, state.text),
         ]),
         h("div", { class: "btn-row" }, [
-          h("button", { class: "btn", disabled: state.running || undefined, onClick: run }, state.running ? "Streaming…" : "Start streaming"),
-          h("button", { class: "btn btn--secondary", disabled: !state.running, onClick: cancel }, "Cancel"),
+          h(
+            "button",
+            { class: "btn", disabled: state.running || undefined, onClick: run },
+            state.running ? "Streaming…" : "Start streaming",
+          ),
+          h(
+            "button",
+            { class: "btn btn--secondary", disabled: !state.running, onClick: cancel },
+            "Cancel",
+          ),
         ]),
       ]),
     );
@@ -134,7 +165,15 @@ export function renderStreaming(root) {
       const card = h("div", { class: "card" }, [h("div", { class: "card-title" }, "Result")]);
 
       if (state.error) {
-        card.append(notice([h("strong", {}, state.error.code ?? "Error"), ` — ${state.error.message ?? "stream failed"}`], "danger"));
+        card.append(
+          notice(
+            [
+              h("strong", {}, state.error.code ?? "Error"),
+              ` — ${state.error.message ?? "stream failed"}`,
+            ],
+            "danger",
+          ),
+        );
       }
 
       card.append(
@@ -143,11 +182,19 @@ export function renderStreaming(root) {
           metric("Finish reason", state.finishReason ?? (state.running ? "streaming…" : "—")),
           metric(
             "Elapsed",
-            state.startedAt ? formatMs(Math.round((state.finishedAt ?? performance.now()) - state.startedAt)) : "—",
+            state.startedAt
+              ? formatMs(Math.round((state.finishedAt ?? performance.now()) - state.startedAt))
+              : "—",
           ),
         ]),
-        h("div", { class: "field" }, [h("label", {}, "Incremental output"), h("div", { class: "output-text" }, state.outputText || "…")]),
-        h("div", { class: "field" }, [h("label", {}, `Raw chunks (${state.chunks.length})`), jsonBlock(state.chunks)]),
+        h("div", { class: "field" }, [
+          h("label", {}, "Incremental output"),
+          h("div", { class: "output-text" }, state.outputText || "…"),
+        ]),
+        h("div", { class: "field" }, [
+          h("label", {}, `Raw chunks (${state.chunks.length})`),
+          jsonBlock(state.chunks),
+        ]),
       );
       root.append(card);
     }

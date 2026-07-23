@@ -10,9 +10,11 @@ export default mergeConfig(
         include: ["src/**/*.ts"],
         // `index.ts` is the process entrypoint (`listen()` + signal
         // handlers on the real process) — exercised by nothing short of an
-        // actual process spawn. `bootstrap.ts` and `http/**` (the actual
-        // composition/routing logic) are fully covered by unit + the
-        // integration suite; see this package's README, Testing strategy.
+        // actual process spawn. The composition/routing logic itself lives
+        // in `@ai-gateway/gateway-runtime` (shared with `apps/vercel-adapter`)
+        // since the EM-5.5 extraction; this app's own `http/server.ts` is
+        // covered by the integration suite. See this package's README,
+        // Testing strategy.
         exclude: ["src/index.ts"],
       },
     },

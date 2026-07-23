@@ -27,7 +27,7 @@ Or, from the repo root: `pnpm --filter ai-gateway-example-pipeline-client start`
   `durationMs`.
 - How a failed or skipped step actually appears in `stepResults`: a
   serialized `GatewayError` — a flat `{ name, code, message, retryable,
-  details }` object, **not** nested under an `.error` key the way a
+details }` object, **not** nested under an `.error` key the way a
   top-level request failure's response body is. This example's step-result
   handling discriminates on the presence of a `code` field for exactly
   this reason (an `ExecuteResponse` never has one).

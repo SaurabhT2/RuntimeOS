@@ -101,7 +101,9 @@ export function renderArchitecture(root) {
       node.setAttribute("opacity", "1");
       node.querySelector("rect").setAttribute("stroke", "var(--accent)");
       await new Promise((r) => setTimeout(r, perStage));
-      node.querySelector("rect").setAttribute("stroke", stage.optional ? "var(--accent-warn)" : "var(--border)");
+      node
+        .querySelector("rect")
+        .setAttribute("stroke", stage.optional ? "var(--accent-warn)" : "var(--border)");
     }
   }
 
@@ -119,7 +121,9 @@ export function renderArchitecture(root) {
       notice(
         [
           h("strong", {}, "The “Replay” animation below paces evenly using one real number "),
-          "(the last successful request's end-to-end ", h("code", {}, "execution.latencyMs"), "), divided across stages — it is illustrative pacing, not measured per-stage timing. The public API doesn't report how long any individual stage took, so this Studio doesn't pretend to show that.",
+          "(the last successful request's end-to-end ",
+          h("code", {}, "execution.latencyMs"),
+          "), divided across stages — it is illustrative pacing, not measured per-stage timing. The public API doesn't report how long any individual stage took, so this Studio doesn't pretend to show that.",
         ],
         "info",
       ),
@@ -130,9 +134,17 @@ export function renderArchitecture(root) {
       h("div", { class: "card-title" }, "Request flow"),
       svg,
       h("div", { class: "btn-row", style: "margin-top: 14px" }, [
-        h("button", { class: "btn btn--secondary", onClick: () => replay(svg) }, "Replay last successful request"),
+        h(
+          "button",
+          { class: "btn btn--secondary", onClick: () => replay(svg) },
+          "Replay last successful request",
+        ),
       ]),
-      h("p", { class: "field-hint" }, "Strategy Layer is drawn dashed because it's off by default and this Studio has no way to know whether the target deployment has ENABLE_STRATEGY_LAYER=true."),
+      h(
+        "p",
+        { class: "field-hint" },
+        "Strategy Layer is drawn dashed because it's off by default and this Studio has no way to know whether the target deployment has ENABLE_STRATEGY_LAYER=true.",
+      ),
     ]);
     root.append(card);
   }

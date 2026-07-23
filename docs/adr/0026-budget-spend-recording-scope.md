@@ -6,7 +6,7 @@
 
 > **Note on this ADR:** Unlike ADR-0025 (an open question left for the
 > Architecture Review Board), this ADR documents a scope boundary the
-> rework *did* decide, per the Rework Order's own instruction to prefer
+> rework _did_ decide, per the Rework Order's own instruction to prefer
 > "document it through an ADR rather than redesigning RuntimeOS" over
 > silently expanding scope. It is filed for transparency and to give the
 > Board an explicit, reviewable seam for a future milestone, not because
@@ -25,7 +25,7 @@ EM-10's scope.
 
 `ExecutionOrchestrator` exposes two entry points that reach a Provider
 Adapter and incur real cost: `execute()` (used by every non-streaming
-caller, and the *only* entry point `pipeline-orchestrator` ever calls —
+caller, and the _only_ entry point `pipeline-orchestrator` ever calls —
 architecture §41.1) and `executeStream()` (used by `/v1/execute/stream`,
 architecture §17). "Successful completion" is unambiguous for `execute()`:
 it either returns an `ExecuteResponse` or rejects with a `GatewayError`.

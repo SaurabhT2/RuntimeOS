@@ -1,5 +1,9 @@
 import { GatewayError, taskTypeSchema, type ExecuteRequest } from "@ai-gateway/core-contracts";
-import type { ExecutionPipeline, PipelineContext, PipelineStep } from "@ai-gateway/pipeline-orchestrator";
+import type {
+  ExecutionPipeline,
+  PipelineContext,
+  PipelineStep,
+} from "@ai-gateway/pipeline-orchestrator";
 import { z } from "zod";
 
 /**
@@ -68,7 +72,9 @@ function buildInputFor(
         { stepId: step.id, inputFrom: sourceStepId },
       );
     }
-    return { input: { text: sourceOutput.output.text ?? JSON.stringify(sourceOutput.output.json) } };
+    return {
+      input: { text: sourceOutput.output.text ?? JSON.stringify(sourceOutput.output.json) },
+    };
   };
 }
 

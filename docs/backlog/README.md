@@ -12,6 +12,6 @@ of the current release.
 Added during the v1.2 documentation-completion pass, alongside the first
 tracked item below.
 
-| Item | Summary |
-|---|---|
+| Item                                                                                                 | Summary                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`expose-complete-gatewayruntimeconfig-surface.md`](expose-complete-gatewayruntimeconfig-surface.md) | Both deployment applications (`apps/gateway-server`, `apps/vercel-adapter`) expose only part of `@ai-gateway/gateway-runtime`'s `GatewayRuntimeConfig` through their own environment-variable/config-file loaders. Not a RuntimeOS implementation defect — deployment/composition-root integration work. |

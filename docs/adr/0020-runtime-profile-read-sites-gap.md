@@ -6,7 +6,7 @@
 
 > **Note on this draft:** Not a defect in EM-9's own deliverable. Every
 > field this ADR discusses was already unreadable by its intended
-> consumer *before* EM-9 (nothing regressed) — EM-9 activated the two of
+> consumer _before_ EM-9 (nothing regressed) — EM-9 activated the two of
 > architecture §37.4's four Runtime Profile read sites that are actually
 > reachable without violating this milestone's "do not modify a frozen
 > interface, do not add a new package" constraints, and this ADR records,
@@ -40,7 +40,7 @@ Three narrower gaps remain, none of them new:
 what §37.2's schema actually provides a field for. A plausible mapping
 exists (e.g. `reliability.failoverAggressiveness` → a shorter/longer
 per-attempt `timeoutMs`, favoring fail-fast-and-move-on for `"aggressive"`)
-but is not the *only* plausible one, and choosing one silently would be
+but is not the _only_ plausible one, and choosing one silently would be
 exactly the kind of invented architecture this review's instructions
 forbid.
 

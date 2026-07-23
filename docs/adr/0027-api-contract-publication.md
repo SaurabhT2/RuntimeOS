@@ -12,7 +12,7 @@
 > exists" is the single most common adoption-friction item newcomers
 > would hit (see `README.md`'s Roadmap and
 > `docs/release/KNOWN_LIMITATIONS.md`), and a recommendation with no
-> record of *how* it should be built, if undertaken, risks becoming a
+> record of _how_ it should be built, if undertaken, risks becoming a
 > hand-maintained artifact that drifts from `core-contracts` the same
 > way this pass found several other documents had drifted from source.
 > Filed as an ADR rather than left as a bare roadmap bullet so that,
@@ -42,7 +42,7 @@ to JSON Schema (and from there, an OpenAPI document) by existing,
 widely-used tooling (e.g. `zod-to-json-schema` or Zod 4's native
 `z.toJSONSchema()`) — this ADR does not mandate a specific library, that
 choice is implementation detail for whoever picks this up, but it does
-mandate the *shape* of the pipeline: generation from an existing,
+mandate the _shape_ of the pipeline: generation from an existing,
 already-validated source of truth, not a hand-authored parallel document.
 
 ## Decision

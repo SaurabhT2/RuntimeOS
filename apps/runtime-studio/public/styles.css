@@ -27,11 +27,8 @@
   --accent-danger: #e5566d;
   --accent-ok: #5fbf77;
 
-  --font-ui:
-    -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono:
-    ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Liberation Mono",
-    monospace;
+  --font-ui: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Liberation Mono", monospace;
 
   --radius: 3px;
   --gap: 16px;
@@ -504,7 +501,9 @@ pre.json {
    only a stroke/opacity transition on nodes as a real request's flow is
    replayed, never a decorative loop. */
 .arch-diagram .arch-node {
-  transition: opacity 0.25s ease, stroke 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    stroke 0.25s ease;
 }
 .arch-diagram text {
   font-family: var(--font-mono);

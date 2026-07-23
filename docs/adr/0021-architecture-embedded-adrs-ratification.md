@@ -11,7 +11,7 @@ Additions") contains three fully-written ADRs — numbered **ADR-013**,
 **ADR-014**, **ADR-015** — embedded directly in the architecture document
 itself, covering Budget Ledger durability/precedence, the pipeline
 `maxSteps` cap, and budget-metric telemetry separation respectively. These
-numbers collide with this repository's *own*, independently-numbered
+numbers collide with this repository's _own_, independently-numbered
 `docs/adr/NNNN-*.md` files: `docs/adr/0013-gatewayconfig-runtime-profile-id-field.md`
 and `docs/adr/0014-prompt-optimizer-execution-profile-registry-dependency-gap.md`
 already exist, filed at EM-6/EM-7, on entirely unrelated topics. `0015` is

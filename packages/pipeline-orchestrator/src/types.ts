@@ -1,4 +1,9 @@
-import type { ExecuteRequest, ExecuteResponse, GatewayError, TaskType } from "@ai-gateway/core-contracts";
+import type {
+  ExecuteRequest,
+  ExecuteResponse,
+  GatewayError,
+  TaskType,
+} from "@ai-gateway/core-contracts";
 
 /**
  * architecture §41.2, verbatim: one step in an `ExecutionPipeline`. Every

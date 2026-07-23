@@ -23,7 +23,7 @@ applies — see below) for:
 
 See [`docs/release/RUNTIME_CONFIGURATION_MATRIX.md`](../release/RUNTIME_CONFIGURATION_MATRIX.md)
 for the full capability-by-capability breakdown, including the one
-capability (`enableStrategyLayer`) that is *already* reachable on both
+capability (`enableStrategyLayer`) that is _already_ reachable on both
 apps today via a `GATEWAY_CONFIG_PATH` JSON file, which is the shape this
 backlog item recommends extending to the three fields above.
 
@@ -33,7 +33,7 @@ backlog item recommends extending to the three fields above.
 fields today — they are real, implemented, tested `GatewayRuntimeConfig`
 fields, exercised directly by
 `packages/gateway-runtime/test/bootstrap.test.ts`. The gap is entirely in
-the two *application* layers' own environment-variable/config-file
+the two _application_ layers' own environment-variable/config-file
 loaders, which is deployment/composition-root integration work, not a
 change to `@ai-gateway/gateway-runtime` or any package it depends on.
 This distinction matters for how this item should be scoped and by whom:

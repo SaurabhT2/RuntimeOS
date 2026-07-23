@@ -25,7 +25,7 @@ explicitly out of scope (architecture §41.5).
    policy, provider, or retry logic").
 2. **`maxSteps` is a mandatory, platform-configured cap, enforced before
    any step runs (ADR-014).** Defaults to `20` (ADR-014's own "e.g., 20").
-   A pipeline exceeding the cap runs *zero* steps — the rejection
+   A pipeline exceeding the cap runs _zero_ steps — the rejection
    (`GatewayError("INVALID_TASK", ...)`, per ADR-014's own "INVALID_TASK-class")
    happens before `orchestrator.execute()` is ever called for that
    pipeline.
@@ -43,13 +43,13 @@ explicitly out of scope (architecture §41.5).
    figures.** Architecture §41.2 names the field but doesn't specify its
    derivation. Wall-clock is this package's documented choice: correct
    today (steps run sequentially, so the two would be equal anyway
-   *if* every step succeeded), and it stays correct without modification
+   _if_ every step succeeded), and it stays correct without modification
    if a future milestone ever parallelizes independent steps
    (§41.5's explicitly deferred scope) — a sum would silently become
    wrong the moment execution overlaps.
 6. **Cancellation is checked between steps, never mid-step.** An
    in-flight step runs to completion; the `AbortSignal`, when supplied, is
-   only consulted before starting the *next* step — the same "cancellation
+   only consulted before starting the _next_ step — the same "cancellation
    takes effect at the next safe point, not by force" contract
    `orchestrator`'s own streaming cancellation already uses (architecture
    §17).
@@ -65,7 +65,7 @@ explicitly out of scope (architecture §41.5).
 
 - The architecture §41.4 four-step worked example (extract → summarize →
   entity_extraction → json_generation) as an integration test, asserting
-  each step actually received the *previous* step's real output.
+  each step actually received the _previous_ step's real output.
 - `maxSteps`: rejected over the limit (with zero steps executed),
   allowed exactly at the limit, and the `20` default.
 - Required-step-abort, non-required-step-continue, and the interaction

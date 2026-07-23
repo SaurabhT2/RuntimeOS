@@ -24,21 +24,21 @@
 The Architecture Specification's Roadmap Addendum (§38.2) defines four
 distinct, narrowly-scoped milestones:
 
-| Architecture milestone | Scope |
-|---|---|
-| **Milestone 8** — Execution Profiles & Strategy Layer Skeleton | Stand up `strategy-layer` with a **pass-through implementation only** ("resolves a profile but changes nothing yet"); deliverables limited to `ExecutionProfileRegistry` and `StrategyDecision` flowing into the Policy Engine unchanged. |
-| **Milestone 9** — Capability Registry & Model Lifecycle | Decouple task→model mapping via the Capability Registry; add `ModelDescriptor.lifecycle`. |
-| **Milestone 10** — Cost & Prompt Optimization | Implement **real (non-pass-through)** `CostOptimizer`/`PromptOptimizer` logic. |
-| **Milestone 11** — Runtime Profiles & Learning Extension Points | Ship `runtime-profiles` and its four read-site integrations; ship `LearningSignalCollector`/`AdaptiveRankingStrategy` (no-op defaults). |
+| Architecture milestone                                          | Scope                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Milestone 8** — Execution Profiles & Strategy Layer Skeleton  | Stand up `strategy-layer` with a **pass-through implementation only** ("resolves a profile but changes nothing yet"); deliverables limited to `ExecutionProfileRegistry` and `StrategyDecision` flowing into the Policy Engine unchanged. |
+| **Milestone 9** — Capability Registry & Model Lifecycle         | Decouple task→model mapping via the Capability Registry; add `ModelDescriptor.lifecycle`.                                                                                                                                                 |
+| **Milestone 10** — Cost & Prompt Optimization                   | Implement **real (non-pass-through)** `CostOptimizer`/`PromptOptimizer` logic.                                                                                                                                                            |
+| **Milestone 11** — Runtime Profiles & Learning Extension Points | Ship `runtime-profiles` and its four read-site integrations; ship `LearningSignalCollector`/`AdaptiveRankingStrategy` (no-op defaults).                                                                                                   |
 
 The Engineering Blueprint's own milestone list (Section 7) groups the same
 underlying work completely differently:
 
-| Blueprint milestone | Scope |
-|---|---|
-| **EM-6** | Build (not wire) `capability-registry`, `execution-profile-registry`, `runtime-profiles` — i.e., architecture's Milestone 9 and Milestone 11 content, built early and left unwired. |
-| **EM-7** | Build (not wire) `cost-optimizer`, `prompt-optimizer`, `learning`, `plugin-system` — i.e., architecture's Milestone 10 and part of Milestone 11 content, also built early and left unwired. |
-| **EM-8** — Strategy Layer Integration | Wire **all** of EM-6/EM-7's packages into `orchestrator` at once — architecture's Milestones 8, 9, 10, and 11 content, combined into a single engineering milestone. |
+| Blueprint milestone                   | Scope                                                                                                                                                                                       |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **EM-6**                              | Build (not wire) `capability-registry`, `execution-profile-registry`, `runtime-profiles` — i.e., architecture's Milestone 9 and Milestone 11 content, built early and left unwired.         |
+| **EM-7**                              | Build (not wire) `cost-optimizer`, `prompt-optimizer`, `learning`, `plugin-system` — i.e., architecture's Milestone 10 and part of Milestone 11 content, also built early and left unwired. |
+| **EM-8** — Strategy Layer Integration | Wire **all** of EM-6/EM-7's packages into `orchestrator` at once — architecture's Milestones 8, 9, 10, and 11 content, combined into a single engineering milestone.                        |
 
 These are not the same sequence wearing different labels: Architecture's
 Milestone 8 is explicitly pass-through-only and explicitly excludes the
@@ -49,7 +49,7 @@ this repository, per `docs/architecture/em-8-runtime-flow.md`'s six-stage
 pipeline (Capability → Execution Profile → Runtime Profile → Prompt
 Optimization → Cost Optimization → Learning Hooks) — integrates all four
 of those architecture milestones' content in one pass. (The pass-through
-*behavior* the Blueprint's EM-8 does preserve — identical routing outcomes
+_behavior_ the Blueprint's EM-8 does preserve — identical routing outcomes
 whether the Strategy Layer is enabled or not — comes from a different
 source: ADR-0018's decision that `policy-engine` does not yet read
 `ctx.strategyDecision`, not from the optimization logic itself being

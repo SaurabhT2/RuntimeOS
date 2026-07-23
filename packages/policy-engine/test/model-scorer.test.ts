@@ -227,7 +227,10 @@ describe("EM-9: strategySignals scoring bonuses", () => {
 
   it("qualityScoreForTask never exceeds 1 even with every bonus stacked", () => {
     const maxed = qualityScoreForTask(
-      { ...reasoningModel, capabilities: { ...reasoningModel.capabilities, structuredOutput: true } },
+      {
+        ...reasoningModel,
+        capabilities: { ...reasoningModel.capabilities, structuredOutput: true },
+      },
       requirement({ requiresJsonMode: true, reasoningAffinity: 1, creativityAffinity: 1 }),
       { preferredModelClasses: [reasoningModel.modelClass] },
     );

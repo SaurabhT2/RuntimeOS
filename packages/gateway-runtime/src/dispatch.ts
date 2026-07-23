@@ -20,7 +20,9 @@ export function buildGatewayRouter(app: GatewayApp): Router {
   const router = new Router();
   router.register("POST", "/v1/execute", (req, res) => handleExecute(req, res, app));
   router.register("POST", "/v1/execute/stream", (req, res) => handleExecuteStream(req, res, app));
-  router.register("POST", "/v1/execute/pipeline", (req, res) => handleExecutePipeline(req, res, app));
+  router.register("POST", "/v1/execute/pipeline", (req, res) =>
+    handleExecutePipeline(req, res, app),
+  );
   router.register("GET", "/v1/health", (req, res) => handleHealth(req, res, app));
   return router;
 }

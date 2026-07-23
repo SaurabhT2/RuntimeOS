@@ -18,7 +18,7 @@ Provider Resolution → Retry → Failover → Streaming → Completion.
   duplicates of their `provider-sdk` counterparts. See ADR-0008 and
   `types.ts`'s doc comment for why.
 - `buildNormalizedInvocation` — pure `ExecuteRequest + ExecutionPlan (+
-  optional StrategyDecision, EM-9) -> NormalizedInvocation` translation
+optional StrategyDecision, EM-9) -> NormalizedInvocation` translation
   (`invocation-builder.ts`).
 - `buildExecuteResponse` — pure `NormalizedResult + ExecutionMeta ->
 ExecuteResponse` translation (`response-mapper.ts`).
@@ -126,7 +126,7 @@ any HTTP server layer (`apps/gateway-server` is EM-5).
    it does not require every optional layer to have a silent-bypass fallback,
    and no other section of the Architecture Specification or Engineering
    Blueprint imposes one specifically on the Strategy Layer (contrast with
-   `runtime-profiles`' registry, architecture §35's ADR, which *is*
+   `runtime-profiles`' registry, architecture §35's ADR, which _is_
    specified to fall back to a last-known-good cache on store
    unavailability — a different package, a different, explicitly-stated
    requirement). A typed, non-retryable `INTERNAL_ERROR` is exactly the

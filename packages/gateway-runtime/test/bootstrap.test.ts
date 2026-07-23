@@ -169,7 +169,9 @@ describe("bootstrap", () => {
       const app = await bootstrap(
         testRuntimeConfig({
           enableStrategyLayer: false,
-          budgetPolicies: [{ tenant: { organizationId: "org-1" }, dailyBudgetUsd: 10, thresholds: [] }],
+          budgetPolicies: [
+            { tenant: { organizationId: "org-1" }, dailyBudgetUsd: 10, thresholds: [] },
+          ],
         }),
       );
       expect(app.budgetEnforcer).toBeUndefined();
@@ -180,7 +182,9 @@ describe("bootstrap", () => {
       const app = await bootstrap(
         testRuntimeConfig({
           enableStrategyLayer: true,
-          budgetPolicies: [{ tenant: { organizationId: "org-1" }, dailyBudgetUsd: 10, thresholds: [] }],
+          budgetPolicies: [
+            { tenant: { organizationId: "org-1" }, dailyBudgetUsd: 10, thresholds: [] },
+          ],
         }),
       );
       expect(app.budgetEnforcer).toBeDefined();
@@ -198,7 +202,10 @@ describe("bootstrap", () => {
             },
           ],
         }),
-        { adapters: [fakeAdapter({ id: "groq" }), fakeAdapter({ id: "nvidia-nim" })], modelRegistrySeed: TEST_MODEL_SEED },
+        {
+          adapters: [fakeAdapter({ id: "groq" }), fakeAdapter({ id: "nvidia-nim" })],
+          modelRegistrySeed: TEST_MODEL_SEED,
+        },
       );
       const response = await app.orchestrator.execute({
         task: "summarization",
@@ -352,7 +359,10 @@ describe("bootstrap", () => {
             ],
           }),
           {
-            adapters: [fakeAdapter({ id: "groq", costUsd: 200 }), fakeAdapter({ id: "nvidia-nim", costUsd: 200 })],
+            adapters: [
+              fakeAdapter({ id: "groq", costUsd: 200 }),
+              fakeAdapter({ id: "nvidia-nim", costUsd: 200 }),
+            ],
             modelRegistrySeed: TEST_MODEL_SEED,
           },
         );
@@ -511,8 +521,16 @@ describe("bootstrap", () => {
           id: "pipeline-1",
           tenant: { organizationId: "org-1" },
           steps: [
-            { id: "s1", task: "summarization", buildInput: () => ({ input: { text: "step one" } }) },
-            { id: "s2", task: "summarization", buildInput: () => ({ input: { text: "step two" } }) },
+            {
+              id: "s1",
+              task: "summarization",
+              buildInput: () => ({ input: { text: "step one" } }),
+            },
+            {
+              id: "s2",
+              task: "summarization",
+              buildInput: () => ({ input: { text: "step two" } }),
+            },
           ],
         });
 

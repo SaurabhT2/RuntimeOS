@@ -1,11 +1,12 @@
 # AI Gateway
+
 ## Universal AI Execution Platform — Architecture & Implementation Specification
 
 **Document status:** v1.2 (Refinement of v1.1 — additive, non-breaking; final pre-implementation architecture validation)
 **Classification:** Open architecture specification (provider- and application-agnostic)
 **Audience:** Platform engineers, SDK authors, infrastructure teams, contributors
 
-**Changelog — v1.1:** Sections 1–28 are the original v1.0 architecture and remain the foundation of the platform; they are unchanged except for the small, explicitly-marked amendments noted inline (Vision, Sections 6/7/9 diagrams, Section 13, Section 17). Sections 29–39 are new: they elevate AI Gateway from a provider-abstraction/routing layer into a full **Intelligent AI Execution Platform** by introducing Execution Profiles, an AI Strategy Layer, a Cost Optimization Engine, a Prompt Optimization Layer, a Capability Registry, Model Lifecycle Management, pluggable Intelligent Learning extension points, and Runtime Profiles. Nothing in v1.1 changes the public request contract's core shape (`task`, not `model`) or removes any v1.0 component — it inserts a new decision layer *between* the request and the existing Policy Engine.
+**Changelog — v1.1:** Sections 1–28 are the original v1.0 architecture and remain the foundation of the platform; they are unchanged except for the small, explicitly-marked amendments noted inline (Vision, Sections 6/7/9 diagrams, Section 13, Section 17). Sections 29–39 are new: they elevate AI Gateway from a provider-abstraction/routing layer into a full **Intelligent AI Execution Platform** by introducing Execution Profiles, an AI Strategy Layer, a Cost Optimization Engine, a Prompt Optimization Layer, a Capability Registry, Model Lifecycle Management, pluggable Intelligent Learning extension points, and Runtime Profiles. Nothing in v1.1 changes the public request contract's core shape (`task`, not `model`) or removes any v1.0 component — it inserts a new decision layer _between_ the request and the existing Policy Engine.
 
 **Changelog — v1.2:** Sections 1–39 are unchanged. Sections 40–46 are new and constitute a final architecture-validation pass rather than new design: they demonstrate — without modifying any existing contract, package, or diagram — that AI Gateway generalizes across application categories (Section 40), supports multi-step pipelines as a thin, opt-in layer over the existing single-request path (Section 41), naturally extends to non-text-generation AI capabilities (Section 42), gains authoritative budget governance that composes with, rather than duplicates, the existing Cost Optimizer (Section 43), has a credible five-year evolution story rooted in decisions already made (Section 44), and survives a self-critical architectural review with only a small number of concrete, non-breaking improvements recommended (Sections 45–46).
 
@@ -109,41 +110,41 @@ Everything above that line — knowledge graphs, RAG pipelines, domain prompt en
 
 The long-term vision (5–10 years) is for AI Gateway to function the way a database or message broker does today: a boring, extremely reliable, swappable-underneath commodity layer that many independent products build on, with an ecosystem of community-contributed provider adapters and policy plugins.
 
-> **v1.1 note:** everything above still holds and is the reason this platform exists. Section 29 strengthens this vision further — AI Gateway is not merely a provider abstraction layer, it is the *execution operating system* that also abstracts model selection, execution strategy, prompt handling, and inference tuning away from applications.
+> **v1.1 note:** everything above still holds and is the reason this platform exists. Section 29 strengthens this vision further — AI Gateway is not merely a provider abstraction layer, it is the _execution operating system_ that also abstracts model selection, execution strategy, prompt handling, and inference tuning away from applications.
 
 ---
 
 ## 3. Architectural Principles
 
-| # | Principle | Implication |
-|---|---|---|
-| P1 | **Provider agnosticism is non-negotiable** | No module outside `packages/providers/*` may import a provider SDK or reference a provider-specific type. |
-| P2 | **Tasks, not models, are the public vocabulary** | The public request contract has no `model` field. It has a `task` field. Model selection is an internal decision. |
-| P3 | **Statelessness at the execution core** | The orchestrator holds no session state between requests; all state needed for a decision travels with the request or lives in the Model Registry / Health Monitor stores. |
-| P4 | **Everything is an adapter or a plugin** | Providers, credential sources, cache backends, and telemetry sinks are all implementations of small interfaces, registered at startup, never hardcoded into core logic. |
-| P5 | **Secrets never cross the trust boundary** | Applications receive results, never raw credentials. Credentials are resolved and injected entirely inside the Credential Resolver. |
-| P6 | **Fail predictably, degrade gracefully** | Every failure mode has a defined, testable behavior: retry, failover, circuit-break, or a typed error — never a silent hang or an unhandled provider exception leaking upstream. |
-| P7 | **Configuration over code** | Model capabilities, routing weights, and credential priority are data (config/DB-backed), not conditionals buried in TypeScript. |
-| P8 | **Observability is a first-class output, not an afterthought** | Every request produces a trace, a set of metrics, and a structured log line by construction, not by developer discipline. |
-| P9 | **Composable middleware over monolithic orchestration** | Cross-cutting concerns (auth, rate limiting, caching, logging) are pipeline middleware, not code sprinkled through the orchestrator. |
-| P10 | **Backward-compatible extensibility** | New providers, new task types, and new policy rules must be addable without modifying the public API contracts. |
+| #   | Principle                                                      | Implication                                                                                                                                                                      |
+| --- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1  | **Provider agnosticism is non-negotiable**                     | No module outside `packages/providers/*` may import a provider SDK or reference a provider-specific type.                                                                        |
+| P2  | **Tasks, not models, are the public vocabulary**               | The public request contract has no `model` field. It has a `task` field. Model selection is an internal decision.                                                                |
+| P3  | **Statelessness at the execution core**                        | The orchestrator holds no session state between requests; all state needed for a decision travels with the request or lives in the Model Registry / Health Monitor stores.       |
+| P4  | **Everything is an adapter or a plugin**                       | Providers, credential sources, cache backends, and telemetry sinks are all implementations of small interfaces, registered at startup, never hardcoded into core logic.          |
+| P5  | **Secrets never cross the trust boundary**                     | Applications receive results, never raw credentials. Credentials are resolved and injected entirely inside the Credential Resolver.                                              |
+| P6  | **Fail predictably, degrade gracefully**                       | Every failure mode has a defined, testable behavior: retry, failover, circuit-break, or a typed error — never a silent hang or an unhandled provider exception leaking upstream. |
+| P7  | **Configuration over code**                                    | Model capabilities, routing weights, and credential priority are data (config/DB-backed), not conditionals buried in TypeScript.                                                 |
+| P8  | **Observability is a first-class output, not an afterthought** | Every request produces a trace, a set of metrics, and a structured log line by construction, not by developer discipline.                                                        |
+| P9  | **Composable middleware over monolithic orchestration**        | Cross-cutting concerns (auth, rate limiting, caching, logging) are pipeline middleware, not code sprinkled through the orchestrator.                                             |
+| P10 | **Backward-compatible extensibility**                          | New providers, new task types, and new policy rules must be addable without modifying the public API contracts.                                                                  |
 
 ---
 
 ## 4. Quality Attributes
 
-| Attribute | Target / Approach |
-|---|---|
-| **Performance** | P50 gateway overhead (excluding provider inference time) < 15ms; P99 < 60ms. Achieved via in-memory registry cache, connection pooling, and no synchronous disk/DB calls on the hot path. |
-| **Scalability** | Horizontally scalable stateless workers behind a load balancer; shared state (health, rate limits, cache) lives in Redis/equivalent, not in-process. |
-| **Availability** | 99.9% target for the gateway control plane itself, independent of any single provider's uptime, via multi-provider failover. |
-| **Extensibility** | New provider adapter addable in < 1 day by implementing 1 interface + registry metadata; no core file modifications required. |
-| **Observability** | 100% of requests traced (OpenTelemetry), with cost/latency/retry metrics exported per request. |
-| **Security** | No plaintext secrets at rest; encrypted-at-rest + encrypted-in-transit credential storage; full audit log of credential resolution and usage. |
-| **Multi-tenancy** | Hard isolation between workspaces/organizations for credentials, rate limits, and telemetry; no cross-tenant data leakage even under shared infrastructure. |
-| **Maintainability** | Each module independently testable and independently deployable (where the deployment model supports it); no circular package dependencies. |
-| **Portability** | Runs identically on a single Node process, a container, or a serverless function; no provider-specific cloud dependencies in the core. |
-| **Cost efficiency** | Default policy prefers free/low-cost tiers (e.g., Groq free tier) for low-complexity tasks; cost accounting surfaced per request, per workspace, per org. |
+| Attribute           | Target / Approach                                                                                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Performance**     | P50 gateway overhead (excluding provider inference time) < 15ms; P99 < 60ms. Achieved via in-memory registry cache, connection pooling, and no synchronous disk/DB calls on the hot path. |
+| **Scalability**     | Horizontally scalable stateless workers behind a load balancer; shared state (health, rate limits, cache) lives in Redis/equivalent, not in-process.                                      |
+| **Availability**    | 99.9% target for the gateway control plane itself, independent of any single provider's uptime, via multi-provider failover.                                                              |
+| **Extensibility**   | New provider adapter addable in < 1 day by implementing 1 interface + registry metadata; no core file modifications required.                                                             |
+| **Observability**   | 100% of requests traced (OpenTelemetry), with cost/latency/retry metrics exported per request.                                                                                            |
+| **Security**        | No plaintext secrets at rest; encrypted-at-rest + encrypted-in-transit credential storage; full audit log of credential resolution and usage.                                             |
+| **Multi-tenancy**   | Hard isolation between workspaces/organizations for credentials, rate limits, and telemetry; no cross-tenant data leakage even under shared infrastructure.                               |
+| **Maintainability** | Each module independently testable and independently deployable (where the deployment model supports it); no circular package dependencies.                                               |
+| **Portability**     | Runs identically on a single Node process, a container, or a serverless function; no provider-specific cloud dependencies in the core.                                                    |
+| **Cost efficiency** | Default policy prefers free/low-cost tiers (e.g., Groq free tier) for low-complexity tasks; cost accounting surfaced per request, per workspace, per org.                                 |
 
 ---
 
@@ -195,6 +196,7 @@ graph TB
 ```
 
 **Key context boundaries:**
+
 - Applications never see arrows into "AI Providers" or "Credential Sources" — those are internal to AI Gateway.
 - The "Intelligence / RAG Layer" is drawn explicitly as an external consumer to make clear AI Gateway does not contain it; it is simply another client of the same public API.
 
@@ -273,7 +275,7 @@ graph TB
 The system separates into four layers:
 
 1. **Edge/API Layer** — public-facing, protocol translation, authn/z, coarse rate limiting, request-level caching.
-2. **Execution Core** — the brain: stateless decision-making and orchestration logic. This is where P1–P6 principles are enforced. **(v1.1)** The Execution Core now contains two sub-layers in strict order: the **AI Strategy Layer** decides *how* a task should be executed (profile, capabilities, optimizations — Sections 30–34), and the existing **Policy Engine** decides *where* it executes (provider/model routing — Section 13, unchanged). The Orchestrator calls the Strategy Layer first; the Strategy Layer's output is the Policy Engine's input.
+2. **Execution Core** — the brain: stateless decision-making and orchestration logic. This is where P1–P6 principles are enforced. **(v1.1)** The Execution Core now contains two sub-layers in strict order: the **AI Strategy Layer** decides _how_ a task should be executed (profile, capabilities, optimizations — Sections 30–34), and the existing **Policy Engine** decides _where_ it executes (provider/model routing — Section 13, unchanged). The Orchestrator calls the Strategy Layer first; the Strategy Layer's output is the Policy Engine's input.
 3. **Provider Adapter Layer** — one implementation per provider, all conforming to a single `ProviderAdapter` interface.
 4. **Shared State & Cross-Cutting** — externalized state (Redis/DB/Vault) so the core stays stateless and horizontally scalable, plus telemetry/config/plugins that every layer above depends on.
 
@@ -608,12 +610,13 @@ ai-gateway/
 **Dependency rule:** arrows only point "inward and downward" — `apps/*` depends on `packages/*`; `packages/providers/*` depends on `provider-sdk` and `core-contracts` only; `orchestrator` depends on `strategy-layer`, `policy-engine`, `model-registry`, `credential-resolver`, `reliability`, `streaming`, `telemetry`, `core-contracts`. **(v1.1)** `strategy-layer` depends on `model-registry` (read-only, for capability/lifecycle metadata) and `runtime-profiles`, but `policy-engine` has no dependency on `strategy-layer` — it only ever receives a fully-resolved `StrategyDecision` as a plain input, never reaches upward to ask the Strategy Layer anything. This keeps the v1.0 Policy Engine testable in isolation exactly as before (Section 24). No package under `packages/` may depend on `apps/*`. `core-contracts` has zero internal dependencies, so it can be published and versioned independently as the stable public contract.
 
 ---
+
 ## 10. Public APIs
 
 ### 10.1 Design Goals for the Public Surface
 
 - No field ever accepts a provider name or model name from the caller.
-- Every response includes enough metadata (which provider/model executed it, token usage, cost, latency) for the caller to build its own dashboards — without the caller having *chosen* any of it.
+- Every response includes enough metadata (which provider/model executed it, token usage, cost, latency) for the caller to build its own dashboards — without the caller having _chosen_ any of it.
 - Errors are typed and provider-independent.
 
 ### 10.2 REST Contract
@@ -660,7 +663,7 @@ export interface ExecuteRequest {
   constraints?: {
     maxLatencyMs?: number;
     maxCostUsd?: number;
-    requiredSchema?: JSONSchema;         // triggers structured-output routing
+    requiredSchema?: JSONSchema; // triggers structured-output routing
     minContextTokens?: number;
     streaming?: boolean;
   };
@@ -704,7 +707,7 @@ export interface ExecuteResponse {
   requestId: string;
   output: {
     text?: string;
-    json?: unknown;         // present when structured output was requested
+    json?: unknown; // present when structured output was requested
     toolCalls?: ToolCall[];
   };
   usage: {
@@ -714,8 +717,8 @@ export interface ExecuteResponse {
   };
   execution: {
     /** Metadata about the decision — informational only, not controllable by the caller. */
-    providerId: string;      // e.g. "groq" — informational, opaque identifier
-    modelClass: string;      // e.g. "fast-extraction" — capability class, not raw model string
+    providerId: string; // e.g. "groq" — informational, opaque identifier
+    modelClass: string; // e.g. "fast-extraction" — capability class, not raw model string
     latencyMs: number;
     retries: number;
     failedOver: boolean;
@@ -753,7 +756,7 @@ export class GatewayError extends Error {
     public code: GatewayErrorCode,
     message: string,
     public retryable: boolean,
-    public details?: Record<string, unknown>
+    public details?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -788,7 +791,7 @@ These are the seams that make the system modular. Every one of these is a small,
 ```typescript
 // packages/providers/provider-sdk/src/provider-adapter.ts
 export interface ProviderAdapter {
-  readonly id: string;                       // "groq", "nvidia-nim", ...
+  readonly id: string; // "groq", "nvidia-nim", ...
   readonly capabilities: ProviderCapabilities;
 
   invoke(req: NormalizedInvocation, cred: ScopedCredential): Promise<NormalizedResult>;
@@ -806,7 +809,7 @@ export interface PolicyEngine {
 export interface ModelRegistry {
   queryModels(filter: ModelQuery): Promise<ModelDescriptor[]>;
   getModel(providerId: string, modelId: string): Promise<ModelDescriptor | null>;
-  upsertModel(descriptor: ModelDescriptor): Promise<void>;   // config-driven, no redeploy
+  upsertModel(descriptor: ModelDescriptor): Promise<void>; // config-driven, no redeploy
 }
 
 // packages/credential-resolver/src/resolver.ts
@@ -836,7 +839,11 @@ export interface StreamManager {
 export interface Telemetry {
   startSpan(name: string, attrs?: Record<string, unknown>): Span;
   recordMetric(name: string, value: number, labels?: Record<string, string>): void;
-  log(level: "debug" | "info" | "warn" | "error", msg: string, fields?: Record<string, unknown>): void;
+  log(
+    level: "debug" | "info" | "warn" | "error",
+    msg: string,
+    fields?: Record<string, unknown>,
+  ): void;
 }
 
 // packages/plugin-system/src/plugin-contract.ts
@@ -851,15 +858,16 @@ export interface GatewayPlugin {
 All core packages depend only on these interfaces plus `core-contracts` — never on a concrete provider or concrete infra implementation. Dependency injection happens once, at `apps/gateway-server/src/bootstrap.ts`.
 
 ---
+
 ## 12. Provider Abstraction Design
 
 ### 12.1 Normalized Invocation
 
-Every provider adapter receives the *same* normalized shape regardless of what the underlying provider API looks like:
+Every provider adapter receives the _same_ normalized shape regardless of what the underlying provider API looks like:
 
 ```typescript
 export interface NormalizedInvocation {
-  modelId: string;                 // provider-specific model identifier, chosen by Policy Engine
+  modelId: string; // provider-specific model identifier, chosen by Policy Engine
   messages: ChatMessage[];
   temperature: number;
   maxOutputTokens: number;
@@ -884,7 +892,7 @@ Each adapter is responsible for two translation directions:
 1. **Inbound:** `NormalizedInvocation` → provider's native request shape (e.g., Groq's OpenAI-compatible chat completions body, or NIM's OpenAI-compatible or native schema).
 2. **Outbound:** provider's native response/error → `NormalizedResult` / `GatewayError`.
 
-This is the *only* place in the codebase that knows a provider's request/response JSON shape.
+This is the _only_ place in the codebase that knows a provider's request/response JSON shape.
 
 ### 12.2 Provider Capability Declaration
 
@@ -904,11 +912,13 @@ The Policy Engine consults this before ever routing a request to a provider — 
 ### 12.3 Reference Adapters at Launch
 
 **Groq Adapter** (`packages/providers/groq`)
+
 - Talks to Groq's OpenAI-compatible `/openai/v1/chat/completions` endpoint.
 - Tuned for the free-tier rate limits: adapter-level token-bucket limiter that respects Groq's per-model RPM/TPM headers, proactively throttling before Groq returns a 429 rather than just reacting to one.
 - Declares multiple `modelClass` mappings (e.g., `fast-extraction` → a small Llama/Gemma-class model, `complex-reasoning` → a larger reasoning-tuned model) so the Policy Engine can route by capability without hardcoding a model string outside the registry.
 
 **NVIDIA NIM Adapter** (`packages/providers/nvidia-nim`)
+
 - Talks to NVIDIA's hosted NIM inference endpoints (build.nvidia.com-style hosted API), not self-hosted GPU inference — no GPU orchestration concerns belong in this adapter.
 - Positioned in the registry primarily as a **failover** and **model-diversity** target, so its routing weight is lower by default than Groq's for latency-sensitive tasks, but can be promoted per-workspace via config.
 
@@ -942,7 +952,7 @@ export interface ExecutionPlan {
   timeoutMs: number;
   retryPolicy: RetryPolicy;
   streaming: boolean;
-  fallbackPlans: ExecutionPlan[];   // ordered failover chain, pre-computed
+  fallbackPlans: ExecutionPlan[]; // ordered failover chain, pre-computed
 }
 ```
 
@@ -968,11 +978,11 @@ graph LR
 
 ```typescript
 score(model) =
-    w_quality   * model.qualityScoreForTask(task)
-  + w_latency   * normalize(1 / model.p50LatencyMs)
-  + w_cost      * normalize(1 / model.costPerKTokens)
-  + w_health    * healthMonitor.getHealth(model.providerId).score
-  - penalty_rateLimitPressure(model.providerId)
+  w_quality * model.qualityScoreForTask(task) +
+  w_latency * normalize(1 / model.p50LatencyMs) +
+  w_cost * normalize(1 / model.costPerKTokens) +
+  w_health * healthMonitor.getHealth(model.providerId).score -
+  penalty_rateLimitPressure(model.providerId);
 ```
 
 Weights (`w_quality`, `w_latency`, `w_cost`, `w_health`) are part of `GatewayConfig.routing` and are overridable per task type, per workspace, and per organization — enforcing Principle P7 (configuration over code).
@@ -980,6 +990,7 @@ Weights (`w_quality`, `w_latency`, `w_cost`, `w_health`) are part of `GatewayCon
 ### 13.4 Policy Rules Engine
 
 Beyond scoring, discrete **rules** can hard-override routing for enterprise needs, e.g.:
+
 - "Never route PII-tagged requests to Provider X" (data residency/compliance)
 - "This workspace's BYOK key for Anthropic must be used for `complex_reasoning` tasks whenever present"
 - "Cap workspace Y's cost per day; route to free-tier models only past 80% of budget"
@@ -991,22 +1002,23 @@ Rules are evaluated after scoring and can veto or force a candidate; they are ex
 As of v1.1, the Policy Engine no longer receives a raw `ExecuteRequest` directly. The new **AI Strategy Layer** (Section 30) sits immediately in front of it and hands it a `StrategyDecision` — a fully-resolved bundle containing the selected `ExecutionProfile` (Section 31), the required capability set (Section 32, resolved via the Capability Registry rather than inferred ad hoc from `task`), and any cost/prompt optimizations already applied (Sections 33–34). Everything described above in 13.1–13.4 — candidate query, scoring, ranking, plan assembly, routing rules — is **unchanged**; it simply operates on the richer, pre-resolved `StrategyDecision` instead of the raw request. This preserves the Policy Engine's existing test suite and its status as a pure, independently-testable routing function (Section 24): from the Policy Engine's point of view, nothing has changed except where its input comes from.
 
 ---
+
 ## 14. Model Registry Design
 
 ### 14.1 Model Descriptor Schema
 
 ```typescript
 export interface ModelDescriptor {
-  providerId: string;              // "groq"
-  modelId: string;                 // provider's native model identifier
-  modelClass: string;               // "fast-extraction" | "complex-reasoning" | "creative" | ...
+  providerId: string; // "groq"
+  modelId: string; // provider's native model identifier
+  modelClass: string; // "fast-extraction" | "complex-reasoning" | "creative" | ...
   capabilities: {
     contextWindow: number;
     structuredOutput: boolean;
     streaming: boolean;
     toolCalling: boolean;
     reasoningDepth: "shallow" | "moderate" | "deep";
-    creativityScore: number;        // 0-1, curated/benchmarked
+    creativityScore: number; // 0-1, curated/benchmarked
   };
   performance: {
     p50LatencyMs: number;
@@ -1042,17 +1054,18 @@ graph LR
 
 ### 14.3 Illustrative Seed Data
 
-| providerId | modelClass | contextWindow | structuredOutput | tier | notes |
-|---|---|---|---|---|---|
-| groq | fast-extraction | 8K–32K | yes | free | small/fast Llama or Gemma-class model |
-| groq | complex-reasoning | 32K–128K | yes | free | larger reasoning-tuned model, higher latency |
-| groq | creative | 32K | no/partial | free | tuned for stylistic generation |
-| nvidia-nim | fast-extraction | 8K–32K | yes | paid | fallback for Groq extraction |
-| nvidia-nim | complex-reasoning | 32K+ | yes | paid | model-diversity alternative |
+| providerId | modelClass        | contextWindow | structuredOutput | tier | notes                                        |
+| ---------- | ----------------- | ------------- | ---------------- | ---- | -------------------------------------------- |
+| groq       | fast-extraction   | 8K–32K        | yes              | free | small/fast Llama or Gemma-class model        |
+| groq       | complex-reasoning | 32K–128K      | yes              | free | larger reasoning-tuned model, higher latency |
+| groq       | creative          | 32K           | no/partial       | free | tuned for stylistic generation               |
+| nvidia-nim | fast-extraction   | 8K–32K        | yes              | paid | fallback for Groq extraction                 |
+| nvidia-nim | complex-reasoning | 32K+          | yes              | paid | model-diversity alternative                  |
 
 Exact model identifiers are deliberately left as configuration, not hardcoded in this spec, since provider-hosted model availability changes frequently — that volatility is precisely what the registry is designed to absorb without a code change.
 
 ---
+
 ## 15. Credential Management Architecture
 
 ### 15.1 Layered Credential Model
@@ -1080,13 +1093,13 @@ export interface ScopeResolver {
 }
 ```
 
-Each `CredentialReference` is a *pointer* (`vault://...`, `aws-sm://...`, a DB row ID) — never the raw secret. The raw secret is only ever fetched from the underlying secret source at the moment of use, decrypted in-memory, used to sign/authorize exactly one provider call, and discarded (never persisted, never logged, never included in traces).
+Each `CredentialReference` is a _pointer_ (`vault://...`, `aws-sm://...`, a DB row ID) — never the raw secret. The raw secret is only ever fetched from the underlying secret source at the moment of use, decrypted in-memory, used to sign/authorize exactly one provider call, and discarded (never persisted, never logged, never included in traces).
 
 ### 15.3 Secret Source Adapters
 
 ```typescript
 export interface SecretSource {
-  id: string;                       // "env" | "db" | "vault" | "aws-sm" | "azure-kv" | "gcp-sm"
+  id: string; // "env" | "db" | "vault" | "aws-sm" | "azure-kv" | "gcp-sm"
   fetch(reference: CredentialReference): Promise<string>;
 }
 ```
@@ -1147,6 +1160,7 @@ A BYOK key registered at workspace scope is only ever resolvable by requests who
 When a BYOK key is used, usage/cost accounting still flows through the same Telemetry Layer as platform-managed keys, tagged with `scope: "byok"` — so a workspace using its own OpenAI key still gets accurate cost dashboards, and platform operators can distinguish "cost we're bearing" from "cost the tenant is bearing on their own key" in aggregate reporting.
 
 ---
+
 ## 17. Request Lifecycle
 
 ```mermaid
@@ -1177,7 +1191,7 @@ graph TD
 
 Every terminal node (`Z1`–`Z6`, `L`) emits a structured log line and closes the trace span with a status. There is no code path in the orchestrator that can return without either a typed success or a typed `GatewayError` — unhandled exceptions from provider adapters are caught at the adapter boundary and converted (Section 19).
 
-> **v1.1 note:** this diagram remains accurate as the *outer* lifecycle. As of v1.1, step **F** ("Policy Engine: build ExecutionPlan") is preceded by a new sub-step where the Orchestrator first calls the AI Strategy Layer to produce a `StrategyDecision`, which the Policy Engine then consumes. Section 38 shows the fully expanded lifecycle with this new sub-step inline.
+> **v1.1 note:** this diagram remains accurate as the _outer_ lifecycle. As of v1.1, step **F** ("Policy Engine: build ExecutionPlan") is preceded by a new sub-step where the Orchestrator first calls the AI Strategy Layer to produce a `StrategyDecision`, which the Policy Engine then consumes. Section 38 shows the fully expanded lifecycle with this new sub-step inline.
 
 ---
 
@@ -1187,12 +1201,12 @@ Every terminal node (`Z1`–`Z6`, `L`) emits a structured log line and closes th
 
 ```typescript
 export interface RetryPolicy {
-  maxAttempts: number;              // per-provider attempts before failover
+  maxAttempts: number; // per-provider attempts before failover
   backoff: "exponential" | "linear" | "none";
   baseDelayMs: number;
   maxDelayMs: number;
   jitter: boolean;
-  retryableErrorCodes: GatewayErrorCode[];   // e.g. RATE_LIMITED, TIMEOUT
+  retryableErrorCodes: GatewayErrorCode[]; // e.g. RATE_LIMITED, TIMEOUT
 }
 ```
 
@@ -1227,24 +1241,25 @@ A single end-to-end deadline is computed from `constraints.maxLatencyMs` (or a s
 
 ### 19.1 Error Taxonomy
 
-| Category | Example Codes | Retryable? | Typical Handling |
-|---|---|---|---|
-| Client input errors | `INVALID_TASK`, `INVALID_SCHEMA` | No | 400, returned immediately, no provider call attempted |
-| Auth/credential errors | `CREDENTIAL_NOT_FOUND`, `CREDENTIAL_INVALID` | No (fails fast) | 401/424, audit-logged, does not leak which scope failed to unauthenticated callers |
-| Transient provider errors | `RATE_LIMITED`, `TIMEOUT` | Yes | Retry → failover per Section 18 |
-| Content policy errors | `CONTENT_FILTERED` | No | Passed through as a typed, non-retryable result |
-| Systemic failure | `ALL_PROVIDERS_UNAVAILABLE` | No (already exhausted retries/failover) | 503, triggers alerting |
-| Internal bugs | `INTERNAL_ERROR` | No | 500, full internal detail captured in trace/log, only a generic message returned to caller |
+| Category                  | Example Codes                                | Retryable?                              | Typical Handling                                                                           |
+| ------------------------- | -------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Client input errors       | `INVALID_TASK`, `INVALID_SCHEMA`             | No                                      | 400, returned immediately, no provider call attempted                                      |
+| Auth/credential errors    | `CREDENTIAL_NOT_FOUND`, `CREDENTIAL_INVALID` | No (fails fast)                         | 401/424, audit-logged, does not leak which scope failed to unauthenticated callers         |
+| Transient provider errors | `RATE_LIMITED`, `TIMEOUT`                    | Yes                                     | Retry → failover per Section 18                                                            |
+| Content policy errors     | `CONTENT_FILTERED`                           | No                                      | Passed through as a typed, non-retryable result                                            |
+| Systemic failure          | `ALL_PROVIDERS_UNAVAILABLE`                  | No (already exhausted retries/failover) | 503, triggers alerting                                                                     |
+| Internal bugs             | `INTERNAL_ERROR`                             | No                                      | 500, full internal detail captured in trace/log, only a generic message returned to caller |
 
 ### 19.2 Adapter Boundary Contract
 
-Every `ProviderAdapter.invoke`/`invokeStream` implementation *must* catch all provider-SDK/HTTP exceptions internally and translate them to `GatewayError` before returning — enforced by the shared conformance test suite, which deliberately injects malformed responses, timeouts, and non-JSON bodies against each adapter and asserts no raw exception escapes.
+Every `ProviderAdapter.invoke`/`invokeStream` implementation _must_ catch all provider-SDK/HTTP exceptions internally and translate them to `GatewayError` before returning — enforced by the shared conformance test suite, which deliberately injects malformed responses, timeouts, and non-JSON bodies against each adapter and asserts no raw exception escapes.
 
 ### 19.3 Never-Silent-Failure Principle
 
-No path exists where a request simply hangs or vanishes: every request has a deadline (Section 18.4), every deadline expiry emits `TIMEOUT`, and the middleware pipeline has an outer catch-all that converts any unexpected exception into `INTERNAL_ERROR` with a correlation ID the caller can hand to platform operators for debugging — while the *actual* stack trace only goes to the Telemetry Layer, never to the response body.
+No path exists where a request simply hangs or vanishes: every request has a deadline (Section 18.4), every deadline expiry emits `TIMEOUT`, and the middleware pipeline has an outer catch-all that converts any unexpected exception into `INTERNAL_ERROR` with a correlation ID the caller can hand to platform operators for debugging — while the _actual_ stack trace only goes to the Telemetry Layer, never to the response body.
 
 ---
+
 ## 20. Security Architecture
 
 ### 20.1 Credential Storage
@@ -1313,16 +1328,16 @@ graph LR
 
 ### 21.2 Metrics Catalogue (illustrative)
 
-| Metric | Type | Labels |
-|---|---|---|
-| `gateway_request_duration_ms` | histogram | task, providerId, modelClass, outcome |
-| `gateway_provider_latency_ms` | histogram | providerId, modelClass |
-| `gateway_tokens_total` | counter | providerId, direction(in/out), tenant scope |
-| `gateway_cost_usd_total` | counter | providerId, tenant scope, byok(bool) |
-| `gateway_retries_total` | counter | providerId, reason |
-| `gateway_failovers_total` | counter | fromProvider, toProvider |
-| `gateway_circuit_breaker_state` | gauge | providerId, modelClass |
-| `gateway_cache_hit_ratio` | gauge | task |
+| Metric                          | Type      | Labels                                      |
+| ------------------------------- | --------- | ------------------------------------------- |
+| `gateway_request_duration_ms`   | histogram | task, providerId, modelClass, outcome       |
+| `gateway_provider_latency_ms`   | histogram | providerId, modelClass                      |
+| `gateway_tokens_total`          | counter   | providerId, direction(in/out), tenant scope |
+| `gateway_cost_usd_total`        | counter   | providerId, tenant scope, byok(bool)        |
+| `gateway_retries_total`         | counter   | providerId, reason                          |
+| `gateway_failovers_total`       | counter   | fromProvider, toProvider                    |
+| `gateway_circuit_breaker_state` | gauge     | providerId, modelClass                      |
+| `gateway_cache_hit_ratio`       | gauge     | task                                        |
 
 ### 21.3 Distributed Tracing
 
@@ -1337,6 +1352,7 @@ All logs are JSON, one event per line, with a fixed core schema (`timestamp`, `l
 Because token usage and cost are recorded per request with full tenant/provider/model-class attribution, the platform can produce (via a downstream analytics job, not inside the hot path) dashboards for: cost per workspace over time, cost per task type, failure/retry rate per provider, and BYOK vs. platform-managed cost split — all without any bespoke instrumentation beyond what every request already emits.
 
 ---
+
 ## 22. Performance Optimizations
 
 - **In-memory registry cache** with pub/sub invalidation (Section 14.2) removes a DB round-trip from the hot path of every request.
@@ -1371,13 +1387,13 @@ graph TB
 
 ### 23.2 Scaling Dimensions
 
-| Dimension | Strategy |
-|---|---|
-| Request throughput | Add stateless gateway instances behind LB; no coordination needed beyond shared Redis/DB |
-| Provider rate-limit ceilings | Policy Engine + Health Monitor automatically shift load to alternate providers/models as headroom shrinks |
-| Multi-region | Deploy gateway instances per region; Redis/DB either regional-replicated or region-local with async cost/usage reconciliation, depending on consistency needs |
-| Registry/config growth | Registry store is a normal relational/document store; scales independently of the execution core |
-| Credential store growth | Encrypted secret storage scales independently (e.g., dedicated Vault cluster or managed secret service) |
+| Dimension                    | Strategy                                                                                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Request throughput           | Add stateless gateway instances behind LB; no coordination needed beyond shared Redis/DB                                                                      |
+| Provider rate-limit ceilings | Policy Engine + Health Monitor automatically shift load to alternate providers/models as headroom shrinks                                                     |
+| Multi-region                 | Deploy gateway instances per region; Redis/DB either regional-replicated or region-local with async cost/usage reconciliation, depending on consistency needs |
+| Registry/config growth       | Registry store is a normal relational/document store; scales independently of the execution core                                                              |
+| Credential store growth      | Encrypted secret storage scales independently (e.g., dedicated Vault cluster or managed secret service)                                                       |
 
 ### 23.3 Backpressure
 
@@ -1387,19 +1403,20 @@ When a tenant's rate limit or a provider's rate limit is genuinely exhausted wit
 
 ## 24. Testing Strategy
 
-| Layer | Strategy |
-|---|---|
-| **Provider adapters** | Shared conformance test suite (`tools/adapter-conformance-tests`) run against every adapter, including a mock-server harness that simulates timeouts, malformed JSON, rate-limit responses, and partial streams — every adapter must pass identically. |
-| **Policy Engine** | Pure-function unit tests over the scoring/ranking pipeline with synthetic Model Registry fixtures — deterministic given fixed inputs, no network. |
-| **Credential Resolver** | Unit tests per `ScopeResolver` with fake secret sources; integration tests against a real (test) Vault/DB to validate the full resolution chain and isolation guarantees (Section 16.3). |
-| **Reliability (Retry/CB/Timeout)** | Property-based tests: inject failure sequences and assert retry counts, backoff timing, and circuit state transitions match policy exactly. |
-| **Orchestrator (integration)** | End-to-end tests using the mock provider adapter, exercising the full request lifecycle (Section 17) including cache hits, failover, and cancellation. |
-| **Streaming** | Tests asserting chunk ordering, cancellation propagation (client disconnect → adapter `abort()`), and correct `finishReason` on truncation/cancel/completion. |
-| **Security/multi-tenancy** | Explicit cross-tenant isolation tests: attempt to resolve Tenant A's credential/cache from a Tenant B context and assert failure. |
-| **Load/performance** | Benchmark suite measuring gateway-overhead latency (Section 4) excluding provider inference time, run in CI against the mock adapter to catch regressions independent of real provider latency variance. |
-| **Contract tests** | Schema validation tests ensuring `ExecuteRequest`/`ExecuteResponse`/`GatewayError` remain backward compatible across releases (breaking changes require a major version + ADR). |
+| Layer                              | Strategy                                                                                                                                                                                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Provider adapters**              | Shared conformance test suite (`tools/adapter-conformance-tests`) run against every adapter, including a mock-server harness that simulates timeouts, malformed JSON, rate-limit responses, and partial streams — every adapter must pass identically. |
+| **Policy Engine**                  | Pure-function unit tests over the scoring/ranking pipeline with synthetic Model Registry fixtures — deterministic given fixed inputs, no network.                                                                                                      |
+| **Credential Resolver**            | Unit tests per `ScopeResolver` with fake secret sources; integration tests against a real (test) Vault/DB to validate the full resolution chain and isolation guarantees (Section 16.3).                                                               |
+| **Reliability (Retry/CB/Timeout)** | Property-based tests: inject failure sequences and assert retry counts, backoff timing, and circuit state transitions match policy exactly.                                                                                                            |
+| **Orchestrator (integration)**     | End-to-end tests using the mock provider adapter, exercising the full request lifecycle (Section 17) including cache hits, failover, and cancellation.                                                                                                 |
+| **Streaming**                      | Tests asserting chunk ordering, cancellation propagation (client disconnect → adapter `abort()`), and correct `finishReason` on truncation/cancel/completion.                                                                                          |
+| **Security/multi-tenancy**         | Explicit cross-tenant isolation tests: attempt to resolve Tenant A's credential/cache from a Tenant B context and assert failure.                                                                                                                      |
+| **Load/performance**               | Benchmark suite measuring gateway-overhead latency (Section 4) excluding provider inference time, run in CI against the mock adapter to catch regressions independent of real provider latency variance.                                               |
+| **Contract tests**                 | Schema validation tests ensuring `ExecuteRequest`/`ExecuteResponse`/`GatewayError` remain backward compatible across releases (breaking changes require a major version + ADR).                                                                        |
 
 ---
+
 ## 25. Deployment Models
 
 AI Gateway is designed to run identically across three deployment shapes, since nothing in the core assumes a specific runtime:
@@ -1413,6 +1430,7 @@ graph TB
         CORE --> LOCALCACHE[In-process cache<br/>(Redis optional/embedded)]
     end
 ```
+
 Suitable for local development, small self-hosted deployments, or CI environments. Redis can be swapped for an in-memory stub implementing the same cache interface.
 
 ### 25.2 Containerized / Kubernetes (Production Default)
@@ -1435,6 +1453,7 @@ graph TB
     OTEL -.-> POD2
     OTEL -.-> POD3
 ```
+
 Horizontal Pod Autoscaling driven by request-rate/CPU metrics; readiness probes gate on `/v1/health` reflecting both the gateway's own readiness and a coarse view of provider health.
 
 ### 25.3 Serverless / Edge (Optional, Later Milestone)
@@ -1453,7 +1472,7 @@ A single `GatewayConfig` (Section 10.6) plus environment-specific secret-source 
 > unmodified from the original architecture text):**
 > This section's Milestone 0–7 sequence was this document's own first pass at a build order,
 > written alongside the rest of the architecture as a plausibility check on the design — it
-> demonstrates that the architecture *can* be built incrementally, not a commitment to build
+> demonstrates that the architecture _can_ be built incrementally, not a commitment to build
 > it in exactly this grouping. The **Engineering Blueprint's Section 7 (`EM-0` through
 > `EM-11`, see `docs/architecture/engineering-blueprint.md`) is the authoritative implementation
 > sequence** actually followed to build this repository, and its milestone scoping differs from
@@ -1468,6 +1487,7 @@ A single `GatewayConfig` (Section 10.6) plus environment-specific secret-source 
 Each milestone is independently deliverable and independently valuable — later milestones do not require re-architecting earlier ones.
 
 ### Milestone 0 — Contracts & Skeleton
+
 - **Objectives:** Establish the public contract and monorepo skeleton before any provider integration.
 - **Scope:** `core-contracts` package; empty `orchestrator` that echoes input; monorepo tooling (build, lint, test) wired up.
 - **Deliverables:** `ExecuteRequest`/`ExecuteResponse`/`GatewayError` types; passing CI skeleton.
@@ -1476,6 +1496,7 @@ Each milestone is independently deliverable and independently valuable — later
 - **Testing:** Contract/schema tests only.
 
 ### Milestone 1 — Single Provider, No Policy Engine
+
 - **Objectives:** Prove the adapter interface against a real provider (Groq) with the simplest possible routing (static task→model mapping).
 - **Scope:** `provider-sdk` interface, `groq` adapter, static routing table (no scoring yet), basic Retry Engine (fixed retries, no circuit breaker yet).
 - **Deliverables:** End-to-end non-streaming execution against Groq for at least 3 task types.
@@ -1484,6 +1505,7 @@ Each milestone is independently deliverable and independently valuable — later
 - **Testing:** Adapter conformance tests, orchestrator integration tests against mock + real Groq (recorded fixtures).
 
 ### Milestone 2 — Model Registry & Policy Engine
+
 - **Objectives:** Replace static routing with the real Policy Engine and configurable Model Registry.
 - **Scope:** `model-registry` (DB-backed), `policy-engine` (scoring + ranking), registry seed data for Groq.
 - **Deliverables:** Task requests routed by capability/score rather than a hardcoded table; registry updatable without redeploy.
@@ -1492,6 +1514,7 @@ Each milestone is independently deliverable and independently valuable — later
 - **Testing:** Policy Engine unit tests with fixtures; A/B comparison of static vs. scored routing on recorded traffic.
 
 ### Milestone 3 — Credential Resolver & BYOK
+
 - **Objectives:** Replace hardcoded platform API keys with the full layered credential system.
 - **Scope:** `credential-resolver`, `env` + `db` secret sources, `/v1/credentials` API, audit logging.
 - **Deliverables:** Workspace/org/user-level BYOK registration and resolution, fully isolated per tenant.
@@ -1500,6 +1523,7 @@ Each milestone is independently deliverable and independently valuable — later
 - **Testing:** Full suite per Section 24's Credential Resolver row, plus a dedicated security review.
 
 ### Milestone 4 — Reliability Hardening
+
 - **Objectives:** Add Circuit Breaker, Health Monitor, and real provider failover (NVIDIA NIM as second adapter).
 - **Scope:** `nvidia-nim` adapter, `reliability` package's circuit breaker + health monitor, fallback-plan assembly in Policy Engine.
 - **Deliverables:** Automatic failover from Groq to NIM under simulated rate-limit/outage conditions.
@@ -1508,6 +1532,7 @@ Each milestone is independently deliverable and independently valuable — later
 - **Testing:** Property-based reliability tests, chaos/fault-injection tests.
 
 ### Milestone 5 — Streaming
+
 - **Objectives:** First-class streaming across both adapters with cancellation.
 - **Scope:** `streaming` package, SSE transport, cancellation propagation through orchestrator → adapter → provider.
 - **Deliverables:** `/v1/execute/stream` fully functional for both providers.
@@ -1516,6 +1541,7 @@ Each milestone is independently deliverable and independently valuable — later
 - **Testing:** Streaming-specific suite per Section 24.
 
 ### Milestone 6 — Observability & Multi-Tenant Hardening
+
 - **Objectives:** Full OTel tracing/metrics, structured logging, cost analytics, and complete workspace/org isolation guarantees under load.
 - **Scope:** `telemetry` package, dashboards (external, consuming the metrics catalogue), rate-limit/cache tenant isolation enforcement.
 - **Deliverables:** End-to-end trace visible for any `requestId`; per-tenant cost dashboard.
@@ -1524,6 +1550,7 @@ Each milestone is independently deliverable and independently valuable — later
 - **Testing:** Section 24's observability-adjacent tests, plus dashboard/alerting validation.
 
 ### Milestone 7 — Enterprise & Ecosystem Readiness
+
 - **Objectives:** Plugin system, additional provider adapters (OpenAI, Anthropic, Gemini at minimum), admin console (optional), enterprise policy rules.
 - **Scope:** `plugin-system`, 3+ additional adapters built against the now-stable `provider-sdk`, `RoutingRule` engine (Section 13.4).
 - **Deliverables:** Community-contributable adapter template proven by at least one externally-contributed adapter (dogfooding the "trivial to add" design goal).
@@ -1532,17 +1559,20 @@ Each milestone is independently deliverable and independently valuable — later
 - **Testing:** Full regression suite + new adapters' conformance tests.
 
 ---
+
 ## 27. Future Evolution (V2, V3)
 
 ### V2 — Adaptive Intelligence
+
 - **Learned routing:** replace/augment static scoring weights (Section 13.3) with a lightweight learned model trained on historical outcome data (actual latency, actual quality feedback signals if callers opt to provide them) — still fully overridable by explicit policy rules, preserving auditability.
 - **Predictive rate-limit avoidance:** forecast provider rate-limit exhaustion ahead of time from traffic trends, proactively shifting routing weight before a provider actually degrades, rather than reactively failing over after the first failure.
 - **Semantic task caching:** move beyond exact-input cache keys (Section 22) toward embedding-similarity-based cache hits for near-duplicate requests, opt-in per task type given the added complexity/risk of subtly-wrong cache hits.
 - **Cost-aware autoscaling of routing:** dynamic per-workspace budget pacing that smoothly shifts routing toward cheaper models as a budget threshold approaches, rather than the hard cutoff described in Section 13.4.
 
 ### V3 — Ecosystem Platform
+
 - **Plugin marketplace:** a curated/community registry of `GatewayPlugin` and `ProviderAdapter` implementations, versioned and conformance-certified automatically via the same test harness used internally.
-- **Federated gateway deployments:** allow one AI Gateway instance to route a subset of tasks to *another* AI Gateway instance (e.g., a regional deployment, or a partner's deployment) as if it were just another provider adapter — because the `ProviderAdapter` interface is generic enough to have "another AI Gateway" as a valid implementation.
+- **Federated gateway deployments:** allow one AI Gateway instance to route a subset of tasks to _another_ AI Gateway instance (e.g., a regional deployment, or a partner's deployment) as if it were just another provider adapter — because the `ProviderAdapter` interface is generic enough to have "another AI Gateway" as a valid implementation.
 - **Fine-grained per-task SLAs:** contractual latency/availability targets configurable per task type per tenant, with the Policy Engine and Health Monitor enforcing and reporting against them explicitly (today's spec supports soft `maxLatencyMs` constraints; V3 would add hard SLA tracking/alerting).
 - **Native multi-modal task types:** extend the `TaskType`/`ExecuteRequest.input` model to cover image/audio input and generation tasks as first-class task types, once a second modality-supporting provider adapter exists to justify the abstraction (avoiding speculative generality today).
 
@@ -1553,42 +1583,49 @@ These are explicitly **not** committed scope for the initial platform (Milestone
 ## 28. Architecture Decision Records (ADRs)
 
 ### ADR-001: Tasks, Not Models, Are the Public Vocabulary
+
 - **Context:** Applications need LLM capability without coupling to a specific vendor or model lifecycle (deprecations, renames, pricing changes).
 - **Decision:** The public API accepts a `TaskType` and never a model identifier; model selection is entirely internal (Policy Engine + Model Registry).
 - **Consequences:** Callers lose fine-grained model control (mitigated by `constraints`/`preferences` as soft/hard knobs); the platform gains the ability to swap underlying models/providers transparently, which is the core value proposition.
 - **Alternatives considered:** Expose model names with gateway as a thin proxy — rejected because it re-introduces the exact coupling the platform exists to remove.
 
 ### ADR-002: Stateless Execution Core with Externalized Shared State
+
 - **Context:** Need horizontal scalability and simple operational characteristics.
 - **Decision:** No in-process state survives a single request beyond a short-TTL local cache; all cross-request state (health, rate limits, registry, response cache) lives in Redis/DB.
 - **Consequences:** Every gateway instance is interchangeable, simplifying autoscaling and rolling deploys; adds a hard dependency on Redis/DB availability for full functionality (mitigated by graceful degradation: registry falls back to last-known-good cache on store unavailability).
 - **Alternatives considered:** In-process sticky state with session affinity — rejected as it complicates scaling and creates uneven load distribution.
 
 ### ADR-003: Provider Adapters Are the Only Place Provider SDKs Are Imported
+
 - **Context:** Provider agnosticism must be enforceable, not just aspirational.
 - **Decision:** Enforce via package boundaries (`packages/providers/*` only) plus a lint rule / dependency-graph check in CI that fails the build if a provider SDK import appears outside that boundary.
 - **Consequences:** Adding/removing/changing a provider never touches core logic; slightly more boilerplate per adapter (normalization code) that would be "saved" by leaking provider types into core — judged a worthwhile tradeoff.
 - **Alternatives considered:** Duck-typed "good enough" abstraction without strict enforcement — rejected as it erodes over time without a structural/CI guardrail.
 
 ### ADR-004: BYOK Modeled as Just Another Credential Scope
+
 - **Context:** BYOK could be built as a bolted-on alternate path or as a first-class part of the core resolution model.
 - **Decision:** Model platform-managed keys as `scope: "platform"`, the least-specific entry in the same `ResolutionChain` used for user/project/workspace/org keys.
 - **Consequences:** Zero special-casing anywhere else in the codebase for "is this BYOK or not"; cost/usage attribution and isolation guarantees apply uniformly.
 - **Alternatives considered:** Separate `BYOKResolver` invoked conditionally — rejected as it would duplicate resolution/audit logic and create two code paths to keep in sync.
 
 ### ADR-005: Pre-Computed Fallback Plans Rather Than Re-Scoring on Failure
+
 - **Context:** Failover must be fast; re-running the full Policy Engine pipeline mid-request adds latency exactly when a request is already struggling.
 - **Decision:** The Policy Engine computes an ordered `fallbackPlans[]` once, at initial plan assembly; the Retry Engine simply advances through this pre-computed list on exhaustion.
 - **Consequences:** Faster failover; slightly stale ranking if provider health changes dramatically mid-request (accepted risk given the short timeframes involved — a request that's still executing is, by definition, a matter of seconds).
 - **Alternatives considered:** Live re-scoring on every failover — rejected for latency cost; considered revisiting in V2 if p99 failover latency data shows it matters more than expected.
 
 ### ADR-006: Errors Are Translated at the Adapter Boundary, Never Propagated Raw
+
 - **Context:** Ten-plus planned provider adapters means ten-plus different native error shapes; core logic (retry, circuit breaker, caller-facing responses) cannot reason about all of them.
 - **Decision:** Every adapter must translate all provider errors/exceptions into `GatewayError` before returning; enforced by the shared conformance test suite injecting malformed/erroring responses.
 - **Consequences:** Uniform, typed error handling everywhere above the adapter layer; adapters carry a small amount of translation boilerplate.
 - **Alternatives considered:** A generic "unknown provider error" passthrough type — rejected because it would prevent the Retry Engine from correctly distinguishing retryable vs. non-retryable failures across providers.
 
 ### ADR-007: Configuration-Driven Registry and Routing Over Compiled Logic
+
 - **Context:** Model availability, pricing, and capability data change far more often than the code that consumes it.
 - **Decision:** Model Registry entries and routing/scoring weights are data (DB/config), not TypeScript conditionals; changes take effect via cache invalidation, not deployment.
 - **Consequences:** Operators can react to a provider outage or pricing change in seconds; requires disciplined schema validation on config writes (mitigated by zod/JSON-schema validation at the config layer).
@@ -1598,31 +1635,30 @@ These are explicitly **not** committed scope for the initial platform (Milestone
 
 # Part II — v1.1 Refinement: The Intelligent Execution Platform
 
-> Everything below is additive. It does not remove, replace, or contradict any component, package, contract, or milestone described in Part I (Sections 1–28). It inserts one new decision layer — the **AI Strategy Layer** — between the request entering the Execution Core and the existing Policy Engine, and it gives that layer the sub-components needed to reason about *how* a task should run, not just *where*.
-
+> Everything below is additive. It does not remove, replace, or contradict any component, package, contract, or milestone described in Part I (Sections 1–28). It inserts one new decision layer — the **AI Strategy Layer** — between the request entering the Execution Core and the existing Policy Engine, and it gives that layer the sub-components needed to reason about _how_ a task should run, not just _where_.
 
 ## 29. Strengthened Vision — AI Gateway as an Execution Operating System
 
 The v1.0 vision (Section 2) established that applications should never know provider SDKs, model names, or authentication mechanisms. v1.1 extends that same isolation principle one layer deeper.
 
-> **v1.0 boundary:** applications are isolated from *providers*.
+> **v1.0 boundary:** applications are isolated from _providers_.
 > **v1.1 boundary:** applications are isolated from providers **and** from model selection, execution strategy, prompt handling, and inference tuning.
 
 An application should never construct a `temperature`, a `top_p`, a retry count, or a token budget. It should never decide whether a request "needs reasoning" or whether a prompt is too long. Those are execution-strategy decisions, and AI Gateway is the only place they should be made — the same way an operating system decides paging strategy and CPU scheduling so that application code just calls `malloc()` and spawns threads.
 
 Restated, AI Gateway v1.1 is responsible for:
 
-| Concern | v1.0 | v1.1 adds |
-|---|---|---|
-| Provider abstraction | ✅ | — |
-| Model selection | ✅ (Policy Engine) | Now informed by Capability Registry + lifecycle state, not just task |
-| Execution strategy | Implicit in Policy Engine scoring | Explicit **AI Strategy Layer** (Section 30) |
+| Concern                                                  | v1.0                                 | v1.1 adds                                                                                                |
+| -------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Provider abstraction                                     | ✅                                   | —                                                                                                        |
+| Model selection                                          | ✅ (Policy Engine)                   | Now informed by Capability Registry + lifecycle state, not just task                                     |
+| Execution strategy                                       | Implicit in Policy Engine scoring    | Explicit **AI Strategy Layer** (Section 30)                                                              |
 | Inference tuning (temperature, top_p, top_k, max tokens) | Caller could imply via `preferences` | Fully owned by **Execution Profiles** (Section 31) — caller expresses `task`, never inference parameters |
-| Cost optimization | Implicit in scoring weights | Explicit **Cost Optimization Engine** (Section 33) as a pipeline stage |
-| Prompt handling | Not addressed | Explicit, provider-independent **Prompt Optimization Layer** (Section 34) |
-| Reliability, observability, security, BYOK | ✅ | Unchanged (Sections 15–21) |
+| Cost optimization                                        | Implicit in scoring weights          | Explicit **Cost Optimization Engine** (Section 33) as a pipeline stage                                   |
+| Prompt handling                                          | Not addressed                        | Explicit, provider-independent **Prompt Optimization Layer** (Section 34)                                |
+| Reliability, observability, security, BYOK               | ✅                                   | Unchanged (Sections 15–21)                                                                               |
 
-Applications continue to express only **intent** — `task`, `input`, optional `constraints`/`preferences` (Section 10.3, unchanged). AI Gateway determines everything about *how* that intent is fulfilled. This is the "Operating System for AI execution" framing: a small, stable syscall-like surface at the top, and an increasingly sophisticated, swappable execution strategy underneath it that applications never need to be aware of, let alone modify, as the AI ecosystem evolves.
+Applications continue to express only **intent** — `task`, `input`, optional `constraints`/`preferences` (Section 10.3, unchanged). AI Gateway determines everything about _how_ that intent is fulfilled. This is the "Operating System for AI execution" framing: a small, stable syscall-like surface at the top, and an increasingly sophisticated, swappable execution strategy underneath it that applications never need to be aware of, let alone modify, as the AI ecosystem evolves.
 
 ---
 
@@ -1632,8 +1668,8 @@ Applications continue to express only **intent** — `task`, `input`, optional `
 
 The v1.0 Policy Engine already made routing decisions using task type, constraints, and preferences (Section 13). It would be possible to keep stuffing more decisions (profile selection, cost tradeoffs, prompt shaping) into that same engine — but that conflates two different questions:
 
-- **"How should this task be executed?"** — inference parameters, reasoning depth, whether to stream, whether a cached answer suffices, how the prompt should be shaped. This depends on the *task* and *tenant policy*, largely independent of which provider ends up serving it.
-- **"Where should this execution happen?"** — which provider, which concrete model, with what retry/failover chain. This depends on *provider health, cost, and availability*, largely independent of what the task actually needs.
+- **"How should this task be executed?"** — inference parameters, reasoning depth, whether to stream, whether a cached answer suffices, how the prompt should be shaped. This depends on the _task_ and _tenant policy_, largely independent of which provider ends up serving it.
+- **"Where should this execution happen?"** — which provider, which concrete model, with what retry/failover chain. This depends on _provider health, cost, and availability_, largely independent of what the task actually needs.
 
 Separating them keeps the Policy Engine exactly as it was in v1.0 (still fully unit-testable in isolation per Section 24) while giving the "how" question its own home that can grow — new execution profiles, new optimization heuristics, future learned strategies — without ever touching provider-routing code.
 
@@ -1684,13 +1720,13 @@ export interface AIStrategyLayer {
 }
 
 export interface StrategyDecision {
-  requiredCapabilities: CapabilitySet;      // from Capability Registry, Section 32
+  requiredCapabilities: CapabilitySet; // from Capability Registry, Section 32
   executionProfile: ResolvedExecutionProfile; // from Execution Profile Registry, Section 31
   optimizations: {
-    cost: CostOptimizationResult;           // Section 33
-    prompt: OptimizedPrompt;                // Section 34
+    cost: CostOptimizationResult; // Section 33
+    prompt: OptimizedPrompt; // Section 34
   };
-  cacheHit?: CachedResult;                  // short-circuits Policy Engine entirely if present
+  cacheHit?: CachedResult; // short-circuits Policy Engine entirely if present
 }
 ```
 
@@ -1701,7 +1737,7 @@ If `cacheHit` is present, the Orchestrator returns it directly and never invokes
 Per the request, the AI Strategy Layer's responsibilities are exactly:
 
 - Execution profile selection (Section 31)
-- Model capability matching (Section 32 — resolving *what a task needs*, distinct from the Policy Engine's job of finding *which model has it*)
+- Model capability matching (Section 32 — resolving _what a task needs_, distinct from the Policy Engine's job of finding _which model has it_)
 - Reasoning depth determination (part of Cost Optimization, Section 33.2)
 - Latency optimization (part of Execution Profile defaults + Cost Optimizer streaming/caching decisions)
 - Cost optimization (Section 33)
@@ -1713,7 +1749,7 @@ Per the request, the AI Strategy Layer's responsibilities are exactly:
 
 ### 31.1 Concept
 
-An **Execution Profile** is the config-driven bundle of inference behavior that a task type resolves to, so that neither the calling application nor, notably, the Policy Engine's callers ever hand-configure `temperature`/`top_p`/`top_k`/timeouts/retry policy directly. This directly answers the requirement: *"Applications should never configure inference parameters directly. Instead they should request an execution profile."* In practice the application still just sends `task` (Section 10.3 is unchanged) — the Strategy Layer resolves `task` to a profile automatically. Advanced tenants may optionally hint a profile override via `preferences.executionProfileOverride` (new optional field, additive to `ExecuteRequest.preferences`), but this remains an override of an internal concept, never a raw parameter list.
+An **Execution Profile** is the config-driven bundle of inference behavior that a task type resolves to, so that neither the calling application nor, notably, the Policy Engine's callers ever hand-configure `temperature`/`top_p`/`top_k`/timeouts/retry policy directly. This directly answers the requirement: _"Applications should never configure inference parameters directly. Instead they should request an execution profile."_ In practice the application still just sends `task` (Section 10.3 is unchanged) — the Strategy Layer resolves `task` to a profile automatically. Advanced tenants may optionally hint a profile override via `preferences.executionProfileOverride` (new optional field, additive to `ExecuteRequest.preferences`), but this remains an override of an internal concept, never a raw parameter list.
 
 ### 31.2 Schema
 
@@ -1721,14 +1757,22 @@ An **Execution Profile** is the config-driven bundle of inference behavior that 
 // packages/strategy-layer/src/execution-profile-registry.ts
 
 export type ExecutionProfileId =
-  | "extraction" | "classification" | "summarization" | "json_generation"
-  | "reasoning" | "composition" | "coding" | "translation"
-  | "vision" | "embedding" | "agent"   // future, disabled until a capability-matching adapter exists
-  | (string & {});                      // extensible, config-registered
+  | "extraction"
+  | "classification"
+  | "summarization"
+  | "json_generation"
+  | "reasoning"
+  | "composition"
+  | "coding"
+  | "translation"
+  | "vision"
+  | "embedding"
+  | "agent" // future, disabled until a capability-matching adapter exists
+  | (string & {}); // extensible, config-registered
 
 export interface ExecutionProfile {
   id: ExecutionProfileId;
-  preferredModelClasses: string[];       // ordered preference, consumed by Policy Engine scoring (Section 13.3)
+  preferredModelClasses: string[]; // ordered preference, consumed by Policy Engine scoring (Section 13.3)
   inference: {
     temperature: number;
     topP?: number;
@@ -1736,7 +1780,7 @@ export interface ExecutionProfile {
     maxOutputTokens: number;
   };
   timeoutMs: number;
-  retryPolicy: RetryPolicy;              // Section 18.1 type, reused as-is
+  retryPolicy: RetryPolicy; // Section 18.1 type, reused as-is
   streaming: { defaultEnabled: boolean; chunking?: "token" | "sentence" };
   structuredOutput: { defaultEnabled: boolean };
   caching: { defaultEnabled: boolean; ttlSeconds?: number; keyStrategy: "exact" | "semantic" };
@@ -1750,16 +1794,16 @@ export interface ResolvedExecutionProfile extends ExecutionProfile {
 
 ### 31.3 Illustrative Seed Profiles
 
-| Profile | temperature | streaming default | structured output default | caching default | notes |
-|---|---|---|---|---|---|
-| extraction | 0.0 | off | on | on (exact-match) | deterministic, cache-friendly |
-| classification | 0.0 | off | on | on (exact-match) | short output, cheap |
-| summarization | 0.3 | on | off | off | long input, medium output |
-| json_generation | 0.0 | off | on (required) | on (exact-match) | never routed to a non-JSON-mode model |
-| reasoning | 0.4 | on | off | off | routed only to `complex-reasoning` model class |
-| composition | 0.8 | on | off | off | creative writing, high temperature |
-| coding | 0.2 | on | off | off | precise, deterministic-leaning |
-| translation | 0.2 | off | off | on (semantic) | benefits from semantic cache reuse |
+| Profile         | temperature | streaming default | structured output default | caching default  | notes                                          |
+| --------------- | ----------- | ----------------- | ------------------------- | ---------------- | ---------------------------------------------- |
+| extraction      | 0.0         | off               | on                        | on (exact-match) | deterministic, cache-friendly                  |
+| classification  | 0.0         | off               | on                        | on (exact-match) | short output, cheap                            |
+| summarization   | 0.3         | on                | off                       | off              | long input, medium output                      |
+| json_generation | 0.0         | off               | on (required)             | on (exact-match) | never routed to a non-JSON-mode model          |
+| reasoning       | 0.4         | on                | off                       | off              | routed only to `complex-reasoning` model class |
+| composition     | 0.8         | on                | off                       | off              | creative writing, high temperature             |
+| coding          | 0.2         | on                | off                       | off              | precise, deterministic-leaning                 |
+| translation     | 0.2         | off               | off                       | on (semantic)    | benefits from semantic cache reuse             |
 
 Like the Model Registry (Section 14), this table is seed data, not compiled logic — an operator can add a new profile or retune an existing one via config, with cache-invalidation propagation identical to Section 14.2.
 
@@ -1793,7 +1837,7 @@ The application never sees or sets `temperature: 0.3` — it only ever said `tas
 
 ### 32.1 Why Task → Capabilities → Models, Not Task → Models Directly
 
-In v1.0, the Policy Engine mapped `task` more or less straight to candidate models via the Model Registry's `modelClass` field (Section 14). That is workable, but it means every task type's routing is only as stable as the current generation of model classes. v1.1 inserts an explicit, independent middle layer: the **Capability Registry**, which maps a task type to the *abstract capabilities it requires* — independent of any specific model or provider. The Model Registry (Section 14, unchanged) still maps *models* to capabilities they *have*. Matching happens where these two independently-evolving registries meet.
+In v1.0, the Policy Engine mapped `task` more or less straight to candidate models via the Model Registry's `modelClass` field (Section 14). That is workable, but it means every task type's routing is only as stable as the current generation of model classes. v1.1 inserts an explicit, independent middle layer: the **Capability Registry**, which maps a task type to the _abstract capabilities it requires_ — independent of any specific model or provider. The Model Registry (Section 14, unchanged) still maps _models_ to capabilities they _have_. Matching happens where these two independently-evolving registries meet.
 
 ```
 Task  →  Capabilities Required  →  Execution Profile  →  Candidate Models  →  Selected Provider
@@ -1812,8 +1856,8 @@ export interface CapabilitySet {
   reasoningDepth: "shallow" | "moderate" | "deep";
   streamingPreferred: boolean;
   minContextTokens: number;
-  visionInput?: boolean;      // future
-  audioInput?: boolean;       // future
+  visionInput?: boolean; // future
+  audioInput?: boolean; // future
 }
 
 export interface CapabilityRegistry {
@@ -1862,33 +1906,33 @@ export interface OptimizationContext {
   capabilities: CapabilitySet;
   profile: ResolvedExecutionProfile;
   promptTokenEstimate: number;
-  runtimeProfile: RuntimeProfile;        // Section 37
-  cache: CacheClient;                     // read-only lookup handle
+  runtimeProfile: RuntimeProfile; // Section 37
+  cache: CacheClient; // read-only lookup handle
 }
 
 export interface CostOptimizationResult {
-  recommendedModelClassDowngrade?: string;  // e.g. force "fast-extraction" over "complex-reasoning" if task doesn't need depth
-  reasoningRequired: boolean;                // did the task actually need deep reasoning, or was that a default assumption?
-  disableStreaming?: boolean;                // e.g. short, non-interactive outputs don't benefit from streaming overhead
-  cacheHit?: CachedResult;                   // exact or semantic match found — short-circuits everything downstream
-  preferFreeTierProviders: boolean;          // from Runtime Profile + workspace budget state
+  recommendedModelClassDowngrade?: string; // e.g. force "fast-extraction" over "complex-reasoning" if task doesn't need depth
+  reasoningRequired: boolean; // did the task actually need deep reasoning, or was that a default assumption?
+  disableStreaming?: boolean; // e.g. short, non-interactive outputs don't benefit from streaming overhead
+  cacheHit?: CachedResult; // exact or semantic match found — short-circuits everything downstream
+  preferFreeTierProviders: boolean; // from Runtime Profile + workspace budget state
   estimatedCostUsd: number;
-  estimatedSavingsUsd: number;               // vs. the naive/default profile execution
+  estimatedSavingsUsd: number; // vs. the naive/default profile execution
 }
 ```
 
 The Cost Optimizer answers, concretely, every question posed in the refinement request:
 
-| Question | How it's answered |
-|---|---|
-| Can this request use a smaller model? | `recommendedModelClassDowngrade`, computed from `capabilities.reasoningDepth` vs. the profile's default preferred class — if the task's *actual* resolved capability need is shallower than the profile's default assumption, downgrade. |
-| Does this task require reasoning? | `reasoningRequired`, derived from `CapabilitySet.reasoningDepth !== "shallow"` combined with input-size/complexity heuristics (e.g., short factual extraction rarely needs `deep`). |
-| Can prompt length be reduced? | Delegated to the Prompt Optimization Layer (Section 34); the Cost Optimizer reads back `estimatedTokens` post-optimization to refine `estimatedCostUsd`. |
-| Can cached responses be reused? | `cacheHit`, via the same cache client used by the request-level cache (Section 22), extended here to support semantic-similarity lookups for `caching.keyStrategy === "semantic"` profiles. |
-| Should streaming be disabled? | `disableStreaming`, e.g. for short, deterministic outputs where streaming overhead exceeds its latency benefit. |
-| Can multiple requests be batched? | Not implemented in v1.1 (see Section 27 V2 note on batching — flagged here as a recognized future extension point, deliberately not built prematurely per the "don't increase complexity unnecessarily" directive). |
-| Can we downgrade providers? | Expressed as a `recommendedModelClassDowngrade` plus `preferFreeTierProviders`, both consumed as *soft* signals by Policy Engine scoring (Section 13.3's `w_cost` term) — never a hard override, so quality-sensitive Routing Rules (Section 13.4) still win when configured. |
-| Can we use free-tier providers first? | `preferFreeTierProviders`, driven primarily by the active Runtime Profile (Section 37) — e.g. `free_tier` and `development` runtime profiles set this `true` by default. |
+| Question                              | How it's answered                                                                                                                                                                                                                                                             |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Can this request use a smaller model? | `recommendedModelClassDowngrade`, computed from `capabilities.reasoningDepth` vs. the profile's default preferred class — if the task's _actual_ resolved capability need is shallower than the profile's default assumption, downgrade.                                      |
+| Does this task require reasoning?     | `reasoningRequired`, derived from `CapabilitySet.reasoningDepth !== "shallow"` combined with input-size/complexity heuristics (e.g., short factual extraction rarely needs `deep`).                                                                                           |
+| Can prompt length be reduced?         | Delegated to the Prompt Optimization Layer (Section 34); the Cost Optimizer reads back `estimatedTokens` post-optimization to refine `estimatedCostUsd`.                                                                                                                      |
+| Can cached responses be reused?       | `cacheHit`, via the same cache client used by the request-level cache (Section 22), extended here to support semantic-similarity lookups for `caching.keyStrategy === "semantic"` profiles.                                                                                   |
+| Should streaming be disabled?         | `disableStreaming`, e.g. for short, deterministic outputs where streaming overhead exceeds its latency benefit.                                                                                                                                                               |
+| Can multiple requests be batched?     | Not implemented in v1.1 (see Section 27 V2 note on batching — flagged here as a recognized future extension point, deliberately not built prematurely per the "don't increase complexity unnecessarily" directive).                                                           |
+| Can we downgrade providers?           | Expressed as a `recommendedModelClassDowngrade` plus `preferFreeTierProviders`, both consumed as _soft_ signals by Policy Engine scoring (Section 13.3's `w_cost` term) — never a hard override, so quality-sensitive Routing Rules (Section 13.4) still win when configured. |
+| Can we use free-tier providers first? | `preferFreeTierProviders`, driven primarily by the active Runtime Profile (Section 37) — e.g. `free_tier` and `development` runtime profiles set this `true` by default.                                                                                                      |
 
 ### 33.3 Optimization Pipeline Diagram
 
@@ -1937,11 +1981,19 @@ export interface OptimizedPrompt {
 }
 
 export type PromptTransformationId =
-  | "compressed" | "context_trimmed" | "duplicates_removed"
-  | "system_prompt_deduped" | "normalized" | "long_context_windowed";
+  | "compressed"
+  | "context_trimmed"
+  | "duplicates_removed"
+  | "system_prompt_deduped"
+  | "normalized"
+  | "long_context_windowed";
 
 export interface PromptOptimizer {
-  optimize(messages: ChatMessage[], budget: TokenBudget, profile: ResolvedExecutionProfile): Promise<OptimizedPrompt>;
+  optimize(
+    messages: ChatMessage[],
+    budget: TokenBudget,
+    profile: ResolvedExecutionProfile,
+  ): Promise<OptimizedPrompt>;
 }
 
 export interface PromptTransformer {
@@ -1954,19 +2006,21 @@ export interface PromptTransformer {
 
 The Prompt Optimizer is itself a small ordered pipeline of independently-testable `PromptTransformer` implementations, matching the refinement's requested responsibility list one-to-one:
 
-| Transformer | Responsibility |
-|---|---|
-| `normalized` | Whitespace/encoding normalization, consistent role formatting — always runs first so every later transformer sees a canonical shape. |
-| `system_prompt_deduped` | Detects a repeated/boilerplate system prompt across a multi-turn `messages` array (or across requests, via a short-lived system-prompt cache keyed by hash) and reuses it instead of re-sending/re-tokenizing identical instructions. |
-| `duplicates_removed` | Strips duplicated content blocks within a single request (e.g., accidentally repeated context chunks from an upstream RAG layer — AI Gateway doesn't own RAG per Section "Philosophy," but it can defensively dedupe whatever content arrives). |
-| `context_trimmed` | Drops or summarizes lowest-relevance context when `estimatedTokens` exceeds `budget.maxInputTokens`, prioritizing the most recent turns and any explicitly marked "must keep" content. |
-| `long_context_windowed` | For very large inputs, applies a sliding-window or hierarchical-summarization strategy rather than a hard truncation, configurable per Execution Profile. |
-| `compressed` | Lossy-but-safe compression of verbose input phrasing where the task's `CapabilitySet` tolerates it (never applied to profiles like `coding` or `json_generation` where exact wording may matter). |
+| Transformer             | Responsibility                                                                                                                                                                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `normalized`            | Whitespace/encoding normalization, consistent role formatting — always runs first so every later transformer sees a canonical shape.                                                                                                            |
+| `system_prompt_deduped` | Detects a repeated/boilerplate system prompt across a multi-turn `messages` array (or across requests, via a short-lived system-prompt cache keyed by hash) and reuses it instead of re-sending/re-tokenizing identical instructions.           |
+| `duplicates_removed`    | Strips duplicated content blocks within a single request (e.g., accidentally repeated context chunks from an upstream RAG layer — AI Gateway doesn't own RAG per Section "Philosophy," but it can defensively dedupe whatever content arrives). |
+| `context_trimmed`       | Drops or summarizes lowest-relevance context when `estimatedTokens` exceeds `budget.maxInputTokens`, prioritizing the most recent turns and any explicitly marked "must keep" content.                                                          |
+| `long_context_windowed` | For very large inputs, applies a sliding-window or hierarchical-summarization strategy rather than a hard truncation, configurable per Execution Profile.                                                                                       |
+| `compressed`            | Lossy-but-safe compression of verbose input phrasing where the task's `CapabilitySet` tolerates it (never applied to profiles like `coding` or `json_generation` where exact wording may matter).                                               |
 
 ### 34.4 Token Estimation & Budgeting
 
 ```typescript
-export function estimateTokens(messages: ChatMessage[]): number { /* provider-agnostic tokenizer approximation */ }
+export function estimateTokens(messages: ChatMessage[]): number {
+  /* provider-agnostic tokenizer approximation */
+}
 ```
 
 A provider-agnostic estimator (not a provider's exact tokenizer, since the eventual model isn't chosen yet at this pipeline stage) is used for budgeting decisions; the Provider Adapter layer (Section 12) still performs provider-exact token accounting from the real response `usage` object for billing/telemetry (Section 21.2) — the two are allowed to differ slightly, since the estimator only needs to be good enough to drive trimming decisions, not to be billing-accurate.
@@ -1985,15 +2039,15 @@ The `OptimizedPrompt` becomes part of the `StrategyDecision` (Section 30.3) that
 
 ```typescript
 export type ModelLifecycleState =
-  | "experimental" | "preview" | "recommended" | "stable" | "deprecated" | "disabled";
+  "experimental" | "preview" | "recommended" | "stable" | "deprecated" | "disabled";
 
 export interface ModelDescriptor {
   // ...all v1.0 fields unchanged (Section 14.1)...
   lifecycle: {
     state: ModelLifecycleState;
-    replacementModelId?: string;      // set when state is "deprecated", points to successor
-    sunsetDate?: string;               // ISO date after which "deprecated" auto-transitions to "disabled"
-    trafficShiftPercent?: number;      // for gradual migration, 0-100
+    replacementModelId?: string; // set when state is "deprecated", points to successor
+    sunsetDate?: string; // ISO date after which "deprecated" auto-transitions to "disabled"
+    trafficShiftPercent?: number; // for gradual migration, 0-100
   };
 }
 ```
@@ -2053,7 +2107,7 @@ export interface ExecutionOutcome {
 }
 
 export interface LearningSignalCollector {
-  record(outcome: ExecutionOutcome): void;   // fire-and-forget, never blocks the response path (Section 22)
+  record(outcome: ExecutionOutcome): void; // fire-and-forget, never blocks the response path (Section 22)
 }
 
 export interface AdaptiveRankingStrategy {
@@ -2063,7 +2117,9 @@ export interface AdaptiveRankingStrategy {
 
 /** Default, shipped implementation: does nothing. */
 export class NoopLearningSignalCollector implements LearningSignalCollector {
-  record(): void { /* intentionally empty */ }
+  record(): void {
+    /* intentionally empty */
+  }
 }
 ```
 
@@ -2081,7 +2137,7 @@ The `ExecutionOutcome` stream — already partially available today as telemetry
 
 ### 37.1 Distinction from Execution Profiles
 
-An **Execution Profile** (Section 31) describes how a given *task type* should run. A **Runtime Profile** is orthogonal: it describes how the *entire gateway deployment/tenant* should behave, overlaying adjustments on top of whatever Execution Profile is resolved. The same `task: "summarization"` request behaves differently under a `free_tier` Runtime Profile than under an `enterprise` one, without the application changing anything.
+An **Execution Profile** (Section 31) describes how a given _task type_ should run. A **Runtime Profile** is orthogonal: it describes how the _entire gateway deployment/tenant_ should behave, overlaying adjustments on top of whatever Execution Profile is resolved. The same `task: "summarization"` request behaves differently under a `free_tier` Runtime Profile than under an `enterprise` one, without the application changing anything.
 
 ### 37.2 Schema
 
@@ -2089,13 +2145,13 @@ An **Execution Profile** (Section 31) describes how a given *task type* should r
 // packages/runtime-profiles/src/runtime-profile.ts
 
 export type RuntimeProfileId =
-  | "development" | "free_tier" | "production" | "enterprise" | "offline" | "high_availability";
+  "development" | "free_tier" | "production" | "enterprise" | "offline" | "high_availability";
 
 export interface RuntimeProfile {
   id: RuntimeProfileId;
   provider: {
     preferFreeTier: boolean;
-    allowedLifecycleStates: ModelLifecycleState[];   // e.g. enterprise excludes "experimental"
+    allowedLifecycleStates: ModelLifecycleState[]; // e.g. enterprise excludes "experimental"
     maxProvidersInFailoverChain: number;
   };
   reliability: {
@@ -2117,14 +2173,14 @@ export interface RuntimeProfile {
 
 ### 37.3 Illustrative Presets
 
-| Runtime Profile | Provider preference | Retries | Failover | Lifecycle states allowed | Caching |
-|---|---|---|---|---|---|
-| **development** | Free tier preferred | Conservative | Conservative | All, including `experimental` | Aggressive (fast iteration) |
-| **free_tier** | Free tier only where possible | Conservative (minimize token burn) | Conservative | `preview`+ | Aggressive |
-| **production** | Balanced (Policy Engine default weights, Section 13.3) | Standard | Standard | `recommended`+ | Standard |
-| **enterprise** | Quality-first regardless of cost | Aggressive | Aggressive, wide failover chain | `stable` only | Standard |
-| **offline** | N/A — routes to on-prem/self-hosted-compatible adapters only (future) | Conservative | Disabled (no network-dependent failover) | `stable` only | Aggressive |
-| **high_availability** | Maximizes provider diversity in fallback chain | Aggressive | Maximally aggressive, largest fallback chain | `recommended`+ | Standard |
+| Runtime Profile       | Provider preference                                                   | Retries                            | Failover                                     | Lifecycle states allowed      | Caching                     |
+| --------------------- | --------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------- | ----------------------------- | --------------------------- |
+| **development**       | Free tier preferred                                                   | Conservative                       | Conservative                                 | All, including `experimental` | Aggressive (fast iteration) |
+| **free_tier**         | Free tier only where possible                                         | Conservative (minimize token burn) | Conservative                                 | `preview`+                    | Aggressive                  |
+| **production**        | Balanced (Policy Engine default weights, Section 13.3)                | Standard                           | Standard                                     | `recommended`+                | Standard                    |
+| **enterprise**        | Quality-first regardless of cost                                      | Aggressive                         | Aggressive, wide failover chain              | `stable` only                 | Standard                    |
+| **offline**           | N/A — routes to on-prem/self-hosted-compatible adapters only (future) | Conservative                       | Disabled (no network-dependent failover)     | `stable` only                 | Aggressive                  |
+| **high_availability** | Maximizes provider diversity in fallback chain                        | Aggressive                         | Maximally aggressive, largest fallback chain | `recommended`+                | Standard                    |
 
 ### 37.4 Where Runtime Profiles Apply
 
@@ -2181,24 +2237,28 @@ Everything from `F` onward is byte-for-byte the same as Section 17's original di
 These milestones assume Milestones 0–7 (Section 26) are complete; they can proceed in parallel with late-stage Milestone 7 work since they touch a disjoint set of packages (`strategy-layer`, `runtime-profiles`) plus additive fields on `ModelDescriptor` and `ExecuteRequest.preferences`.
 
 **Milestone 8 — Execution Profiles & Strategy Layer Skeleton**
+
 - **Objectives:** Stand up `strategy-layer` package with a pass-through implementation (resolves a profile but changes nothing yet) to prove the Orchestrator → Strategy Layer → Policy Engine wiring without behavior change.
 - **Deliverables:** `ExecutionProfileRegistry` with seed profiles (Section 31.3); `StrategyDecision` flowing into the existing Policy Engine unchanged (Section 13.5).
 - **Acceptance criteria:** A/B test shows identical routing outcomes pre/post-integration when the pass-through implementation is active — proves non-regression before adding real optimization logic.
 - **Risks:** Introducing a new layer always risks latency regression — mitigated by the Section 4 performance benchmark suite gating this milestone's merge.
 
 **Milestone 9 — Capability Registry & Model Lifecycle**
+
 - **Objectives:** Decouple task→model mapping via the Capability Registry (Section 32); add lifecycle states to the Model Registry (Section 35).
 - **Deliverables:** `CapabilityRegistry` with seed mappings; `ModelDescriptor.lifecycle` field; Policy Engine candidate filtering by lifecycle state (Section 35.3).
 - **Acceptance criteria:** Marking a model `deprecated` with a `replacementModelId` measurably shifts traffic per `trafficShiftPercent` without any application-level change, verified end-to-end.
 - **Risks:** Migration logic bugs could strand traffic on a disabled model — mitigated by defaulting `trafficShiftPercent` to 0 (no shift) unless explicitly set, and disabling only after `sunsetDate`.
 
 **Milestone 10 — Cost & Prompt Optimization**
+
 - **Objectives:** Implement real (non-pass-through) `CostOptimizer` and `PromptOptimizer` logic.
 - **Deliverables:** Model-downgrade recommendations, streaming-disable heuristics, semantic cache lookups, full prompt transformer pipeline (Section 34.3).
 - **Acceptance criteria:** Measured cost reduction on a representative traffic replay, with zero regressions on tasks whose `CapabilitySet` requires strict capabilities (e.g., no downgrade ever breaks a `json_generation` request's schema compliance).
 - **Risks:** Over-aggressive prompt compression could degrade output quality — mitigated by profile-level opt-out (Section 34.3's `compressed` transformer explicitly excluded for `coding`/`json_generation`).
 
 **Milestone 11 — Runtime Profiles & Learning Extension Points**
+
 - **Objectives:** Ship `runtime-profiles` package and its four read-site integrations (Section 37.4); ship the `LearningSignalCollector`/`AdaptiveRankingStrategy` interfaces with no-op defaults (Section 36).
 - **Deliverables:** Tenant-configurable Runtime Profile selection; `ExecutionOutcome` telemetry stream wired to a (no-op) `LearningSignalCollector`.
 - **Acceptance criteria:** Switching a workspace from `production` to `enterprise` measurably changes provider preference and retry aggressiveness with no code deploy; confirmed no-op learning collector has zero measurable effect on routing.
@@ -2209,32 +2269,37 @@ These milestones assume Milestones 0–7 (Section 26) are complete; they can pro
 ## 39. Architecture Decision Records — v1.1 Additions
 
 ### ADR-008: Strategy Layer Is a Separate Package From Policy Engine, Not an Extension of It
+
 - **Context:** The refinement could have been implemented by adding more fields/logic to the existing Policy Engine.
 - **Decision:** Introduce `strategy-layer` as a new package whose only coupling to `policy-engine` is a one-way data handoff (`StrategyDecision` in, nothing back) — see Section 30.1 and the dependency rule in Section 9.
 - **Consequences:** The v1.0 Policy Engine test suite (Section 24) required zero changes; the Strategy Layer can be tested, versioned, and evolved (including future learned ranking, Section 36) entirely independently.
 - **Alternatives considered:** Extending `ModelScorer` with profile/capability/cost logic directly — rejected because it would conflate "how" and "where" decisions in one module and make the Policy Engine's existing unit tests fragile to unrelated changes.
 
 ### ADR-009: Capability Registry Is Independent of the Model Registry
-- **Context:** Task capability *requirements* and model capability *offerings* could be conflated into one registry.
+
+- **Context:** Task capability _requirements_ and model capability _offerings_ could be conflated into one registry.
 - **Decision:** Keep them as two registries that meet only at the Policy Engine's candidate-matching step (Section 32.3); the Capability Registry never references a specific `providerId`/`modelId`.
 - **Consequences:** A wholesale change in available models (new provider, new model generation) requires zero Capability Registry changes; a change in business requirements for a task (e.g., "extraction now also needs tool calling") requires zero Model Registry changes.
-- **Alternatives considered:** A single merged registry keyed by task — rejected because it would need updating every time either models *or* task requirements changed, doubling churn and coupling two independently-evolving concerns.
+- **Alternatives considered:** A single merged registry keyed by task — rejected because it would need updating every time either models _or_ task requirements changed, doubling churn and coupling two independently-evolving concerns.
 
 ### ADR-010: Execution Profiles Are Config Data, Resolved Automatically, With Only an Optional Advanced Override
+
 - **Context:** The refinement explicitly requires applications never configure inference parameters directly, while still allowing enterprise flexibility.
-- **Decision:** `task` alone drives profile resolution by default; `preferences.executionProfileOverride` is the only caller-facing knob, and it selects a *profile ID*, never a raw parameter (Section 31.1).
+- **Decision:** `task` alone drives profile resolution by default; `preferences.executionProfileOverride` is the only caller-facing knob, and it selects a _profile ID_, never a raw parameter (Section 31.1).
 - **Consequences:** The overwhelming majority of callers never need to know profiles exist at all; advanced tenants get an escape hatch without reopening the raw-parameter door the whole architecture exists to close.
 - **Alternatives considered:** Allowing raw `temperature`/`top_p` passthrough for "power users" — rejected as it would directly contradict the core v1.0/v1.1 vision (Sections 2, 29) and reintroduce provider/model coupling through the back door.
 
 ### ADR-011: Model Lifecycle State Is a Soft Scoring Signal Plus a Hard Filter, Not a Hard Cutover
+
 - **Context:** Deprecating a model abruptly risks a thundering-herd shift of all its traffic to a replacement at once.
 - **Decision:** `deprecated` models remain routable but scored down proportionally to `trafficShiftPercent` (Section 35.3); only `disabled` is a hard exclusion.
 - **Consequences:** Migrations can be gradual and reversible (rollback path in Section 35.2's state diagram); adds one more tunable (`trafficShiftPercent`) that operators must understand.
 - **Alternatives considered:** Immediate hard cutover on deprecation — rejected as too risky for production traffic, especially given Section 18's reliability goals around avoiding correlated failure spikes.
 
 ### ADR-012: Runtime Profiles Are Orthogonal to Execution Profiles, Not a Variant of Them
+
 - **Context:** "Different behavior per environment/tenant tier" could have been folded into Execution Profiles (e.g., an "enterprise-summarization" profile per tier).
-- **Decision:** Keep Runtime Profiles as a separate, orthogonal dimension (Section 37.1) that *adjusts* whatever Execution Profile is resolved, rather than multiplying the number of Execution Profiles by the number of tiers.
+- **Decision:** Keep Runtime Profiles as a separate, orthogonal dimension (Section 37.1) that _adjusts_ whatever Execution Profile is resolved, rather than multiplying the number of Execution Profiles by the number of tiers.
 - **Consequences:** Adding a new Runtime Profile (e.g., a future `regulated_industry` profile) never requires duplicating all eleven-plus Execution Profiles; adding a new Execution Profile never requires re-specifying it per Runtime Profile.
 - **Alternatives considered:** A single combined `(task, tier)` profile matrix — rejected as combinatorially wasteful and harder to keep consistent as either dimension grows.
 
@@ -2252,12 +2317,12 @@ These are hypothetical, illustrative application categories — no real product 
 
 A product that lets users query a large internal knowledge base conversationally.
 
-| Stays inside the application | Delegated to AI Gateway |
-|---|---|
-| Document ingestion, chunking strategy, vector index, retrieval ranking | `task: "summarization"` / `"reasoning"` over retrieved chunks |
-| Knowledge graph construction, source-of-truth management | `task: "entity_extraction"` for graph population |
-| Which retrieved chunks to include in context (a business/RAG decision) | Prompt token budgeting once chunks are chosen (Section 34) |
-| Answer provenance/citation UI | Structured JSON generation for citation objects (`task: "json_generation"`, `constraints.requiredSchema`) |
+| Stays inside the application                                           | Delegated to AI Gateway                                                                                   |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Document ingestion, chunking strategy, vector index, retrieval ranking | `task: "summarization"` / `"reasoning"` over retrieved chunks                                             |
+| Knowledge graph construction, source-of-truth management               | `task: "entity_extraction"` for graph population                                                          |
+| Which retrieved chunks to include in context (a business/RAG decision) | Prompt token budgeting once chunks are chosen (Section 34)                                                |
+| Answer provenance/citation UI                                          | Structured JSON generation for citation objects (`task: "json_generation"`, `constraints.requiredSchema`) |
 
 The application never learns which model answered a query, only that it did — and cheaply, thanks to Section 33's optimizer, since many knowledge queries are `extraction`-class rather than `reasoning`-class.
 
@@ -2265,11 +2330,11 @@ The application never learns which model answered a query, only that it did — 
 
 A product that helps teams produce marketing copy, blog drafts, and social posts.
 
-| Stays inside the application | Delegated to AI Gateway |
-|---|---|
-| Brand voice guidelines, tone rules, approval workflows | `task: "composition"` / `"marketing_content"` execution |
-| Content calendar, publishing integrations, versioning | Streaming output for long-form drafts (Execution Profile default, Section 31.3) |
-| Human review/editing UI | Cost-optimized routing so high-volume, low-stakes drafts use cheaper model classes automatically (Section 33) |
+| Stays inside the application                           | Delegated to AI Gateway                                                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Brand voice guidelines, tone rules, approval workflows | `task: "composition"` / `"marketing_content"` execution                                                       |
+| Content calendar, publishing integrations, versioning  | Streaming output for long-form drafts (Execution Profile default, Section 31.3)                               |
+| Human review/editing UI                                | Cost-optimized routing so high-volume, low-stakes drafts use cheaper model classes automatically (Section 33) |
 
 Brand voice is explicitly out of scope for AI Gateway (Section "Philosophy," Part I) — it lives entirely in the application's prompt construction before the request is sent, and in how the application uses the returned draft.
 
@@ -2277,11 +2342,11 @@ Brand voice is explicitly out of scope for AI Gateway (Section "Philosophy," Par
 
 A product embedded in an IDE that answers questions about a codebase and proposes changes.
 
-| Stays inside the application | Delegated to AI Gateway |
-|---|---|
-| Codebase indexing, symbol resolution, diff generation, patch application | `task: "code_generation"` / `"reasoning"` execution |
-| Static analysis, security scanning, test execution | Execution Profile tuned for low temperature / high determinism (Section 31.3's `coding` profile) |
-| IDE integration, inline UI | Structured tool-call outputs if the assistant exposes function-calling actions (Section 10.3's `toolCalls`) |
+| Stays inside the application                                             | Delegated to AI Gateway                                                                                     |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Codebase indexing, symbol resolution, diff generation, patch application | `task: "code_generation"` / `"reasoning"` execution                                                         |
+| Static analysis, security scanning, test execution                       | Execution Profile tuned for low temperature / high determinism (Section 31.3's `coding` profile)            |
+| IDE integration, inline UI                                               | Structured tool-call outputs if the assistant exposes function-calling actions (Section 10.3's `toolCalls`) |
 
 Notably, `coding`'s Execution Profile explicitly excludes the Prompt Optimizer's lossy `compressed` transformer (Section 34.3) — validating that the profile system already protects precision-sensitive applications without the application having to opt out manually.
 
@@ -2289,11 +2354,11 @@ Notably, `coding`'s Execution Profile explicitly excludes the Prompt Optimizer's
 
 A product that triages tickets and drafts agent responses.
 
-| Stays inside the application | Delegated to AI Gateway |
-|---|---|
-| Ticketing/CRM integration, escalation rules, agent handoff, SLAs | `task: "classification"` for ticket intent/urgency |
-| Support policy, refund rules, what an agent is allowed to promise | `task: "summarization"` of long threads for agent context |
-| Knowledge base content | `task: "composition"` for drafted (human-reviewed) replies |
+| Stays inside the application                                      | Delegated to AI Gateway                                    |
+| ----------------------------------------------------------------- | ---------------------------------------------------------- |
+| Ticketing/CRM integration, escalation rules, agent handoff, SLAs  | `task: "classification"` for ticket intent/urgency         |
+| Support policy, refund rules, what an agent is allowed to promise | `task: "summarization"` of long threads for agent context  |
+| Knowledge base content                                            | `task: "composition"` for drafted (human-reviewed) replies |
 
 This category stresses multi-step usage — classify, then summarize, then draft — which is exactly what Section 41's pipelines formalize.
 
@@ -2301,21 +2366,21 @@ This category stresses multi-step usage — classify, then summarize, then draft
 
 A product that helps a user investigate a topic across many sources.
 
-| Stays inside the application | Delegated to AI Gateway |
-|---|---|
-| Source selection strategy, proprietary corpus search, provenance display | `task: "reasoning"` for synthesis across sources |
-| Fact-checking workflow, citation formatting rules | `task: "entity_extraction"` / `"summarization"` per source |
-| (Future) live web lookups | (Future) `web_search` capability (Section 42) once that domain is added — no contract change needed today |
+| Stays inside the application                                             | Delegated to AI Gateway                                                                                   |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Source selection strategy, proprietary corpus search, provenance display | `task: "reasoning"` for synthesis across sources                                                          |
+| Fact-checking workflow, citation formatting rules                        | `task: "entity_extraction"` / `"summarization"` per source                                                |
+| (Future) live web lookups                                                | (Future) `web_search` capability (Section 42) once that domain is added — no contract change needed today |
 
 ### 40.6 Document Intelligence Platform
 
 A product that ingests scanned/uploaded documents (invoices, contracts, forms) and extracts structured data.
 
-| Stays inside the application | Delegated to AI Gateway |
-|---|---|
-| Document storage, retention/compliance rules, human-review UI | `task: "json_generation"` with `constraints.requiredSchema` for structured extraction |
-| Ingestion pipeline (upload, format detection, queuing) | (Future) `ocr` capability (Section 42) for scanned documents once that domain is added |
-| Workflow routing based on extracted fields | Multi-step pipeline: OCR → extraction → classification → structured JSON (Section 41) |
+| Stays inside the application                                  | Delegated to AI Gateway                                                                |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Document storage, retention/compliance rules, human-review UI | `task: "json_generation"` with `constraints.requiredSchema` for structured extraction  |
+| Ingestion pipeline (upload, format detection, queuing)        | (Future) `ocr` capability (Section 42) for scanned documents once that domain is added |
+| Workflow routing based on extracted fields                    | Multi-step pipeline: OCR → extraction → classification → structured JSON (Section 41)  |
 
 ### 40.7 What This Validates
 
@@ -2327,7 +2392,7 @@ Across six structurally different application categories — synchronous Q&A, lo
 
 ### 41.1 Design Stance: A Thin Layer, Not a New Engine
 
-The temptation with "add pipeline support" is to build a second execution engine alongside the Orchestrator. This spec deliberately does not do that. A **Pipeline** is nothing more than an ordered sequence of ordinary `ExecuteRequest`s, where each step's input may reference a prior step's output. Every step still goes through the *exact same* path as a standalone request — Strategy Layer (Section 30) → Policy Engine (Section 13) → Retry/Failover (Section 18) → Provider Adapter (Section 12) — with its own independently-resolved Execution Profile, Capability Requirements, and Cost Optimization. This directly satisfies the requirement that each step *independently* benefit from these systems, and that simple single-request execution (Section 17) remains completely untouched and uncomplicated by the existence of pipelines.
+The temptation with "add pipeline support" is to build a second execution engine alongside the Orchestrator. This spec deliberately does not do that. A **Pipeline** is nothing more than an ordered sequence of ordinary `ExecuteRequest`s, where each step's input may reference a prior step's output. Every step still goes through the _exact same_ path as a standalone request — Strategy Layer (Section 30) → Policy Engine (Section 13) → Retry/Failover (Section 18) → Provider Adapter (Section 12) — with its own independently-resolved Execution Profile, Capability Requirements, and Cost Optimization. This directly satisfies the requirement that each step _independently_ benefit from these systems, and that simple single-request execution (Section 17) remains completely untouched and uncomplicated by the existence of pipelines.
 
 ### 41.2 Contracts
 
@@ -2350,17 +2415,17 @@ export interface PipelineStep {
 export interface ExecutionPipeline {
   id: string;
   steps: PipelineStep[];
-  maxSteps?: number;          // guard, default platform-wide cap (Section 45.3)
+  maxSteps?: number; // guard, default platform-wide cap (Section 45.3)
 }
 
 export interface PipelineContext {
-  outputs: Record<string, ExecuteResponse>;   // keyed by step id, populated as steps complete
+  outputs: Record<string, ExecuteResponse>; // keyed by step id, populated as steps complete
 }
 
 export interface PipelineResult {
   pipelineId: string;
   stepResults: Record<string, ExecuteResponse | GatewayError>;
-  totalCostUsd: number;        // sum of every step's usage.estimatedCostUsd (Section 10.4)
+  totalCostUsd: number; // sum of every step's usage.estimatedCostUsd (Section 10.4)
   totalLatencyMs: number;
 }
 ```
@@ -2397,7 +2462,7 @@ Each `Sn` box is, internally, a completely ordinary invocation of the diagram in
 - **Independent optimization per step.** Step 1 (`extraction`) might route to a small free-tier model (Section 33), while Step 3 (`entity_extraction` requiring deeper structure) routes elsewhere — the Cost Optimizer and Policy Engine make this decision fresh for every step, exactly as they would for four unrelated standalone requests.
 - **Failure handling reuses Section 19 unchanged.** A non-`required` step that fails contributes a `GatewayError` to `stepResults` and the pipeline continues; a `required` step's failure (the default) aborts remaining steps and returns immediately, with all prior successful `stepResults` still populated.
 - **Cost aggregation reuses Section 21.5 unchanged.** `totalCostUsd` is simply the sum of each step's already-recorded `usage.estimatedCostUsd` — no new cost-accounting mechanism, and this total is exactly what Budget Governance (Section 43) reads.
-- **Parallelism is explicitly out of scope for v1.2.** Steps without a data dependency *could* run concurrently, but that requires a DAG rather than an array and is deliberately deferred (see Section 44's "Workflow execution" discussion) to avoid the exact kind of premature complexity the refinement asks this pass to avoid.
+- **Parallelism is explicitly out of scope for v1.2.** Steps without a data dependency _could_ run concurrently, but that requires a DAG rather than an array and is deliberately deferred (see Section 44's "Workflow execution" discussion) to avoid the exact kind of premature complexity the refinement asks this pass to avoid.
 
 ### 41.6 Why This Doesn't Complicate Simple Request Execution
 
@@ -2415,7 +2480,7 @@ Each `Sn` box is, internally, a completely ordinary invocation of the diagram in
 // packages/providers/provider-sdk/src/capability-adapter.ts  (new, generalizes provider-adapter.ts)
 
 export type CapabilityDomain =
-  | "text-generation"     // existing: Section 12's ProviderAdapter
+  | "text-generation" // existing: Section 12's ProviderAdapter
   | "embedding"
   | "vision"
   | "image-understanding"
@@ -2425,7 +2490,7 @@ export type CapabilityDomain =
   | "document-parsing"
   | "web-search"
   | "video-analysis"
-  | (string & {});        // open, like TaskType and CapabilityDomain's siblings
+  | (string & {}); // open, like TaskType and CapabilityDomain's siblings
 
 export interface CapabilityAdapter<TInput, TOutput> {
   readonly id: string;
@@ -2446,18 +2511,18 @@ export type ProviderAdapter = CapabilityAdapter<NormalizedInvocation, Normalized
 
 ### 42.2 What Generalizes Automatically vs. What a New Domain Would Add
 
-| Layer | Generalizes automatically, zero change | New domain adds |
-|---|---|---|
-| Credential Resolver (Section 15/16) | ✅ — scoped to `provider`, not to domain | Nothing; a speech provider's BYOK key resolves identically |
-| Retry Engine / Circuit Breaker / Health Monitor (Section 18) | ✅ — operate on `(providerId, modelClass)`, domain-agnostic | Nothing |
-| Telemetry (Section 21) | ✅ — labels are `providerId`/`task`, not text-specific | A `domain` label, purely additive to existing metrics |
-| Model Registry (Section 14) | ✅ — `ModelDescriptor` is already generic metadata | A `domain` field on `ModelDescriptor`, additive |
-| Capability Registry (Section 32) | ✅ — `CapabilitySet` already models arbitrary required traits | A domain-specific capability shape (e.g., `{ languagesSupported }` for speech) alongside the existing text-oriented fields |
-| Execution Profile Registry (Section 31) | ✅ — `vision`, `embedding`, `agent` are already reserved-but-disabled profile IDs (Section 31.2) | Enabling those IDs plus new ones (`ocr`, `speech_transcription`, `web_search`) |
-| Public API (Section 10) | ✅ — `TaskType` is already `string & {}`, open | New task types like `"ocr_extraction"`; `ExecuteRequest.input` gains an optional binary/URL field for non-text payloads (additive) |
-| Provider Adapter layer (Section 12) | ⚠️ partial | A new `CapabilityAdapter<TInput,TOutput>` implementation per domain — this is the one place genuinely new code is required, by design (Principle P1: only the adapter layer knows a provider's shape) |
+| Layer                                                        | Generalizes automatically, zero change                                                           | New domain adds                                                                                                                                                                                       |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Credential Resolver (Section 15/16)                          | ✅ — scoped to `provider`, not to domain                                                         | Nothing; a speech provider's BYOK key resolves identically                                                                                                                                            |
+| Retry Engine / Circuit Breaker / Health Monitor (Section 18) | ✅ — operate on `(providerId, modelClass)`, domain-agnostic                                      | Nothing                                                                                                                                                                                               |
+| Telemetry (Section 21)                                       | ✅ — labels are `providerId`/`task`, not text-specific                                           | A `domain` label, purely additive to existing metrics                                                                                                                                                 |
+| Model Registry (Section 14)                                  | ✅ — `ModelDescriptor` is already generic metadata                                               | A `domain` field on `ModelDescriptor`, additive                                                                                                                                                       |
+| Capability Registry (Section 32)                             | ✅ — `CapabilitySet` already models arbitrary required traits                                    | A domain-specific capability shape (e.g., `{ languagesSupported }` for speech) alongside the existing text-oriented fields                                                                            |
+| Execution Profile Registry (Section 31)                      | ✅ — `vision`, `embedding`, `agent` are already reserved-but-disabled profile IDs (Section 31.2) | Enabling those IDs plus new ones (`ocr`, `speech_transcription`, `web_search`)                                                                                                                        |
+| Public API (Section 10)                                      | ✅ — `TaskType` is already `string & {}`, open                                                   | New task types like `"ocr_extraction"`; `ExecuteRequest.input` gains an optional binary/URL field for non-text payloads (additive)                                                                    |
+| Provider Adapter layer (Section 12)                          | ⚠️ partial                                                                                       | A new `CapabilityAdapter<TInput,TOutput>` implementation per domain — this is the one place genuinely new code is required, by design (Principle P1: only the adapter layer knows a provider's shape) |
 
-Everything in the "zero change" rows was already domain-agnostic in v1.0/v1.1 because none of them ever inspected the *content* of a request — they operated on `providerId`, `task`, cost, and health, none of which are text-generation-specific concepts.
+Everything in the "zero change" rows was already domain-agnostic in v1.0/v1.1 because none of them ever inspected the _content_ of a request — they operated on `providerId`, `task`, cost, and health, none of which are text-generation-specific concepts.
 
 ### 42.3 Unified Capability Architecture Diagram
 
@@ -2502,7 +2567,7 @@ Per the refinement's instruction, no OCR, speech, vision, embedding, web-search,
 
 ### 43.1 Distinction from the Cost Optimizer (Section 33)
 
-The Cost Optimizer (Section 33) is **advisory and opportunistic** — it looks for savings on a single request (a smaller model would do, streaming isn't needed, a cache hit exists) without any authority to say no. Budget Governance is **authoritative and cumulative** — it tracks spend over time against tenant-configured limits and can force a downgrade, force a provider switch, or outright block a request when a hard limit is reached. The two compose: the Cost Optimizer runs first and produces its best-effort savings; Budget Governance then checks the *resulting* plan against the tenant's budget state and can tighten it further, but never loosens it.
+The Cost Optimizer (Section 33) is **advisory and opportunistic** — it looks for savings on a single request (a smaller model would do, streaming isn't needed, a cache hit exists) without any authority to say no. Budget Governance is **authoritative and cumulative** — it tracks spend over time against tenant-configured limits and can force a downgrade, force a provider switch, or outright block a request when a hard limit is reached. The two compose: the Cost Optimizer runs first and produces its best-effort savings; Budget Governance then checks the _resulting_ plan against the tenant's budget state and can tighten it further, but never loosens it.
 
 ### 43.2 New Package and Interfaces
 
@@ -2514,26 +2579,34 @@ export interface BudgetPolicy {
   dailyBudgetUsd?: number;
   monthlyBudgetUsd?: number;
   perProviderSpendCapUsd?: Partial<Record<string, number>>;
-  thresholds: BudgetThresholdAction[];   // ordered, evaluated low-to-high
+  thresholds: BudgetThresholdAction[]; // ordered, evaluated low-to-high
 }
 
 export interface BudgetThresholdAction {
-  atPercentOfBudget: number;             // e.g. 80, 100
+  atPercentOfBudget: number; // e.g. 80, 100
   action: "alert" | "downgrade_model" | "switch_provider" | "block";
 }
 
 export interface BudgetLedger {
   recordSpend(tenant: BudgetPolicy["tenant"], providerId: string, costUsd: number): Promise<void>;
-  getSpend(tenant: BudgetPolicy["tenant"], window: "day" | "month", providerId?: string): Promise<number>;
+  getSpend(
+    tenant: BudgetPolicy["tenant"],
+    window: "day" | "month",
+    providerId?: string,
+  ): Promise<number>;
 }
 
 export interface BudgetEnforcer {
-  evaluate(tenant: BudgetPolicy["tenant"], plannedCostUsd: number, providerId: string): Promise<BudgetDecision>;
+  evaluate(
+    tenant: BudgetPolicy["tenant"],
+    plannedCostUsd: number,
+    providerId: string,
+  ): Promise<BudgetDecision>;
 }
 
 export interface BudgetDecision {
   allowed: boolean;
-  forcedModelClassDowngrade?: string;     // reuses the same field shape as CostOptimizationResult, Section 33.2
+  forcedModelClassDowngrade?: string; // reuses the same field shape as CostOptimizationResult, Section 33.2
   forcedProviderExclusion?: string[];
   alertsTriggered: BudgetThresholdAction[];
   reason?: "BUDGET_EXCEEDED" | "APPROACHING_LIMIT";
@@ -2555,7 +2628,7 @@ graph LR
     E --> G
 ```
 
-The Budget Enforcer runs as the last step of the Optimization Pipeline (Section 33.3), immediately before the `StrategyDecision` is handed to the Policy Engine (Section 13.5) — so it sees the *already cost-optimized* planned spend, not the naive pre-optimization estimate, avoiding false-positive budget blocks on requests the Cost Optimizer would have made affordable anyway.
+The Budget Enforcer runs as the last step of the Optimization Pipeline (Section 33.3), immediately before the `StrategyDecision` is handed to the Policy Engine (Section 13.5) — so it sees the _already cost-optimized_ planned spend, not the naive pre-optimization estimate, avoiding false-positive budget blocks on requests the Cost Optimizer would have made affordable anyway.
 
 ### 43.4 Ledger Storage
 
@@ -2575,19 +2648,19 @@ Nothing in `ExecuteRequest`/`ExecuteResponse` (Section 10.3/10.4) changes. A req
 
 For each direction, the claim is specific: the architecture already has the exact seam this evolution would use, made in an earlier part of this document, before this evolution was in view.
 
-| Evolution direction | Seam already in place | Section |
-|---|---|---|
-| **Additional providers** (OpenAI, Anthropic, Gemini, Bedrock, etc.) | `ProviderAdapter` interface + conformance test suite + `_template` package; adding one is copy-implement-test-register with zero core changes | 12.4 |
-| **Multimodal AI** (vision, speech, embeddings) | `CapabilityAdapter<TInput,TOutput>` generalization; `TaskType` and `ExecutionProfileId` are already open string unions with `vision`/`embedding` reserved | 42 |
-| **Local inference** (self-hosted open-weight models) | `CapabilityAdapter.invoke()` has no assumption of a network call — a local-runtime adapter (e.g., wrapping a local inference server) implements the identical interface; cost/latency profile is just different metadata in the Model Registry | 12.1, 14.1 |
-| **Edge inference** (on-device / near-device execution) | Same as local inference, plus Runtime Profiles (`offline`, Section 37.3) already model a mode with no network-dependent failover — an edge deployment is an `offline`-like Runtime Profile paired with a local-inference `CapabilityAdapter` | 37, 42 |
-| **Workflow execution** (branching, conditional, parallel multi-step logic) | Multi-Step Pipelines (Section 41) already establish the substrate — a Pipeline with conditional edges is a superset of the linear-array `ExecutionPipeline`, and Section 41.5 explicitly names DAG support as the deferred next increment, not an unforeseen one | 41.5 |
-| **Adaptive/learned routing** | `AdaptiveRankingStrategy` and `LearningSignalCollector` interfaces exist today as no-op-by-default plugins (Section 36) — the `ExecutionOutcome` telemetry stream they consume is already emitted | 36 |
-| **New capability types** beyond the eight named in Section 42 | `CapabilityDomain` is `(string & {})`-open, identical in spirit to `TaskType` (Section 10.3) and `ModelLifecycleState`'s config-driven registry pattern (Section 14.2) — a new domain is a registry entry plus one new adapter, not a schema migration | 42.1 |
+| Evolution direction                                                        | Seam already in place                                                                                                                                                                                                                                            | Section    |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| **Additional providers** (OpenAI, Anthropic, Gemini, Bedrock, etc.)        | `ProviderAdapter` interface + conformance test suite + `_template` package; adding one is copy-implement-test-register with zero core changes                                                                                                                    | 12.4       |
+| **Multimodal AI** (vision, speech, embeddings)                             | `CapabilityAdapter<TInput,TOutput>` generalization; `TaskType` and `ExecutionProfileId` are already open string unions with `vision`/`embedding` reserved                                                                                                        | 42         |
+| **Local inference** (self-hosted open-weight models)                       | `CapabilityAdapter.invoke()` has no assumption of a network call — a local-runtime adapter (e.g., wrapping a local inference server) implements the identical interface; cost/latency profile is just different metadata in the Model Registry                   | 12.1, 14.1 |
+| **Edge inference** (on-device / near-device execution)                     | Same as local inference, plus Runtime Profiles (`offline`, Section 37.3) already model a mode with no network-dependent failover — an edge deployment is an `offline`-like Runtime Profile paired with a local-inference `CapabilityAdapter`                     | 37, 42     |
+| **Workflow execution** (branching, conditional, parallel multi-step logic) | Multi-Step Pipelines (Section 41) already establish the substrate — a Pipeline with conditional edges is a superset of the linear-array `ExecutionPipeline`, and Section 41.5 explicitly names DAG support as the deferred next increment, not an unforeseen one | 41.5       |
+| **Adaptive/learned routing**                                               | `AdaptiveRankingStrategy` and `LearningSignalCollector` interfaces exist today as no-op-by-default plugins (Section 36) — the `ExecutionOutcome` telemetry stream they consume is already emitted                                                                | 36         |
+| **New capability types** beyond the eight named in Section 42              | `CapabilityDomain` is `(string & {})`-open, identical in spirit to `TaskType` (Section 10.3) and `ModelLifecycleState`'s config-driven registry pattern (Section 14.2) — a new domain is a registry entry plus one new adapter, not a schema migration           | 42.1       |
 
 ### 44.1 Why "No Fundamental Redesign" Is a Credible Claim, Not Optimism
 
-Every one of these seams was already load-bearing for something shipped in Milestones 0–7 (Section 26) or Milestones 8–11 (Section 38.2) — none was speculatively added *for* this section. `ProviderAdapter` had to be provider-agnostic to support Groq and NVIDIA NIM simultaneously (Milestone 4); `TaskType`/`CapabilityDomain` had to be open string unions to support config-driven task registration without redeploys (Principle P7); Runtime Profiles had to model an `offline` mode for genuinely disconnected self-hosted deployments, independent of any edge-computing use case. Platform evolution here means *exercising already-general interfaces along a new axis*, which is a fundamentally lower-risk claim than "we designed for the future and hope it holds."
+Every one of these seams was already load-bearing for something shipped in Milestones 0–7 (Section 26) or Milestones 8–11 (Section 38.2) — none was speculatively added _for_ this section. `ProviderAdapter` had to be provider-agnostic to support Groq and NVIDIA NIM simultaneously (Milestone 4); `TaskType`/`CapabilityDomain` had to be open string unions to support config-driven task registration without redeploys (Principle P7); Runtime Profiles had to model an `offline` mode for genuinely disconnected self-hosted deployments, independent of any edge-computing use case. Platform evolution here means _exercising already-general interfaces along a new axis_, which is a fundamentally lower-risk claim than "we designed for the future and hope it holds."
 
 ### 44.2 What Would Still Require Genuine New Design Work
 
@@ -2607,32 +2680,32 @@ This is a self-critical review, not a justification exercise. Where a real risk 
 
 ### 45.1 Potential Coupling
 
-| Risk | Assessment |
-|---|---|
-| Strategy Layer → Policy Engine handoff | **Low risk, validated.** One-way data (`StrategyDecision` in, nothing back), enforced by the package dependency rule (Section 9, ADR-008). No action needed. |
+| Risk                                                                    | Assessment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Strategy Layer → Policy Engine handoff                                  | **Low risk, validated.** One-way data (`StrategyDecision` in, nothing back), enforced by the package dependency rule (Section 9, ADR-008). No action needed.                                                                                                                                                                                                                                                                                                                                                                             |
 | Budget Enforcer reusing the Routing Rules veto mechanism (Section 13.4) | **Minor, real coupling point.** Two independent sources (Routing Rules and Budget Governance) can now both attempt to constrain the Policy Engine's candidate set. The architecture does not currently specify an explicit precedence when both fire on the same request. **Recommendation (ADR-013, Section 46):** define and document an explicit evaluation order (Budget Governance's hard `block` short-circuits before any Routing Rule is evaluated; forced downgrades/exclusions from both sources are unioned, not overridden). |
-| Capability Registry ↔ Model Registry meeting point (Section 32.3) | **Low risk, validated.** Deliberately kept as two independent registries per ADR-009; the coupling is confined to one query at candidate-matching time. |
+| Capability Registry ↔ Model Registry meeting point (Section 32.3)       | **Low risk, validated.** Deliberately kept as two independent registries per ADR-009; the coupling is confined to one query at candidate-matching time.                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ### 45.2 Potential Bottlenecks
 
-| Risk | Assessment |
-|---|---|
-| Shared Redis now backs rate limits, health state, registry-cache invalidation, *and* (proposed in Section 43) the Budget Ledger | **Real risk if unaddressed.** Budget Ledger writes are durability-sensitive in a way ephemeral rate-limit/health state is not — losing a rate-limit counter self-heals in seconds; losing a budget-ledger write could silently let a tenant exceed a hard cap. **Recommendation (ADR-013, Section 46):** back `BudgetLedger` with the durable Config/Credential DB (already Postgres in the reference deployment, Section 25.2), with Redis used only as a read-through cache in front of it — not as the ledger's source of truth. |
-| Prompt Optimizer + Cost Optimizer running on every request, even trivially short ones | **Low risk, already mitigated.** Transformers apply conditionally against `TokenBudget` (Section 34.3) — a short prompt under budget triggers no compression/trimming work beyond a cheap token estimate. No action needed, but worth stating explicitly rather than assuming. |
+| Risk                                                                                                                            | Assessment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared Redis now backs rate limits, health state, registry-cache invalidation, _and_ (proposed in Section 43) the Budget Ledger | **Real risk if unaddressed.** Budget Ledger writes are durability-sensitive in a way ephemeral rate-limit/health state is not — losing a rate-limit counter self-heals in seconds; losing a budget-ledger write could silently let a tenant exceed a hard cap. **Recommendation (ADR-013, Section 46):** back `BudgetLedger` with the durable Config/Credential DB (already Postgres in the reference deployment, Section 25.2), with Redis used only as a read-through cache in front of it — not as the ledger's source of truth. |
+| Prompt Optimizer + Cost Optimizer running on every request, even trivially short ones                                           | **Low risk, already mitigated.** Transformers apply conditionally against `TokenBudget` (Section 34.3) — a short prompt under budget triggers no compression/trimming work beyond a cheap token estimate. No action needed, but worth stating explicitly rather than assuming.                                                                                                                                                                                                                                                      |
 
 ### 45.3 Scaling Risks
 
-| Risk | Assessment |
-|---|---|
-| Two additional config-driven registries (Capability Registry, Execution Profile Registry) alongside the Model Registry | **Low risk, validated.** Identical caching/invalidation pattern as Section 14.2 (in-memory cache + pub/sub invalidation) — this is proven infrastructure reused three times, not three new mechanisms. |
-| Unbounded pipeline length (Section 41) | **Real risk if unaddressed.** Nothing currently stops a caller from submitting a 500-step pipeline, amplifying per-step orchestration overhead and making a single `/v1/execute/pipeline` call behave like a sustained load-test. **Recommendation (ADR-014, Section 46):** enforce `ExecutionPipeline.maxSteps` (already declared optionally in Section 41.2) as a mandatory, platform-configured hard cap with a sane default (e.g., 20), rejected at the API layer before any step executes. |
+| Risk                                                                                                                   | Assessment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two additional config-driven registries (Capability Registry, Execution Profile Registry) alongside the Model Registry | **Low risk, validated.** Identical caching/invalidation pattern as Section 14.2 (in-memory cache + pub/sub invalidation) — this is proven infrastructure reused three times, not three new mechanisms.                                                                                                                                                                                                                                                                                          |
+| Unbounded pipeline length (Section 41)                                                                                 | **Real risk if unaddressed.** Nothing currently stops a caller from submitting a 500-step pipeline, amplifying per-step orchestration overhead and making a single `/v1/execute/pipeline` call behave like a sustained load-test. **Recommendation (ADR-014, Section 46):** enforce `ExecutionPipeline.maxSteps` (already declared optionally in Section 41.2) as a mandatory, platform-configured hard cap with a sane default (e.g., 20), rejected at the API layer before any step executes. |
 
 ### 45.4 Operational Risks
 
-| Risk | Assessment |
-|---|---|
+| Risk                                                                                                                                                 | Assessment                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Budget-driven hard blocks (`BUDGET_EXCEEDED`) look, to an on-call engineer, superficially similar to a provider outage (`ALL_PROVIDERS_UNAVAILABLE`) | **Real risk if unaddressed** — these are different classes of problem (a business-policy decision vs. a technical failure) requiring different responses, and conflating them in dashboards wastes incident-response time. **Recommendation (ADR-015, Section 46):** emit `BUDGET_EXCEEDED` events to a distinct metric/alert category from provider-health metrics (Section 21.2), never co-mingled with `gateway_failovers_total` or circuit-breaker state. |
-| Runtime Profile misconfiguration (e.g., accidentally restricting a workspace to `stable`-only models) | **Already mitigated.** Milestone 11 (Section 38.2) already specifies a dry-run/preview mode before a Runtime Profile change takes effect tenant-wide. No further action needed. |
+| Runtime Profile misconfiguration (e.g., accidentally restricting a workspace to `stable`-only models)                                                | **Already mitigated.** Milestone 11 (Section 38.2) already specifies a dry-run/preview mode before a Runtime Profile change takes effect tenant-wide. No further action needed.                                                                                                                                                                                                                                                                               |
 
 ### 45.5 Complexity Trade-offs
 
@@ -2640,7 +2713,7 @@ The package count has grown from ~13 (v1.0) to ~15 conceptual packages across v1
 
 ### 45.6 Future Extensibility
 
-Validated, no change recommended: `TaskType`, `CapabilityDomain`, `ModelLifecycleState`-driven migration, and `ExecutionProfileId` are all either open string unions or config-registered enums (Sections 10.3, 14.2, 31.2, 35.1, 42.1) — every extension mechanism exercised in Sections 40–44 was a *reuse* of one of these four patterns, not a new one. That repetition is itself the evidence of a stable extensibility model rather than four unrelated ad hoc mechanisms.
+Validated, no change recommended: `TaskType`, `CapabilityDomain`, `ModelLifecycleState`-driven migration, and `ExecutionProfileId` are all either open string unions or config-registered enums (Sections 10.3, 14.2, 31.2, 35.1, 42.1) — every extension mechanism exercised in Sections 40–44 was a _reuse_ of one of these four patterns, not a new one. That repetition is itself the evidence of a stable extensibility model rather than four unrelated ad hoc mechanisms.
 
 ### 45.7 Verdict
 
@@ -2651,18 +2724,21 @@ AI Gateway validates as an independent, reusable execution platform: six structu
 ## 46. Architecture Decision Records — v1.2 Additions
 
 ### ADR-013: Budget Ledger Is Durably Stored, Separate From Ephemeral Rate-Limit/Health State; Budget Enforcement Precedence Is Explicit
+
 - **Context:** Section 45.1/45.2's self-review identified two related risks: (a) Budget Governance and Routing Rules can both attempt to constrain the same Policy Engine candidate set with no defined precedence, and (b) the Budget Ledger was implicitly going to share Redis with genuinely ephemeral state (rate limits, health), which tolerates loss in a way financial-adjacent budget data should not.
 - **Decision:** `BudgetLedger` (Section 43.2) is backed by the durable Config/Credential DB (Section 23.1's Postgres), with Redis used only as a read-through cache — never the source of truth. Precedence is fixed: a Budget Enforcer `block` decision short-circuits before Routing Rules are evaluated; forced downgrades/exclusions from Budget Governance and Routing Rules are unioned (both applied), never one silently overriding the other.
 - **Consequences:** One additional durability guarantee to operate (DB writes on the budget-check path, not just Redis reads); fully deterministic, documented behavior when multiple constraint sources fire on one request.
 - **Alternatives considered:** Leaving the Budget Ledger in Redis alongside rate limits — rejected once the durability mismatch was made explicit in review; leaving precedence undefined and "whichever runs last wins" — rejected as non-deterministic and untestable.
 
 ### ADR-014: Pipelines Enforce a Mandatory, Platform-Configured `maxSteps` Cap
+
 - **Context:** Section 45.3 identified that an unbounded `ExecutionPipeline` (Section 41.2) lets a single API call amplify into unbounded per-step orchestration and provider-call load, effectively an accidental load-test vector with no application-level throttle.
 - **Decision:** `maxSteps` (already an optional field in Section 41.2) becomes a mandatory, platform-configured hard cap enforced at the API layer (Section 10.2's `/v1/execute/pipeline`) before any step executes — a pipeline exceeding it is rejected with a typed `GatewayError` (`INVALID_TASK`-class, non-retryable) rather than partially executing.
 - **Consequences:** A rare legitimate long pipeline must be split by the caller into multiple pipeline calls; the common case (a handful of steps, per Section 41's own worked examples) is entirely unaffected.
-- **Alternatives considered:** No cap, relying on the existing per-tenant rate limiter (Section 20.4) to catch runaway usage indirectly — rejected because rate limiting operates on request *count*, not on the amplification factor a single oversized pipeline request represents.
+- **Alternatives considered:** No cap, relying on the existing per-tenant rate limiter (Section 20.4) to catch runaway usage indirectly — rejected because rate limiting operates on request _count_, not on the amplification factor a single oversized pipeline request represents.
 
 ### ADR-015: Budget-Related Failures Are Telemetrically Distinct From Provider-Health Failures
+
 - **Context:** Section 45.4 identified that `BUDGET_EXCEEDED` (a business-policy outcome, Section 43.5) and `ALL_PROVIDERS_UNAVAILABLE` (a technical failure, Section 19.1) could be conflated in dashboards/alerts if both simply increment generic error counters, wasting on-call time distinguishing "we chose to stop spending" from "the providers are actually down."
 - **Decision:** Budget-related events (`gateway_budget_alert_total`, `BUDGET_EXCEEDED` occurrences) are emitted to a distinct metric namespace from provider-health/failover metrics (Section 21.2), never co-mingled with `gateway_failovers_total` or circuit-breaker state gauges.
 - **Consequences:** A small addition to the metrics catalogue (Section 21.2, additive); dashboards and alert rules must be authored to treat the two namespaces separately, which is a one-time documentation/runbook cost, not a code complexity cost.
@@ -2670,4 +2746,4 @@ AI Gateway validates as an independent, reusable execution platform: six structu
 
 ---
 
-*End of specification (v1.2).*
+_End of specification (v1.2)._

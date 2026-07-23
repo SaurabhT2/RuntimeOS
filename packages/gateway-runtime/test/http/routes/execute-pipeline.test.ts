@@ -39,7 +39,28 @@ describe("POST /v1/execute/pipeline", () => {
   it("returns a serialized GatewayError (not a raw exception) for a required step's failure", async () => {
     server = await startTestDispatchServer(
       {},
-      { adapters: [{ id: "groq", invoke: async () => { throw new Error("boom"); }, invokeStream: async function* () {}, healthCheck: async () => ({ providerId: "groq", healthy: true, lastCheckedAt: new Date().toISOString(), consecutiveFailures: 0 }), estimateCost: () => ({ estimatedInputTokens: 1, estimatedOutputTokens: 1, estimatedCostUsd: 0 }) }] },
+      {
+        adapters: [
+          {
+            id: "groq",
+            invoke: async () => {
+              throw new Error("boom");
+            },
+            invokeStream: async function* () {},
+            healthCheck: async () => ({
+              providerId: "groq",
+              healthy: true,
+              lastCheckedAt: new Date().toISOString(),
+              consecutiveFailures: 0,
+            }),
+            estimateCost: () => ({
+              estimatedInputTokens: 1,
+              estimatedOutputTokens: 1,
+              estimatedCostUsd: 0,
+            }),
+          },
+        ],
+      },
     );
     const res = await fetch(`${server.baseUrl}/v1/execute/pipeline`, {
       method: "POST",
