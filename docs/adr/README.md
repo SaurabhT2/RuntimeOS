@@ -23,7 +23,7 @@ inconsistency. It's listed in its own small table, below the
 implementation-gap ADRs, for exactly this reason — the "ten" figure
 elsewhere in this repository's release documentation (e.g.
 `KNOWN_LIMITATIONS.md` §6) refers to implementation-gap ADRs only and
-correctly excludes it; "eleven" (or "27 total ADRs") refers to every
+correctly excludes it; "twelve" (or "28 total ADRs") refers to every
 Proposed/Draft ADR including it.
 
 ## Accepted
