@@ -141,6 +141,7 @@ apps/                       deployable applications
                                   see apps/runtime-studio/README.md
 packages/                   library packages — the bulk of the platform
   core-contracts/              public request/response/error contracts, frozen at 1.0.0
+  agent-registry/              versioned specialist-agent contracts and capability discovery
   config/                      Zod/JSON-schema validated configuration loader
   telemetry/                   OpenTelemetry tracer/metrics/logger wrapper
   providers/provider-sdk/      ProviderAdapter interface, Mock Adapter, conformance harness
