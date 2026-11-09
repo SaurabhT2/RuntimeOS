@@ -90,6 +90,18 @@ describe("validateExecutionPlan", () => {
     expect(result.errors.map((issue) => issue.code)).toContain("PLAN_COST_EXCEEDED");
   });
 
+  it("rejects aggregate task maximum budgets that exceed the plan cost ceiling", () => {
+    const value = plan([task("research"), task("strategy")]);
+    const invalid: ExecutionPlan = {
+      ...value,
+      limits: { ...value.limits, maxTotalCostUsd: 1.5 },
+    };
+
+    const result = validateExecutionPlan(invalid);
+    expect(result.totalEstimatedCostUsd).toBe(0.5);
+    expect(result.errors.map((issue) => issue.code)).toContain("PLAN_MAX_BUDGET_EXCEEDED");
+  });
+
   it("throws a typed error for an invalid plan", () => {
     expect(() => assertValidExecutionPlan(plan([]))).toThrow(ExecutionPlanValidationError);
   });
