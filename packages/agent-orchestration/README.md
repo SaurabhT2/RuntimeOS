@@ -38,7 +38,7 @@ again by the runtime before dispatch.
 - A task marked optional may fail without failing the whole plan; its
   dependants are still blocked unless their dependency completes successfully.
 - The scheduler is deterministic and has no model/provider or network access.
-- No database schema or persistence adapter is introduced in this package.
+- No database schema, persistent run store or live agent dispatch is introduced in this package.
 
 ## Validation and scheduling
 
