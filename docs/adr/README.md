@@ -1,6 +1,6 @@
 # Architecture Decision Records — Index
 
-Twenty-seven ADRs are on record, spanning EM-0 through EM-10 (plus the
+Twenty-nine ADRs are on record, spanning EM-0 through EM-10 (plus the
 EM-10 Engineering Rework), plus one roadmap recommendation (0027) filed
 during the v1.2 documentation-completion pass rather than by an
 engineering milestone.
@@ -23,7 +23,7 @@ inconsistency. It's listed in its own small table, below the
 implementation-gap ADRs, for exactly this reason — the "ten" figure
 elsewhere in this repository's release documentation (e.g.
 `KNOWN_LIMITATIONS.md` §6) refers to implementation-gap ADRs only and
-correctly excludes it; "eleven" (or "27 total ADRs") refers to every
+correctly excludes it; "thirteen" (or "29 total ADRs") refers to every
 Proposed/Draft ADR including it.
 
 ## Accepted
@@ -72,6 +72,21 @@ Proposed/Draft ADR including it.
 | ADR                                      | Title                                                                                  | Description                                                                                                                                                                                                                                                                                                                                                  |
 | ---------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [0027](0027-api-contract-publication.md) | API Contract Publication — generate OpenAPI from `core-contracts`, don't hand-write it | Recommends a `core-contracts` → Zod schemas → generated OpenAPI pipeline for the currently-nonexistent API schema, explicitly ruling out a hand-maintained OpenAPI document. Filed during the v1.2 documentation-completion pass, not by an engineering milestone — a forward-looking recommendation, not a discovered spec-vs-implementation inconsistency. |
+
+## Proposed — agentic orchestration architecture extension
+
+- [0028](0028-agent-registry-and-dynamic-agent-orchestration.md): Separate the Agent Registry from Dynamic Agent Orchestration.
+  Establishes versioned specialist-agent contracts and a separate executive
+  orchestrator without repurposing RuntimeOS provider execution or the
+  sequential pipeline engine.
+- [0029](0029-agent-execution-plan-and-dag-contracts.md): Define tenant-scoped
+  execution plans, dependency validation, deterministic scheduling and
+  explicit runtime authorization boundaries.
+
+## Proposed — agentic orchestration architecture extension
+
+- [0028](0028-agent-registry-and-dynamic-agent-orchestration.md): Separate the Agent Registry from Dynamic Agent Orchestration.
+- [0029](0029-agent-execution-plan-and-dag-contracts.md): Define tenant-scoped execution plans, dependency validation, deterministic scheduling and explicit runtime authorization boundaries.
 
 ## Template
 

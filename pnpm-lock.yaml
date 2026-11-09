@@ -131,6 +131,10 @@ importers:
 
   examples/streaming-client: {}
 
+  packages/agent-registry: {}
+
+  packages/agent-orchestration: {}
+
   packages/budget-governance:
     dependencies:
       '@ai-gateway/config':

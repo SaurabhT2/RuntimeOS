@@ -19,6 +19,8 @@
 // too — do not pre-populate edges for packages that don't exist yet).
 const DEPENDENCY_TABLE = {
   "core-contracts": [],
+  "agent-registry": [],
+  "agent-orchestration": [],
   config: ["core-contracts"],
   telemetry: ["core-contracts"],
   "providers/provider-sdk": ["core-contracts"],
