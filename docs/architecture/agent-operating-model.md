@@ -245,7 +245,17 @@ Initial acceptance scenarios:
 7. A prohibited or approval-required action cannot be executed by a
    manifest declaration alone.
 
-## 10. Implementation sequence
+## 10. Planning and DAG contract baseline
+
+The agent-orchestration package defines the typed plan and task envelopes,
+tenant/workspace scope, cost/time limits, dependency validation and
+deterministic DAG scheduling helpers. It remains a pure planning package:
+it does not dispatch agents, invoke providers, authorize tools or persist
+execution state. Runtime authorization must inject authorized capabilities
+after the Control Plane approves the principal, workspace and requested
+capabilities.
+
+## 11. Implementation sequence
 
 1. **Contract and registry foundation:** this package and the six versioned
    built-in manifests.
