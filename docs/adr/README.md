@@ -80,6 +80,11 @@ Proposed/Draft ADR including it.
   orchestrator without repurposing RuntimeOS provider execution or the
   sequential pipeline engine.
 
+## Proposed — agentic orchestration architecture extension
+
+- [0028](0028-agent-registry-and-dynamic-agent-orchestration.md): Separate the Agent Registry from Dynamic Agent Orchestration.
+- [0029](0029-agent-execution-plan-and-dag-contracts.md): Define tenant-scoped execution plans, dependency validation, deterministic scheduling and explicit runtime authorization boundaries.
+
 ## Template
 
 | ADR                      | Title        | Description                                                                                                                |
