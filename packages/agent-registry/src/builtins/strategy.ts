@@ -19,25 +19,11 @@ export const strategyAgent: AgentManifest = {
   input: {
     requiredFields: ["objective", "desiredOutcome"],
     optionalFields: ["timeHorizon", "constraints", "optionsUnderConsideration"],
-    contextKeys: [
-      "executive-profile",
-      "active-priorities",
-      "workspace-knowledge",
-      "project-context",
-      "decision-history",
-    ],
+    contextKeys: ["executive-profile", "active-priorities", "workspace-knowledge", "project-context", "decision-history"],
   },
   output: {
     kind: "decision-brief",
-    requiredSections: [
-      "executive-summary",
-      "strategic-context",
-      "options",
-      "trade-offs",
-      "recommendation",
-      "risks",
-      "decision-required",
-    ],
+    requiredSections: ["executive-summary", "strategic-context", "options", "trade-offs", "recommendation", "risks", "decision-required"],
     evidenceRules: [
       "Separate verified facts, assumptions and hypotheses.",
       "State material unknowns and confidence.",
@@ -46,29 +32,12 @@ export const strategyAgent: AgentManifest = {
   },
   toolCapabilities: ["knowledge.search", "research.search", "artifact.draft"],
   autonomy: {
-    autonomousActions: [
-      "analyse-options",
-      "draft-strategy",
-      "prepare-decision-brief",
-      "identify-risks",
-    ],
-    approvalRequiredActions: [
-      "commit-to-strategy",
-      "communicate-strategy-externally",
-      "change-approved-business-priorities",
-    ],
-    prohibitedActions: [
-      "make-financial-commitments",
-      "represent-unverified-prospects-as-clients",
-    ],
+    autonomousActions: ["analyse-options", "draft-strategy", "prepare-decision-brief", "identify-risks"],
+    approvalRequiredActions: ["commit-to-strategy", "communicate-strategy-externally", "change-approved-business-priorities"],
+    prohibitedActions: ["make-financial-commitments", "represent-unverified-prospects-as-clients"],
   },
   evaluation: {
-    qualityCriteria: [
-      "strategic-coherence",
-      "commercial-realism",
-      "traceable-evidence",
-      "explicit-trade-offs",
-    ],
+    qualityCriteria: ["strategic-coherence", "commercial-realism", "traceable-evidence", "explicit-trade-offs"],
     acceptanceChecks: [
       "Recommendation answers the stated objective.",
       "Assumptions and dependencies are visible.",
