@@ -1,19 +1,9 @@
 import { assertValidExecutionPlan } from "./plan-validation.js";
-import type {
-  AgentTask,
-  ExecutionPlan,
-  ExecutionTaskState,
-} from "./plan-contract.js";
+import type { AgentTask, ExecutionPlan, ExecutionTaskState } from "./plan-contract.js";
 
-const FAILED_DEPENDENCY_STATES = new Set<ExecutionTaskState>([
-  "failed",
-  "skipped",
-  "cancelled",
-]);
+const FAILED_DEPENDENCY_STATES = new Set<ExecutionTaskState>(["failed", "skipped", "cancelled"]);
 
-export function getExecutionWaves(
-  plan: ExecutionPlan,
-): readonly (readonly string[])[] {
+export function getExecutionWaves(plan: ExecutionPlan): readonly (readonly string[])[] {
   assertValidExecutionPlan(plan);
 
   const remaining = new Set(plan.tasks.map((task) => task.id));
@@ -25,23 +15,15 @@ export function getExecutionWaves(
     const ready = [...remaining]
       .filter((taskId) => {
         const task = tasksById.get(taskId)!;
-        return task.dependencies.every((dependencyId) =>
-          completed.has(dependencyId),
-        );
+        return task.dependencies.every((dependencyId) => completed.has(dependencyId));
       })
       .sort();
 
     if (ready.length === 0) {
-      throw new Error(
-        "Validated execution plan unexpectedly contains a dependency cycle.",
-      );
+      throw new Error("Validated execution plan unexpectedly contains a dependency cycle.");
     }
 
-    for (
-      let index = 0;
-      index < ready.length;
-      index += plan.limits.maxParallelTasks
-    ) {
+    for (let index = 0; index < ready.length; index += plan.limits.maxParallelTasks) {
       const wave = ready.slice(index, index + plan.limits.maxParallelTasks);
       waves.push(wave);
       for (const taskId of wave) {
@@ -60,22 +42,15 @@ export function getReadyTasks(
 ): readonly AgentTask[] {
   assertValidExecutionPlan(plan);
 
-  const runningCount = plan.tasks.filter(
-    (task) => states[task.id] === "running",
-  ).length;
-  const availableSlots = Math.max(
-    0,
-    plan.limits.maxParallelTasks - runningCount,
-  );
+  const runningCount = plan.tasks.filter((task) => states[task.id] === "running").length;
+  const availableSlots = Math.max(0, plan.limits.maxParallelTasks - runningCount);
   if (availableSlots === 0) return [];
 
   return plan.tasks
     .filter(
       (task) =>
         (states[task.id] ?? "pending") === "pending" &&
-        task.dependencies.every(
-          (dependencyId) => states[dependencyId] === "succeeded",
-        ),
+        task.dependencies.every((dependencyId) => states[dependencyId] === "succeeded"),
     )
     .sort((a, b) => a.id.localeCompare(b.id))
     .slice(0, availableSlots);

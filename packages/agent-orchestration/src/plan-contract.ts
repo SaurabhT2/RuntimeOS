@@ -6,20 +6,10 @@
  */
 
 export type ExecutionTaskState =
-  | "pending"
-  | "running"
-  | "succeeded"
-  | "failed"
-  | "skipped"
-  | "cancelled";
+  "pending" | "running" | "succeeded" | "failed" | "skipped" | "cancelled";
 
 export type ExecutionPlanStatus =
-  | "planned"
-  | "running"
-  | "completed"
-  | "completed_with_errors"
-  | "failed"
-  | "cancelled";
+  "planned" | "running" | "completed" | "completed_with_errors" | "failed" | "cancelled";
 
 export interface TaskBudget {
   readonly maxCostUsd: number;
@@ -104,11 +94,7 @@ export interface ProposedAgentAction {
   readonly id: string;
   readonly description: string;
   /** Agent-declared risk hint; the Control Plane must independently classify it. */
-  readonly declaredRiskClass:
-    | "routine"
-    | "material"
-    | "high_impact"
-    | "prohibited";
+  readonly declaredRiskClass: "routine" | "material" | "high_impact" | "prohibited";
 }
 
 export interface AgentTaskResult {

@@ -40,9 +40,7 @@ function taskDepth(
   const cached = memo.get(task.id);
   if (cached !== undefined) return cached;
 
-  const dependencies = Array.isArray(task.dependencies)
-    ? task.dependencies
-    : [];
+  const dependencies = Array.isArray(task.dependencies) ? task.dependencies : [];
   const depth =
     dependencies.length === 0
       ? 0
@@ -74,9 +72,7 @@ function findCycle(byId: ReadonlyMap<string, AgentTask>): string[] | undefined {
     stack.push(taskId);
 
     const task = byId.get(taskId);
-    const dependencies = Array.isArray(task?.dependencies)
-      ? task.dependencies
-      : [];
+    const dependencies = Array.isArray(task?.dependencies) ? task.dependencies : [];
     for (const dependencyId of dependencies) {
       if (!byId.has(dependencyId)) continue;
       const cycle = visit(dependencyId);
@@ -98,8 +94,7 @@ function findCycle(byId: ReadonlyMap<string, AgentTask>): string[] | undefined {
 
 function validateTask(task: AgentTask): PlanValidationIssue[] {
   const issues: PlanValidationIssue[] = [];
-  const add = (code: string, message: string) =>
-    issues.push({ code, message, taskId: task.id });
+  const add = (code: string, message: string) => issues.push({ code, message, taskId: task.id });
 
   if (!isNonEmpty(task.id)) add("TASK_ID_REQUIRED", "Task id is required.");
   if (!isNonEmpty(task.agentId)) add("AGENT_ID_REQUIRED", "Agent id is required.");
@@ -125,7 +120,10 @@ function validateTask(task: AgentTask): PlanValidationIssue[] {
     task.constraints.some((constraint) => !isNonEmpty(constraint)) ||
     task.requiredCapabilities.some((capability) => !isNonEmpty(capability))
   ) {
-    add("TASK_REFERENCES_INVALID", "Task references, constraints and capabilities must be non-empty strings.");
+    add(
+      "TASK_REFERENCES_INVALID",
+      "Task references, constraints and capabilities must be non-empty strings.",
+    );
   }
 
   const budget = task.budget;
@@ -148,22 +146,31 @@ function validateTask(task: AgentTask): PlanValidationIssue[] {
   return issues;
 }
 
-export function validateExecutionPlan(
-  plan: ExecutionPlan,
-): PlanValidationResult {
+export function validateExecutionPlan(plan: ExecutionPlan): PlanValidationResult {
   const errors: PlanValidationIssue[] = [];
   const warnings: PlanValidationIssue[] = [];
 
-  if (!isNonEmpty(plan.id)) errors.push({ code: "PLAN_ID_REQUIRED", message: "Plan id is required." });
-  if (!isNonEmpty(plan.tenantId)) errors.push({ code: "TENANT_REQUIRED", message: "Tenant id is required." });
-  if (!isNonEmpty(plan.workspaceId)) errors.push({ code: "WORKSPACE_REQUIRED", message: "Workspace id is required." });
-  if (!isNonEmpty(plan.requestedBy)) errors.push({ code: "PRINCIPAL_REQUIRED", message: "Requesting principal is required." });
-  if (!isNonEmpty(plan.objective)) errors.push({ code: "PLAN_OBJECTIVE_REQUIRED", message: "Plan objective is required." });
+  if (!isNonEmpty(plan.id))
+    errors.push({ code: "PLAN_ID_REQUIRED", message: "Plan id is required." });
+  if (!isNonEmpty(plan.tenantId))
+    errors.push({ code: "TENANT_REQUIRED", message: "Tenant id is required." });
+  if (!isNonEmpty(plan.workspaceId))
+    errors.push({ code: "WORKSPACE_REQUIRED", message: "Workspace id is required." });
+  if (!isNonEmpty(plan.requestedBy))
+    errors.push({ code: "PRINCIPAL_REQUIRED", message: "Requesting principal is required." });
+  if (!isNonEmpty(plan.objective))
+    errors.push({ code: "PLAN_OBJECTIVE_REQUIRED", message: "Plan objective is required." });
   if (Number.isNaN(Date.parse(plan.createdAt))) {
-    errors.push({ code: "CREATED_AT_INVALID", message: "Plan creation time must be an ISO-compatible timestamp." });
+    errors.push({
+      code: "CREATED_AT_INVALID",
+      message: "Plan creation time must be an ISO-compatible timestamp.",
+    });
   }
   if (plan.version !== "1.0.0") {
-    errors.push({ code: "PLAN_VERSION_UNSUPPORTED", message: "Only execution plan version 1.0.0 is supported." });
+    errors.push({
+      code: "PLAN_VERSION_UNSUPPORTED",
+      message: "Only execution plan version 1.0.0 is supported.",
+    });
   }
 
   const limits = plan.limits;
@@ -184,19 +191,19 @@ export function validateExecutionPlan(
     }
   }
   if (!isFiniteNonNegative(limits.maxTotalCostUsd)) {
-    errors.push({ code: "PLAN_COST_LIMIT_INVALID", message: "Maximum plan cost must be finite and non-negative." });
+    errors.push({
+      code: "PLAN_COST_LIMIT_INVALID",
+      message: "Maximum plan cost must be finite and non-negative.",
+    });
   }
-  if (
-    Number.isInteger(limits.maxTasks) &&
-    plan.tasks.length > limits.maxTasks
-  ) {
+  if (Number.isInteger(limits.maxTasks) && plan.tasks.length > limits.maxTasks) {
     errors.push({ code: "MAX_TASKS_EXCEEDED", message: "Plan exceeds its maximum task count." });
   }
-  if (
-    Number.isInteger(limits.maxParallelTasks) &&
-    limits.maxParallelTasks > limits.maxTasks
-  ) {
-    errors.push({ code: "PARALLEL_LIMIT_INVALID", message: "Maximum parallel tasks cannot exceed maximum tasks." });
+  if (Number.isInteger(limits.maxParallelTasks) && limits.maxParallelTasks > limits.maxTasks) {
+    errors.push({
+      code: "PARALLEL_LIMIT_INVALID",
+      message: "Maximum parallel tasks cannot exceed maximum tasks.",
+    });
   }
   if (plan.tasks.length === 0) {
     errors.push({ code: "PLAN_EMPTY", message: "Execution plan must contain at least one task." });
@@ -218,9 +225,7 @@ export function validateExecutionPlan(
 
   for (const task of plan.tasks) {
     const seenDependencies = new Set<string>();
-    const dependencies = Array.isArray(task.dependencies)
-      ? task.dependencies
-      : [];
+    const dependencies = Array.isArray(task.dependencies) ? task.dependencies : [];
     for (const dependencyId of dependencies) {
       if (dependencyId === task.id) {
         errors.push({

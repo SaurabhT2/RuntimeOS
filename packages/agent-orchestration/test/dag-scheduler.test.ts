@@ -1,19 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  getBlockedTaskIds,
-  getExecutionWaves,
-  getReadyTasks,
-} from "../src/index.js";
-import type {
-  AgentTask,
-  ExecutionPlan,
-  ExecutionTaskState,
-} from "../src/index.js";
+import { getBlockedTaskIds, getExecutionWaves, getReadyTasks } from "../src/index.js";
+import type { AgentTask, ExecutionPlan, ExecutionTaskState } from "../src/index.js";
 
-const makeTask = (
-  id: string,
-  dependencies: readonly string[] = [],
-): AgentTask => ({
+const makeTask = (id: string, dependencies: readonly string[] = []): AgentTask => ({
   id,
   agentId: "research",
   agentVersion: "1.0.0",
@@ -61,11 +50,7 @@ describe("DAG scheduling helpers", () => {
       makeTask("extra"),
     ]);
 
-    expect(getExecutionWaves(value)).toEqual([
-      ["extra", "research"],
-      ["strategy"],
-      ["synthesis"],
-    ]);
+    expect(getExecutionWaves(value)).toEqual([["extra", "research"], ["strategy"], ["synthesis"]]);
   });
 
   it("returns only tasks whose dependencies succeeded", () => {
@@ -84,11 +69,7 @@ describe("DAG scheduling helpers", () => {
   });
 
   it("caps ready work by remaining parallel slots", () => {
-    const value = makePlan([
-      makeTask("a"),
-      makeTask("b"),
-      makeTask("c"),
-    ]);
+    const value = makePlan([makeTask("a"), makeTask("b"), makeTask("c")]);
     const states: Record<string, ExecutionTaskState> = {
       a: "running",
       b: "pending",
