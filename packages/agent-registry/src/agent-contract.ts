@@ -3,24 +3,53 @@
  * A manifest describes an agent's scope; it is not an executable prompt,
  * tool implementation, or authorization grant.
  */
-export type AgentDomain = "strategy" | "leadership" | "research" | "architecture" | "growth" | "execution";
+export type AgentDomain =
+  | "strategy"
+  | "leadership"
+  | "research"
+  | "architecture"
+  | "growth"
+  | "execution";
 
 export type AgentCapability =
-  | "strategic-analysis" | "decision-support"
-  | "executive-communication" | "meeting-preparation" | "presentation-drafting"
-  | "market-research" | "competitive-intelligence" | "evidence-synthesis"
-  | "solution-architecture" | "technical-due-diligence" | "security-review"
-  | "account-strategy" | "go-to-market" | "partnership-planning" | "proposal-development"
-  | "project-planning" | "task-coordination" | "progress-reporting";
+  | "strategic-analysis"
+  | "decision-support"
+  | "executive-communication"
+  | "meeting-preparation"
+  | "presentation-drafting"
+  | "market-research"
+  | "competitive-intelligence"
+  | "evidence-synthesis"
+  | "solution-architecture"
+  | "technical-due-diligence"
+  | "security-review"
+  | "account-strategy"
+  | "go-to-market"
+  | "partnership-planning"
+  | "proposal-development"
+  | "project-planning"
+  | "task-coordination"
+  | "progress-reporting";
 
 export type AgentContextKey =
-  | "executive-profile" | "active-priorities" | "workspace-knowledge" | "project-context"
-  | "stakeholder-context" | "market-evidence" | "technical-constraints"
-  | "decision-history" | "delivery-state";
+  | "executive-profile"
+  | "active-priorities"
+  | "workspace-knowledge"
+  | "project-context"
+  | "stakeholder-context"
+  | "market-evidence"
+  | "technical-constraints"
+  | "decision-history"
+  | "delivery-state";
 
 export type AgentOutputKind =
-  | "analysis" | "decision-brief" | "executive-communication" | "research-brief"
-  | "architecture-design" | "account-plan" | "execution-plan";
+  | "analysis"
+  | "decision-brief"
+  | "executive-communication"
+  | "research-brief"
+  | "architecture-design"
+  | "account-plan"
+  | "execution-plan";
 
 export interface AgentInputContract {
   readonly requiredFields: readonly string[];
