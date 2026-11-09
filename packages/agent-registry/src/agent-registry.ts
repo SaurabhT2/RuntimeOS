@@ -55,7 +55,7 @@ function assertManifest(manifest: AgentManifest): void {
   }
   if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) {
     throw new AgentRegistryError(
-      \`Agent \${manifest.id} must use semantic versioning (major.minor.patch)\`,
+      "Agent " + manifest.id + " must use semantic versioning (major.minor.patch)",
     );
   }
 
@@ -78,7 +78,7 @@ function assertManifest(manifest: AgentManifest): void {
       values.some((value) => typeof value !== "string" || !value.trim())
     ) {
       throw new AgentRegistryError(
-        \`Agent \${manifest.id} requires non-empty string entries in \${name}\`,
+        "Agent " + manifest.id + " requires non-empty string entries in " + name,
       );
     }
   }
@@ -90,7 +90,7 @@ function assertManifest(manifest: AgentManifest): void {
   ]) {
     if (autonomous.has(action)) {
       throw new AgentRegistryError(
-        \`Agent \${manifest.id} has conflicting autonomy classification for: \${action}\`,
+        "Agent " + manifest.id + " has conflicting autonomy classification for: " + action,
       );
     }
   }
@@ -102,7 +102,7 @@ export class InMemoryAgentRegistry {
   register(manifest: AgentManifest): void {
     assertManifest(manifest);
     if (this.manifests.has(manifest.id)) {
-      throw new AgentRegistryError(\`Agent already registered: \${manifest.id}\`);
+      throw new AgentRegistryError("Agent already registered: " + manifest.id);
     }
     this.manifests.set(manifest.id, snapshotManifest(manifest));
   }
