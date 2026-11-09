@@ -285,10 +285,21 @@ export function validateExecutionPlan(plan: ExecutionPlan): PlanValidationResult
     (total, task) => total + (task.budget?.estimatedCostUsd ?? 0),
     0,
   );
+  const totalMaximumTaskBudgetUsd = plan.tasks.reduce(
+    (total, task) => total + (task.budget?.maxCostUsd ?? 0),
+    0,
+  );
+
   if (totalEstimatedCostUsd > limits.maxTotalCostUsd) {
     errors.push({
       code: "PLAN_COST_EXCEEDED",
       message: "Estimated task cost exceeds the plan cost limit.",
+    });
+  }
+  if (totalMaximumTaskBudgetUsd > limits.maxTotalCostUsd) {
+    errors.push({
+      code: "PLAN_MAX_BUDGET_EXCEEDED",
+      message: "Aggregate task maximum budgets exceed the plan cost limit.",
     });
   }
   if (plan.tasks.every((task) => !task.required)) {
