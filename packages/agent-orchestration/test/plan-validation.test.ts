@@ -209,4 +209,33 @@ describe("validateExecutionPlan", () => {
       "TASK_DEPENDENCY_DUPLICATE",
     );
   });
+
+  it("rejects task estimates that exceed the task budget", () => {
+    const overBudget = {
+      ...task("research"),
+      budget: {
+        ...task("research").budget,
+        estimatedCostUsd: 2,
+      },
+    };
+    const result = validateExecutionPlan(plan([overBudget]));
+
+    expect(result.errors.map((issue) => issue.code)).toContain(
+      "TASK_BUDGET_INVALID",
+    );
+  });
+
+  it("reports malformed dependency and context arrays without throwing", () => {
+    const malformed = {
+      ...task("malformed"),
+      dependencies: null,
+      contextRefs: null,
+    } as unknown as AgentTask;
+    const result = validateExecutionPlan(plan([malformed]));
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((issue) => issue.code)).toContain(
+      "TASK_REFERENCES_INVALID",
+    );
+  });
 });
