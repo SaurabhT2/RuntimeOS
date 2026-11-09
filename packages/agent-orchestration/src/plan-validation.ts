@@ -127,7 +127,8 @@ function validateTask(task: AgentTask): PlanValidationIssue[] {
     !Number.isInteger(budget.timeoutMs) ||
     budget.timeoutMs <= 0 ||
     (budget.estimatedCostUsd !== undefined &&
-      !isFiniteNonNegative(budget.estimatedCostUsd))
+      (!isFiniteNonNegative(budget.estimatedCostUsd) ||
+        budget.estimatedCostUsd > budget.maxCostUsd))
   ) {
     add("TASK_BUDGET_INVALID", "Task budget contains invalid limits or estimates.");
   }
