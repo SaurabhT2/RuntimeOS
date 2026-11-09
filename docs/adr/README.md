@@ -1,6 +1,6 @@
 # Architecture Decision Records — Index
 
-Twenty-eight ADRs are on record, spanning EM-0 through EM-10 (plus the
+Twenty-nine ADRs are on record, spanning EM-0 through EM-10 (plus the
 EM-10 Engineering Rework), plus one roadmap recommendation (0027) filed
 during the v1.2 documentation-completion pass rather than by an
 engineering milestone.
@@ -23,7 +23,7 @@ inconsistency. It's listed in its own small table, below the
 implementation-gap ADRs, for exactly this reason — the "ten" figure
 elsewhere in this repository's release documentation (e.g.
 `KNOWN_LIMITATIONS.md` §6) refers to implementation-gap ADRs only and
-correctly excludes it; "twelve" (or "28 total ADRs") refers to every
+correctly excludes it; "thirteen" (or "29 total ADRs") refers to every
 Proposed/Draft ADR including it.
 
 ## Accepted
@@ -79,6 +79,9 @@ Proposed/Draft ADR including it.
   Establishes versioned specialist-agent contracts and a separate executive
   orchestrator without repurposing RuntimeOS provider execution or the
   sequential pipeline engine.
+- [0029](0029-agent-execution-plan-and-dag-contracts.md): Define tenant-scoped
+  execution plans, dependency validation, deterministic scheduling and
+  explicit runtime authorization boundaries.
 
 ## Proposed — agentic orchestration architecture extension
 
