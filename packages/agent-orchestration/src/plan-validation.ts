@@ -102,12 +102,18 @@ function validateTask(task: AgentTask): PlanValidationIssue[] {
   }
   if (!isNonEmpty(task.objective)) add("TASK_OBJECTIVE_REQUIRED", "Task objective is required.");
   if (
+    !Array.isArray(task.successCriteria) ||
     task.successCriteria.length === 0 ||
     task.successCriteria.some((item) => !isNonEmpty(item))
   ) {
     add("SUCCESS_CRITERIA_REQUIRED", "At least one non-empty success criterion is required.");
   }
   if (
+    !Array.isArray(task.dependencies) ||
+    !Array.isArray(task.contextRefs) ||
+    !Array.isArray(task.evidenceRefs) ||
+    !Array.isArray(task.constraints) ||
+    !Array.isArray(task.requiredCapabilities) ||
     task.contextRefs.some((ref) => !isNonEmpty(ref)) ||
     task.evidenceRefs.some((ref) => !isNonEmpty(ref)) ||
     task.constraints.some((constraint) => !isNonEmpty(constraint)) ||
@@ -230,7 +236,7 @@ export function validateExecutionPlan(
         });
       }
     }
-    if (task.budget.timeoutMs > limits.maxTaskTimeoutMs) {
+    if (task.budget && task.budget.timeoutMs > limits.maxTaskTimeoutMs) {
       errors.push({
         code: "TASK_TIMEOUT_EXCEEDED",
         message: "Task timeout exceeds the plan maximum task timeout.",
