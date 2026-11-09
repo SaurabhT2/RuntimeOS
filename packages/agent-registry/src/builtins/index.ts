@@ -14,3 +14,12 @@ export const BUILT_IN_AGENTS: readonly AgentManifest[] = [
   growthAgent,
   executionAgent,
 ];
+
+export {
+  strategyAgent,
+  leadershipAgent,
+  researchAgent,
+  architectureAgent,
+  growthAgent,
+  executionAgent,
+};
