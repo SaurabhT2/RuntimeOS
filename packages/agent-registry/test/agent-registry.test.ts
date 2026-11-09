@@ -1,10 +1,88 @@
 import { describe, expect, it } from "vitest";
-import { AgentRegistryError, InMemoryAgentRegistry, BUILT_IN_AGENTS } from "../src/index.js";
+import {
+  AgentRegistryError,
+  BUILT_IN_AGENTS,
+  InMemoryAgentRegistry,
+} from "../src/index.js";
+
 describe("InMemoryAgentRegistry", () => {
- it("registers six built-in contracts", () => { const r=new InMemoryAgentRegistry(); for(const a of BUILT_IN_AGENTS) r.register(a); expect(r.size).toBe(6); expect(r.list().map(a=>a.id)).toEqual(["architecture","execution","growth","leadership","research","strategy"]); });
- it("rejects duplicate identifiers", () => { const r=new InMemoryAgentRegistry(); r.register(BUILT_IN_AGENTS[0]!); expect(()=>r.register(BUILT_IN_AGENTS[0]!)).toThrow(AgentRegistryError); });
- it("returns undefined for unknown agents", () => { expect(new InMemoryAgentRegistry().get("missing")).toBeUndefined(); });
- it("filters by domain and all requested capabilities", () => { const r=new InMemoryAgentRegistry(); for(const a of BUILT_IN_AGENTS) r.register(a); expect(r.findCandidates({domains:["growth"]}).map(a=>a.id)).toEqual(["growth"]); expect(r.findCandidates({capabilities:["market-research","evidence-synthesis"]}).map(a=>a.id)).toEqual(["research"]); expect(r.findCandidates({domains:["growth"],capabilities:["security-review"]})).toEqual([]); });
- it("returns immutable snapshots", () => { const r=new InMemoryAgentRegistry(); r.register(BUILT_IN_AGENTS[0]!); const a=r.get("strategy")!; expect(Object.isFrozen(a)).toBe(true); expect(Object.isFrozen(a.capabilities)).toBe(true); expect(()=> (a.capabilities as string[]).push("unexpected")).toThrow(); });
- it("rejects conflicting autonomy classifications", () => { const a=BUILT_IN_AGENTS[0]!; const invalid={...a,autonomy:{...a.autonomy,approvalRequiredActions:[...a.autonomy.approvalRequiredActions,"analyse-options"]}}; expect(()=>new InMemoryAgentRegistry().register(invalid)).toThrow(/conflicting autonomy classification/); });
+  it("registers six built-in contracts", () => {
+    const registry = new InMemoryAgentRegistry();
+    for (const agent of BUILT_IN_AGENTS) registry.register(agent);
+
+    expect(registry.size).toBe(6);
+    expect(registry.list().map((agent) => agent.id)).toEqual([
+      "architecture",
+      "execution",
+      "growth",
+      "leadership",
+      "research",
+      "strategy",
+    ]);
+  });
+
+  it("rejects duplicate identifiers", () => {
+    const registry = new InMemoryAgentRegistry();
+    registry.register(BUILT_IN_AGENTS[0]!);
+
+    expect(() => registry.register(BUILT_IN_AGENTS[0]!)).toThrow(
+      AgentRegistryError,
+    );
+  });
+
+  it("returns undefined for unknown agents", () => {
+    expect(new InMemoryAgentRegistry().get("missing")).toBeUndefined();
+  });
+
+  it("filters by domain and all requested capabilities", () => {
+    const registry = new InMemoryAgentRegistry();
+    for (const agent of BUILT_IN_AGENTS) registry.register(agent);
+
+    expect(
+      registry.findCandidates({ domains: ["growth"] }).map((agent) => agent.id),
+    ).toEqual(["growth"]);
+    expect(
+      registry
+        .findCandidates({
+          capabilities: ["market-research", "evidence-synthesis"],
+        })
+        .map((agent) => agent.id),
+    ).toEqual(["research"]);
+    expect(
+      registry.findCandidates({
+        domains: ["growth"],
+        capabilities: ["security-review"],
+      }),
+    ).toEqual([]);
+  });
+
+  it("returns immutable snapshots", () => {
+    const registry = new InMemoryAgentRegistry();
+    registry.register(BUILT_IN_AGENTS[0]!);
+    const stored = registry.get("strategy")!;
+
+    expect(Object.isFrozen(stored)).toBe(true);
+    expect(Object.isFrozen(stored.capabilities)).toBe(true);
+    expect(() =>
+      (stored.capabilities as string[]).push("unexpected"),
+    ).toThrow();
+  });
+
+  it("rejects conflicting autonomy classifications", () => {
+    const source = BUILT_IN_AGENTS[0]!;
+    const invalid = {
+      ...source,
+      autonomy: {
+        ...source.autonomy,
+        approvalRequiredActions: [
+          ...source.autonomy.approvalRequiredActions,
+          "analyse-options",
+        ],
+      },
+    };
+
+    expect(() => new InMemoryAgentRegistry().register(invalid)).toThrow(
+      /conflicting autonomy classification/,
+    );
+  });
 });
