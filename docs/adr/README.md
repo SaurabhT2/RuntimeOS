@@ -73,13 +73,15 @@ Proposed/Draft ADR including it.
 | ---------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [0027](0027-api-contract-publication.md) | API Contract Publication — generate OpenAPI from `core-contracts`, don't hand-write it | Recommends a `core-contracts` → Zod schemas → generated OpenAPI pipeline for the currently-nonexistent API schema, explicitly ruling out a hand-maintained OpenAPI document. Filed during the v1.2 documentation-completion pass, not by an engineering milestone — a forward-looking recommendation, not a discovered spec-vs-implementation inconsistency. |
 
+## Proposed — agentic orchestration architecture extension
+
+- [0028](0028-agent-registry-and-dynamic-agent-orchestration.md): Separate the Agent Registry from Dynamic Agent Orchestration.
+  Establishes versioned specialist-agent contracts and a separate executive
+  orchestrator without repurposing RuntimeOS provider execution or the
+  sequential pipeline engine.
+
 ## Template
 
 | ADR                      | Title        | Description                                                                                                                |
 | ------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | [0000](0000-template.md) | ADR template | The Context / Decision / Consequences / Alternatives template used to write every ADR above. Not a decision record itself. |
-
-
-## Proposed — agentic orchestration architecture extension
-
-- [0028](0028-agent-registry-and-dynamic-agent-orchestration.md): Separate the Agent Registry from Dynamic Agent Orchestration. Establishes versioned specialist-agent contracts and a separate executive orchestrator without repurposing RuntimeOS provider execution or the sequential pipeline engine.
