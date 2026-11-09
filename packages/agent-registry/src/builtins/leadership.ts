@@ -9,11 +9,7 @@ export const leadershipAgent: AgentManifest = {
   purpose:
     "Help the user communicate with clarity, authority and appropriate audience calibration.",
   domains: ["leadership"],
-  capabilities: [
-    "executive-communication",
-    "meeting-preparation",
-    "presentation-drafting",
-  ],
+  capabilities: ["executive-communication", "meeting-preparation", "presentation-drafting"],
   invocationTriggers: [
     "leadership meeting",
     "executive update",
@@ -47,11 +43,7 @@ export const leadershipAgent: AgentManifest = {
       "Distinguish suggested language from confirmed facts.",
     ],
   },
-  toolCapabilities: [
-    "knowledge.search",
-    "artifact.draft",
-    "presentation.draft",
-  ],
+  toolCapabilities: ["knowledge.search", "artifact.draft", "presentation.draft"],
   autonomy: {
     autonomousActions: [
       "prepare-meeting-brief",
@@ -70,12 +62,7 @@ export const leadershipAgent: AgentManifest = {
     ],
   },
   evaluation: {
-    qualityCriteria: [
-      "clarity",
-      "executive-presence",
-      "audience-fit",
-      "factual-integrity",
-    ],
+    qualityCriteria: ["clarity", "executive-presence", "audience-fit", "factual-integrity"],
     acceptanceChecks: [
       "Message fits the audience and time available.",
       "Claims are traceable to supplied evidence.",

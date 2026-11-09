@@ -4,16 +4,11 @@ export const executionAgent: AgentManifest = {
   id: "execution",
   version: "1.0.0",
   displayName: "Execution Agent",
-  description:
-    "Turns approved priorities into plans, work items, status and follow-through.",
+  description: "Turns approved priorities into plans, work items, status and follow-through.",
   purpose:
     "Coordinate internal execution with clear ownership, dependencies, milestones and exception handling.",
   domains: ["execution"],
-  capabilities: [
-    "project-planning",
-    "task-coordination",
-    "progress-reporting",
-  ],
+  capabilities: ["project-planning", "task-coordination", "progress-reporting"],
   invocationTriggers: [
     "project plan",
     "action items",
@@ -25,12 +20,7 @@ export const executionAgent: AgentManifest = {
   input: {
     requiredFields: ["desiredOutcome", "scope"],
     optionalFields: ["deadline", "owners", "dependencies", "currentStatus"],
-    contextKeys: [
-      "active-priorities",
-      "project-context",
-      "delivery-state",
-      "decision-history",
-    ],
+    contextKeys: ["active-priorities", "project-context", "delivery-state", "decision-history"],
   },
   output: {
     kind: "execution-plan",
@@ -49,12 +39,7 @@ export const executionAgent: AgentManifest = {
       "Preserve dependencies and unresolved blockers.",
     ],
   },
-  toolCapabilities: [
-    "project.read",
-    "task.draft",
-    "knowledge.search",
-    "artifact.draft",
-  ],
+  toolCapabilities: ["project.read", "task.draft", "knowledge.search", "artifact.draft"],
   autonomy: {
     autonomousActions: [
       "break-down-approved-work",
@@ -68,10 +53,7 @@ export const executionAgent: AgentManifest = {
       "notify-external-stakeholders",
       "close-or-cancel-project",
     ],
-    prohibitedActions: [
-      "mark-unverified-work-complete",
-      "make-external-delivery-commitments",
-    ],
+    prohibitedActions: ["mark-unverified-work-complete", "make-external-delivery-commitments"],
   },
   evaluation: {
     qualityCriteria: [

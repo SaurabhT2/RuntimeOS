@@ -4,8 +4,7 @@ export const growthAgent: AgentManifest = {
   id: "growth",
   version: "1.0.0",
   displayName: "Growth Agent",
-  description:
-    "Develops account strategies, offerings, partnerships and go-to-market plans.",
+  description: "Develops account strategies, offerings, partnerships and go-to-market plans.",
   purpose:
     "Convert validated market and customer context into commercially grounded growth plays and account actions.",
   domains: ["growth"],
@@ -58,12 +57,7 @@ export const growthAgent: AgentManifest = {
       "Qualify revenue estimates and attribution.",
     ],
   },
-  toolCapabilities: [
-    "knowledge.search",
-    "research.search",
-    "account.read",
-    "artifact.draft",
-  ],
+  toolCapabilities: ["knowledge.search", "research.search", "account.read", "artifact.draft"],
   autonomy: {
     autonomousActions: [
       "analyse-account",
@@ -78,10 +72,7 @@ export const growthAgent: AgentManifest = {
       "make-commercial-commitment",
       "update-external-crm",
     ],
-    prohibitedActions: [
-      "fabricate-pipeline",
-      "promise-unapproved-delivery-or-pricing",
-    ],
+    prohibitedActions: ["fabricate-pipeline", "promise-unapproved-delivery-or-pricing"],
   },
   evaluation: {
     qualityCriteria: [

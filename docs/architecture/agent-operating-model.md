@@ -18,15 +18,15 @@ The agent system supports this cycle; it does not replace the user as decision-m
 
 ## 2. Component responsibilities
 
-| Component | Responsibility | Explicit boundary |
-|---|---|---|
-| SAURABH AI experience | Single conversational and workspace interface | Does not directly grant tools or query arbitrary tenant data |
-| Executive orchestrator | Intent interpretation, task planning, agent selection, dependency graph, synthesis and completion assessment | Does not bypass policy or silently expand scope |
-| Agent Registry | Versioned specialist manifests and capability discovery | Does not execute agents or authorize tools |
-| RuntimeOS | Model/provider execution, routing, retries, streaming, cost and telemetry | Does not own executive knowledge or business truth |
-| IntelligenceOS | Workspace knowledge, memory, retrieval, learning and context | Does not decide which external actions are authorized |
-| AI Control Plane | Identity, tenant/workspace scope, tool authorization, approvals, audit and policy enforcement | Is authoritative over agent-declared autonomy |
-| Workspace | User-facing projects, artifacts, preferences and active work | Private workspace data is isolated from public advisory content and other tenants |
+| Component              | Responsibility                                                                                               | Explicit boundary                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| SAURABH AI experience  | Single conversational and workspace interface                                                                | Does not directly grant tools or query arbitrary tenant data                      |
+| Executive orchestrator | Intent interpretation, task planning, agent selection, dependency graph, synthesis and completion assessment | Does not bypass policy or silently expand scope                                   |
+| Agent Registry         | Versioned specialist manifests and capability discovery                                                      | Does not execute agents or authorize tools                                        |
+| RuntimeOS              | Model/provider execution, routing, retries, streaming, cost and telemetry                                    | Does not own executive knowledge or business truth                                |
+| IntelligenceOS         | Workspace knowledge, memory, retrieval, learning and context                                                 | Does not decide which external actions are authorized                             |
+| AI Control Plane       | Identity, tenant/workspace scope, tool authorization, approvals, audit and policy enforcement                | Is authoritative over agent-declared autonomy                                     |
+| Workspace              | User-facing projects, artifacts, preferences and active work                                                 | Private workspace data is isolated from public advisory content and other tenants |
 
 ## 3. Dynamic orchestration lifecycle
 
@@ -130,12 +130,12 @@ The current sequential pipeline-orchestrator remains unchanged. It is not silent
 
 ## 7. Autonomy and approval baseline
 
-| Class | Examples | Default |
-|---|---|---|
-| Routine internal work | Research, analysis, drafting, summarization, internal task breakdown | Autonomous within granted scope |
-| Material or external action | Send email, publish, contact prospect, submit proposal, update external CRM, assign work to others | User approval required |
-| High-impact action | Financial commitment, contract acceptance, production deployment, destructive database change, permission/security change | Explicit approval and applicable control checks |
-| Prohibited | Exfiltrate secrets, bypass access controls, fabricate evidence, impersonate or make unauthorized commitments | Never allowed |
+| Class                       | Examples                                                                                                                  | Default                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Routine internal work       | Research, analysis, drafting, summarization, internal task breakdown                                                      | Autonomous within granted scope                 |
+| Material or external action | Send email, publish, contact prospect, submit proposal, update external CRM, assign work to others                        | User approval required                          |
+| High-impact action          | Financial commitment, contract acceptance, production deployment, destructive database change, permission/security change | Explicit approval and applicable control checks |
+| Prohibited                  | Exfiltrate secrets, bypass access controls, fabricate evidence, impersonate or make unauthorized commitments              | Never allowed                                   |
 
 The platform Control Plane is authoritative. A manifest's autonomousActions is not a permission grant and cannot override workspace, tenant, role, tool or data policy.
 
@@ -153,6 +153,7 @@ The platform Control Plane is authoritative. A manifest's autonomousActions is n
 Each agent is evaluated independently for mandate adherence, evidence quality, factual integrity, output completeness, tool-scope compliance and approval behavior. The orchestrator is evaluated for agent selection precision, unnecessary fan-out, dependency correctness, synthesis quality, policy enforcement, cost/latency and graceful partial failure.
 
 Initial acceptance scenarios:
+
 1. A one-line writing request invokes Leadership only, not all six agents.
 2. A sourced market-entry strategy invokes Research and Strategy, then Growth if commercial design is required.
 3. A technical platform proposal invokes Architecture and Research, then Leadership for the executive narrative.

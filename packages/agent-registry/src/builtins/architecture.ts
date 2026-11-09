@@ -4,16 +4,11 @@ export const architectureAgent: AgentManifest = {
   id: "architecture",
   version: "1.0.0",
   displayName: "Architecture Agent",
-  description:
-    "Designs and reviews enterprise software, AI platforms and agentic systems.",
+  description: "Designs and reviews enterprise software, AI platforms and agentic systems.",
   purpose:
     "Translate requirements and constraints into secure, operable and evolvable technical architectures.",
   domains: ["architecture"],
-  capabilities: [
-    "solution-architecture",
-    "technical-due-diligence",
-    "security-review",
-  ],
+  capabilities: ["solution-architecture", "technical-due-diligence", "security-review"],
   invocationTriggers: [
     "solution architecture",
     "system design",
@@ -62,12 +57,7 @@ export const architectureAgent: AgentManifest = {
     "architecture.validate",
   ],
   autonomy: {
-    autonomousActions: [
-      "draft-architecture",
-      "review-design",
-      "identify-threats",
-      "propose-tests",
-    ],
+    autonomousActions: ["draft-architecture", "review-design", "identify-threats", "propose-tests"],
     approvalRequiredActions: [
       "modify-repository",
       "change-infrastructure",

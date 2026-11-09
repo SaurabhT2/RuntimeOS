@@ -49,9 +49,7 @@ function snapshotManifest(manifest: AgentManifest): AgentManifest {
 
 function assertManifest(manifest: AgentManifest): void {
   if (!/^[a-z][a-z0-9-]*$/.test(manifest.id)) {
-    throw new AgentRegistryError(
-      "Agent id must be a lowercase kebab-case identifier",
-    );
+    throw new AgentRegistryError("Agent id must be a lowercase kebab-case identifier");
   }
   if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) {
     throw new AgentRegistryError(
@@ -112,9 +110,7 @@ export class InMemoryAgentRegistry {
   }
 
   list(): readonly AgentManifest[] {
-    return [...this.manifests.values()].sort((a, b) =>
-      a.id.localeCompare(b.id),
-    );
+    return [...this.manifests.values()].sort((a, b) => a.id.localeCompare(b.id));
   }
 
   findCandidates(query: AgentSelectionQuery): readonly AgentManifest[] {
@@ -122,11 +118,8 @@ export class InMemoryAgentRegistry {
     const capabilities = query.capabilities ?? [];
     return this.list().filter(
       (agent) =>
-        (domains.length === 0 ||
-          domains.some((domain) => agent.domains.includes(domain))) &&
-        capabilities.every((capability) =>
-          agent.capabilities.includes(capability),
-        ),
+        (domains.length === 0 || domains.some((domain) => agent.domains.includes(domain))) &&
+        capabilities.every((capability) => agent.capabilities.includes(capability)),
     );
   }
 

@@ -4,12 +4,7 @@
  * tool implementation, or authorization grant.
  */
 export type AgentDomain =
-  | "strategy"
-  | "leadership"
-  | "research"
-  | "architecture"
-  | "growth"
-  | "execution";
+  "strategy" | "leadership" | "research" | "architecture" | "growth" | "execution";
 
 export type AgentCapability =
   | "strategic-analysis"

@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  AgentRegistryError,
-  BUILT_IN_AGENTS,
-  InMemoryAgentRegistry,
-} from "../src/index.js";
+import { AgentRegistryError, BUILT_IN_AGENTS, InMemoryAgentRegistry } from "../src/index.js";
 
 describe("InMemoryAgentRegistry", () => {
   it("registers six built-in contracts", () => {
@@ -25,9 +21,7 @@ describe("InMemoryAgentRegistry", () => {
     const registry = new InMemoryAgentRegistry();
     registry.register(BUILT_IN_AGENTS[0]!);
 
-    expect(() => registry.register(BUILT_IN_AGENTS[0]!)).toThrow(
-      AgentRegistryError,
-    );
+    expect(() => registry.register(BUILT_IN_AGENTS[0]!)).toThrow(AgentRegistryError);
   });
 
   it("returns undefined for unknown agents", () => {
@@ -38,9 +32,9 @@ describe("InMemoryAgentRegistry", () => {
     const registry = new InMemoryAgentRegistry();
     for (const agent of BUILT_IN_AGENTS) registry.register(agent);
 
-    expect(
-      registry.findCandidates({ domains: ["growth"] }).map((agent) => agent.id),
-    ).toEqual(["growth"]);
+    expect(registry.findCandidates({ domains: ["growth"] }).map((agent) => agent.id)).toEqual([
+      "growth",
+    ]);
     expect(
       registry
         .findCandidates({
@@ -63,9 +57,7 @@ describe("InMemoryAgentRegistry", () => {
 
     expect(Object.isFrozen(stored)).toBe(true);
     expect(Object.isFrozen(stored.capabilities)).toBe(true);
-    expect(() =>
-      (stored.capabilities as string[]).push("unexpected"),
-    ).toThrow();
+    expect(() => (stored.capabilities as string[]).push("unexpected")).toThrow();
   });
 
   it("rejects conflicting autonomy classifications", () => {
@@ -74,10 +66,7 @@ describe("InMemoryAgentRegistry", () => {
       ...source,
       autonomy: {
         ...source.autonomy,
-        approvalRequiredActions: [
-          ...source.autonomy.approvalRequiredActions,
-          "analyse-options",
-        ],
+        approvalRequiredActions: [...source.autonomy.approvalRequiredActions, "analyse-options"],
       },
     };
 

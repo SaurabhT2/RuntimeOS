@@ -57,10 +57,7 @@ export const strategyAgent: AgentManifest = {
       "communicate-strategy-externally",
       "change-approved-business-priorities",
     ],
-    prohibitedActions: [
-      "make-financial-commitments",
-      "represent-unverified-prospects-as-clients",
-    ],
+    prohibitedActions: ["make-financial-commitments", "represent-unverified-prospects-as-clients"],
   },
   evaluation: {
     qualityCriteria: [

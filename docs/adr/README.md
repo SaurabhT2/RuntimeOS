@@ -79,9 +79,8 @@ Proposed/Draft ADR including it.
 | ------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | [0000](0000-template.md) | ADR template | The Context / Decision / Consequences / Alternatives template used to write every ADR above. Not a decision record itself. |
 
-
 ## Proposed — agentic orchestration architecture extension
 
-| ADR | Title | Description |
-| --- | --- | --- |
+| ADR                                                            | Title                                                        | Description                                                                                                                                                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [0028](0028-agent-registry-and-dynamic-agent-orchestration.md) | Separate the Agent Registry from Dynamic Agent Orchestration | Establishes versioned specialist-agent contracts and a separate dynamic executive orchestrator, without repurposing RuntimeOS's provider execution orchestrator or sequential pipeline engine. |
