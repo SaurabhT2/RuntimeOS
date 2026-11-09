@@ -40,12 +40,15 @@ function taskDepth(
   const cached = memo.get(task.id);
   if (cached !== undefined) return cached;
 
+  const dependencies = Array.isArray(task.dependencies)
+    ? task.dependencies
+    : [];
   const depth =
-    task.dependencies.length === 0
+    dependencies.length === 0
       ? 0
       : 1 +
         Math.max(
-          ...task.dependencies.map((dependencyId) => {
+          ...dependencies.map((dependencyId) => {
             const dependency = byId.get(dependencyId);
             return dependency ? taskDepth(dependency, byId, memo) : 0;
           }),
@@ -71,7 +74,10 @@ function findCycle(byId: ReadonlyMap<string, AgentTask>): string[] | undefined {
     stack.push(taskId);
 
     const task = byId.get(taskId);
-    for (const dependencyId of task?.dependencies ?? []) {
+    const dependencies = Array.isArray(task?.dependencies)
+      ? task.dependencies
+      : [];
+    for (const dependencyId of dependencies) {
       if (!byId.has(dependencyId)) continue;
       const cycle = visit(dependencyId);
       if (cycle) return cycle;
@@ -212,7 +218,10 @@ export function validateExecutionPlan(
 
   for (const task of plan.tasks) {
     const seenDependencies = new Set<string>();
-    for (const dependencyId of task.dependencies) {
+    const dependencies = Array.isArray(task.dependencies)
+      ? task.dependencies
+      : [];
+    for (const dependencyId of dependencies) {
       if (dependencyId === task.id) {
         errors.push({
           code: "TASK_SELF_DEPENDENCY",
