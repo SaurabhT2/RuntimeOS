@@ -103,8 +103,12 @@ export interface AgentTaskEnvelope {
 export interface ProposedAgentAction {
   readonly id: string;
   readonly description: string;
-  readonly riskClass: "routine" | "material" | "high_impact" | "prohibited";
-  readonly requiredApproval: boolean;
+  /** Agent-declared risk hint; the Control Plane must independently classify it. */
+  readonly declaredRiskClass:
+    | "routine"
+    | "material"
+    | "high_impact"
+    | "prohibited";
 }
 
 export interface AgentTaskResult {
